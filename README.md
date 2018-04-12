@@ -4,4 +4,4 @@
 ioc2rpz webgui
 
 
-<p align="center"><img src="https://github.com/Homas/ioc2rpz.gui/blob/master/io2rpz.gui.png"></p>
+<p align="center"><img src="https://github.com/Homas/ioc2rpz.gui/blob/master/ioc2rpz.gui.png"></p>
