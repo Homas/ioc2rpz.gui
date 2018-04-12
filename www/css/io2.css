@@ -1,0 +1,65 @@
+/*
+ioc2rpz.gui (c) Vadim Pavlov
+*/
+
+html,body {height: 100%;}
+.dropdown .dropdown-menu .dropdown-item:focus .sorting:focus  { outline: none;}
+:focus {
+  outline: none!important;
+}
+.menu-bkgr,.corners {background-color: #343038;} /*251956*/
+.copyright{
+  text-align: right;
+  height: 20px; /* .push must be the same height as .footer */
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+}
+.curl_angels {
+  background-position: left top;
+  border-radius: 10px 0px 0px 0px;
+  background-color: #F5FAFB;
+}
+.corners {
+   padding: 0;
+}
+.width150{
+  width: 150px;
+}
+
+.page-item.active > a {
+    background-color: #6c757d!important;
+    border-color: #6c757d!important;
+    color: #FFFFFF!important;
+}
+
+.my-select {
+    background-color: #9ca3a8;
+    border-color: #9ca3a8;
+    color: #FFFFFF;
+    padding-top: 0 ;padding-bottom: 0;
+    font-size: 100%;
+}
+
+.form_row {
+  padding: 5px;
+}
+
+.modal-header, .modal-footer, .modal-body  {
+/*
+  Check how to fix Tkey we need to remove padding header(bottom), footer(top)
+  padding: 5px 5px 5px 16px;
+*/
+  border: 0;
+}
+
+.vcenter {
+    display: inline-block;
+    vertical-align: middle;
+    float: none;
+}
+
+[v-cloak] {
+  display: none;
+}
