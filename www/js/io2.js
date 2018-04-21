@@ -28,6 +28,7 @@ Vue.component('io2-table', {
               <template slot="actions_e" slot-scope="row">
                 <b-button size="sm" @click.stop="mgmtRec('info', table, row, $event.target)" class="" v-b-tooltip.hover title="Information" variant="outline-secondary"><i class="fa fa-info-circle"></i></b-button>
                 <b-button size="sm" @click.stop="mgmtRec('edit', table, row, $event.target)" class=""  v-b-tooltip.hover title="Edit" variant="outline-secondary"><i class="fa fa-pencil-alt"></i></b-button>
+                <b-button size="sm" @click.stop="mgmtRec('clone', table, row, $event.target)" class=""  v-b-tooltip.hover title="Clone" variant="outline-secondary"><i class="fa fa-clone"></i></b-button>
                 <b-button size="sm" @click.stop="requestDelete(table,row)" class="" v-b-tooltip.hover title="Delete" variant="outline-secondary"><i class="fa fa-times-circle"></i></b-button>
               </template>  
               <template slot="mgmt" slot-scope="row">
@@ -42,6 +43,9 @@ Vue.component('io2-table', {
               <template slot="update" slot-scope="row">
                 {{ row.item.axfr_update }}/{{ row.item.ixfr_update }}
               </template>                
+              <template slot="disabled" slot-scope="row" >
+                <b-form-checkbox unchecked-value=0 value=1 disabled :checked="row.item.disabled"/>
+              </template>
               <template slot="sources_list" slot-scope="row">
                 <div v-if="row.item.sources.length<4">
                   <div v-for='item in row.item.sources'>
@@ -135,8 +139,9 @@ Vue.component('io2-table', {
         break;
         case "info tkeys":
         case "edit tkeys":
-          this.$root.ftKeyId=row.item.rowid;
-          this.$root.ftKeyName=row.item.name;
+        case "clone tkeys":
+          this.$root.ftKeyId=action=="clone"?-1:row.item.rowid;
+          this.$root.ftKeyName=action=="clone"?row.item.name+"_clone":row.item.name;
           this.$root.ftKey=row.item.tkey;
           this.$root.ftKeyAlg=row.item.alg;
           this.$root.ftKeyMGMT=row.item.mgmt;
@@ -155,10 +160,12 @@ Vue.component('io2-table', {
         break;
         case "info whitelists":
         case "edit whitelists":
+        case "clone whitelists":
         case "info sources":
         case "edit sources":
-          this.$root.ftSrcId=row.item.rowid;
-          this.$root.ftSrcName=row.item.name;
+        case "clone sources":
+          this.$root.ftSrcId=action=="clone"?-1:row.item.rowid;
+          this.$root.ftSrcName=action=="clone"?row.item.name+"_clone":row.item.name;
           this.$root.ftSrcURL=row.item.url;
           this.$root.ftSrcREGEX=row.item.regex;
           this.$root.ftSrcType=table;
@@ -180,8 +187,9 @@ Vue.component('io2-table', {
         break;
         case "info servers":
         case "edit servers":
-          this.$root.ftSrvId=row.item.rowid;
-          this.$root.ftSrvName=row.item.name;
+        case "clone servers":
+          this.$root.ftSrvId=action=="clone"?-1:row.item.rowid;
+          this.$root.ftSrvName=action=="clone"?row.item.name+"_clone":row.item.name;
           this.$root.ftSrvIP=row.item.ip;
           this.$root.ftSrvNS=row.item.ns;
           this.$root.ftSrvEmail=row.item.email;
@@ -212,12 +220,27 @@ Vue.component('io2-table', {
           this.$root.ftRPZIXFR='';
           this.$root.ftRPZCache=1;
           this.$root.ftRPZWildcard=1;
+
+          this.$root.get_lists('rpz_servers','ftRPZSrvsAll');
+          this.$root.ftRPZSrvs=[];
+          this.$root.get_lists('rpz_tkeys','ftRPZTKeysAll');
+          this.$root.ftRPZSrc=[];
+          this.$root.get_lists('rpz_sources','ftRPZSrcAll');
+          this.$root.ftRPZSrc=[];
+          this.$root.get_lists('rpz_whitelists','ftRPZWLAll');
+          this.$root.ftRPZWL=[];
+          
+          this.$root.ftRPZAction="nx";
+          this.$root.ftRPZIOCType="m";          
+          this.$root.ftRPZNotify="";
+
           this.$root.$emit('bv::show::modal', 'mConfEditRPZ');
         break;
         case "info rpzs":
         case "edit rpzs":
-          this.$root.ftRPZId=row.item.rowid;
-          this.$root.ftRPZName=row.item.name;
+        case "clone rpzs":
+          this.$root.ftRPZId=action=="clone"?-1:row.item.rowid;
+          this.$root.ftRPZName=action=="clone"?row.item.name+"_clone":row.item.name;
           this.$root.ftRPZSOA_Refresh=row.item.soa_refresh;
           this.$root.ftRPZSOA_UpdRetry=row.item.soa_update_retry;
           this.$root.ftRPZSOA_Exp=row.item.soa_expiration;
@@ -226,15 +249,43 @@ Vue.component('io2-table', {
           this.$root.ftRPZIXFR=row.item.ixfr_update;
           this.$root.ftRPZCache=row.item.cache;
           this.$root.ftRPZWildcard=row.item.wildcard;
-          //this.$root.ftRPZIOCType=row.item.ioc_type //todo update DB change type to integer
+          this.$root.ftRPZAction=row.item.action;
+          this.$root.ftRPZIOCType=row.item.ioc_type;
+          var RPZNotify='';
+          row.item.notify.forEach(function(el) {
+            RPZNotify+=el.notify+' ';
+          });
+          this.$root.ftRPZNotify=RPZNotify.trim();
           
-          this.$root.get_lists('rpz_servers','ftRPZServers');
-          this.$root.get_lists('rpz_tkeys','ftRPZTKeys');
-          this.$root.get_lists('rpz_whitelists','ftRPZWhitelists');
-          this.$root.get_lists('rpz_sources','ftRPZSources');
-          this.$root.get_lists('rpz_notify','ftRPZNotify');
-          //this.$root.ftRPZAction=row.item. //todo update DB
-          this.$root.get_lists('rpz_actions','ftRPZActionList');
+          this.$root.get_lists('rpz_servers','ftRPZSrvsAll');
+          var list=[];
+          row.item.servers.forEach(function(el) {
+            list.push(el.rowid);
+          });
+          this.$root.ftRPZSrvs=list;
+          
+          
+          this.$root.get_lists('rpz_tkeys','ftRPZTKeysAll');
+          list=[];
+          row.item.tkeys.forEach(function(el) {
+            list.push(el.rowid);
+          });
+          this.$root.ftRPZTKeys=list;
+
+          this.$root.get_lists('rpz_sources','ftRPZSrcAll');
+          list=[];
+          row.item.sources.forEach(function(el) {
+            list.push(el.rowid);
+          });
+          this.$root.ftRPZSrc=list;
+
+          this.$root.get_lists('rpz_whitelists','ftRPZWLAll');
+          list=[];
+          row.item.whitelists.forEach(function(el) {
+            list.push(el.rowid);
+          });
+          this.$root.ftRPZSrc=list;
+
           
           this.$root.$emit('bv::show::modal', 'mConfEditRPZ');
         break;
@@ -261,7 +312,7 @@ new Vue({
         { key: 'ns', label: 'Name Server' },
         { key: 'email', label: 'Admin Email' },
         { key: 'mgmt', label: 'Monitoring', 'class': 'text-center' },
-        { key: 'disbld', label: 'Disabled', 'class': 'text-center' },
+        { key: 'disabled', label: 'Disabled', 'class': 'text-center' },
         { key: 'actions_e', label: 'Actions', 'class': 'text-center',  'tdClass': 'width150'}
       ],
       tkeys_fields: [
@@ -294,6 +345,7 @@ new Vue({
         { key: 'action', label: 'Responce action', sortable: true },
         { key: 'sources_list', label: 'Sources', sortable: true },
         { key: 'update', label: 'Update time', sortable: true  },
+        { key: 'disabled', label: 'Disabled', 'class': 'text-center' },
         { key: 'actions_e', label: 'Actions', 'class': 'text-center',  'tdClass': 'width150' }
       ],
       modalMSG: 'Modal',
@@ -339,20 +391,37 @@ new Vue({
       //RPZs
       ftRPZId: 0,
       ftRPZName: '',
-      ftRPZServers: [],
+      ftRPZSrvs: [],
+      ftRPZSrvsAll: [],
       ftRPZTKeys: [],
-      ftRPZWhitelists: [],
-      ftRPZSources: [],
-      ftRPZNotify: [],
+      ftRPZTKeysAll: [],
+      ftRPZWL: [],
+      ftRPZWLAll: [],
+      ftRPZSrc: [],
+      ftRPZSrcAll: [],
+      ftRPZNotify: "",
       ftRPZSOA_Refresh: 0,
       ftRPZSOA_UpdRetry: 0,
       ftRPZSOA_Exp: 0,
       ftRPZSOA_NXTTL: 0,
       ftRPZCache: 0,
       ftRPZWildcard: 0,
-      ftRPZAction: 0, //TODO update DB //nxdomain, nodata, passthru, drop, tcp-only, local records
-      ftRPZActionList:[], //TODO update DB
-      ftRPZIOCType: 0, //TODO update DB: mixed, fqdn, ip
+      ftRPZAction: "nx", //nx/nxdomain, nod/nodata, pass/passthru, drop, tcp/tcp-only, loc/local records
+      ftRPZActionCustom: "", 
+      RPZ_Act_Options: [
+        { value: 'nx', text: 'NXDomain' },
+        { value: 'nod', text: 'NoData' },
+        { value: 'pass', text: 'Passthru' },
+        { value: 'drop', text: 'Drop' },
+        { value: 'tcp', text: 'TCP-only' },
+        { value: 'loc', text: 'Local records' },
+      ],
+      RPZ_IType_Options: [
+        { value: 'm', text: 'Mixed' },
+        { value: 'f', text: 'Hosts' },
+        { value: 'i', text: 'IPs' },
+      ],
+      ftRPZIOCType: "m", // m/mixed, f/fqdn, i/ip
       ftRPZAXFR: 0,
       ftRPZIXFR: 0,
       
@@ -361,6 +430,7 @@ new Vue({
       ftRPZDisabled: 0, //TODO to add
 
       infoWindow: true,
+      publishUpdates: false, //TODO save in cookie
       
 //          }
   },
@@ -447,15 +517,16 @@ new Vue({
     //Server
     tblMgmtSrvRecord: function (table) {
       var obj=this;
+      this.publishUpdates=true;
       if (this.ftSrvId==-1){
         //Add
         axios.post('/io2data.php/'+table,
-                   {tSrvName: this.ftSrvName, tSrvIP: this.ftSrvIP, tSrvNS: this.ftSrvNS, tSrvEmail: this.ftSrvEmail, tSrvMGMT: this.ftSrvMGMT, tSrvMGMTIP: JSON.stringify(this.ftSrvMGMTIP.split(/,|\s/g).filter(String)), tSrvTKeys: JSON.stringify(this.ftSrvTKeys)}
+                   {tSrvName: this.ftSrvName, tSrvIP: this.ftSrvIP, tSrvNS: this.ftSrvNS, tSrvEmail: this.ftSrvEmail, tSrvMGMT: this.ftSrvMGMT, tSrvMGMTIP: JSON.stringify(this.ftSrvMGMTIP.split(/,|\s/g).filter(String)), tSrvTKeys: JSON.stringify(this.ftSrvTKeys), tSrvDisabled: this.ftSrvDisabled}
                    ).then(function (response) {obj.mgmtTableOk(response,obj,table)}).catch(function (error){obj.mgmtTableError(error,obj,table)})
       }else{
         //Modify
         axios.put('/io2data.php/'+table,
-                   {tSrvId: this.ftSrvId, tSrvName: this.ftSrvName, tSrvIP: this.ftSrvIP, tSrvNS: this.ftSrvNS, tSrvEmail: this.ftSrvEmail, tSrvMGMT: this.ftSrvMGMT, tSrvMGMTIP: JSON.stringify(this.ftSrvMGMTIP.split(/,|\s/g).filter(String)), tSrvTKeys: JSON.stringify(this.ftSrvTKeys)}
+                   {tSrvId: this.ftSrvId, tSrvName: this.ftSrvName, tSrvIP: this.ftSrvIP, tSrvNS: this.ftSrvNS, tSrvEmail: this.ftSrvEmail, tSrvMGMT: this.ftSrvMGMT, tSrvMGMTIP: JSON.stringify(this.ftSrvMGMTIP.split(/,|\s/g).filter(String)), tSrvTKeys: JSON.stringify(this.ftSrvTKeys), tSrvDisabled: this.ftSrvDisabled}
                    ).then(function (response) {obj.mgmtTableOk(response,obj,table)}).catch(function (error){obj.mgmtTableError(error,obj,table)})
       };
     },

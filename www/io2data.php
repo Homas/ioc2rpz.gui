@@ -57,7 +57,7 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
       
     case "POST servers":
       $tkeys=DB_selectArray($db,"select rowid from tkeys where user_id=$USERID and rowid in (".implode(",",json_decode($REQUEST['tSrvTKeys'])).")");
-      $sql="insert into servers values($USERID,'${REQUEST['tSrvName']}','${REQUEST['tSrvIP']}','${REQUEST['tSrvNS']}','${REQUEST['tSrvEmail']}',${REQUEST['tSrvMGMT']})";
+      $sql="insert into servers values($USERID,'${REQUEST['tSrvName']}','${REQUEST['tSrvIP']}','${REQUEST['tSrvNS']}','${REQUEST['tSrvEmail']}',${REQUEST['tSrvMGMT']},${REQUEST['tSrvDisabled']})";
       if (DB_execute($db,$sql)) {
         //safest way to get id?
         $srvid=DB_selectArray($db,"select max(rowid) as rowid from servers where user_id=$USERID and name='${REQUEST['tSrvName']}'")[0]['rowid'];
@@ -86,15 +86,15 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
       foreach($tkeys as $tkey){
         $sql.="insert into servers_tsig values(${REQUEST['tSrvId']},$USERID,${tkey['rowid']});\n";
       };
-      $mgmtip_new=json_decode($REQUEST['tSrvMGMTIP']);
+      $mgmtip_new=array_unique(json_decode($REQUEST['tSrvMGMTIP']));
       $mgmtip_old=DB_selectArray($db,"select rowid, mgmt_ip from mgmt_ips where user_id=$USERID and server_id=${REQUEST['tSrvId']}");
       foreach($mgmtip_old as $ip){
-        if (in_array($ip['mgmt_ip'],$mgmtip_new)) unset($mgmtip_new[$ip['mgmt_ip']]); else $sql.="delete from mgmt_ips where rowid=${ip['rowid']};\n";
+        if ($k=array_search($ip['mgmt_ip'],$mgmtip_new)) unset($mgmtip_new[$k]); else $sql.="delete from mgmt_ips where rowid=${ip['rowid']};\n";
       };       
       foreach($mgmtip_new as $ip){
         $sql.="insert into mgmt_ips values(${REQUEST['tSrvId']},$USERID,'$ip');\n";
       };
-      $sql.="update servers set name='${REQUEST['tSrvName']}', ip='${REQUEST['tSrvIP']}', ns='${REQUEST['tSrvNS']}', email='${REQUEST['tSrvEmail']}', mgmt=${REQUEST['tSrvMGMT']} where user_id=$USERID and rowid=${REQUEST['tSrvId']}";
+      $sql.="update servers set name='${REQUEST['tSrvName']}', ip='${REQUEST['tSrvIP']}', ns='${REQUEST['tSrvNS']}', email='${REQUEST['tSrvEmail']}', mgmt=${REQUEST['tSrvMGMT']}, disabled=${REQUEST['tSrvDisabled']} where user_id=$USERID and rowid=${REQUEST['tSrvId']}";
       
       if (DB_execute($db,$sql)) $response='{"status":"ok"}'; else $response='{"status":"failed", "sql":"'.$sql.'"}'; //TODO remove SQL
       break;
@@ -187,6 +187,22 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
         $rarray[]=$row;
       };
       $response=json_encode($rarray);
+      break;
+
+    case "GET rpz_servers":
+      $response=json_encode(DB_selectArray($db,"select rowid as value, name as text from servers where user_id=$USERID;"));
+      break;
+
+    case "GET rpz_tkeys":
+      $response=json_encode(DB_selectArray($db,"select rowid as value, name as text from tkeys where user_id=$USERID and mgmt!=1;"));
+      break;
+
+    case "GET rpz_sources":
+      $response=json_encode(DB_selectArray($db,"select rowid as value, name as text from sources where user_id=$USERID;"));
+      break;
+
+    case "GET rpz_whitelists":
+      $response=json_encode(DB_selectArray($db,"select rowid as value, name as text from whitelists where user_id=$USERID;"));
       break;
     
     case "GET newtkey":

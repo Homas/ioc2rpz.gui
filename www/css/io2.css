@@ -60,6 +60,8 @@ html,body {height: 100%;}
     float: none;
 }
 
+.spacer { margin: 0 10px;}
+
 [v-cloak] {
   display: none;
 }

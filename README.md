@@ -2,10 +2,25 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)  
 
 ## Overview
-ioc2rpz.gui is a WEBGUI for [ioc2rpz](https://github.com/Homas/ioc2rpz)
+ioc2rpz.gui is a web interface for [ioc2rpz](https://github.com/Homas/ioc2rpz)
 
 <p align="center"><img src="https://github.com/Homas/ioc2rpz.gui/blob/master/ioc2rpz.gui.png"></p>
 
+
+## TODO
+- [ ] Check input in browser
+- [ ] Check input on server side
+- [ ] Navigation/routing, to keep current page after a refresh/passing a link
+- [ ] Authentication/Authozitaion, password management
+- [ ] Intelligent publish updates
+- [ ] Monitoring/dashboards
+- [ ] Link to a community
+- [ ] Utils
+    - [ ] Publish updates to managed servers
+    - [ ] Export ioc2rpz configuration
+
+## Bugs
+- [ ] Window scroll on size of navbar
 
 # License
 Copyright 2017 - 2018 Vadim Pavlov pvm(dot)del[at]gmail[.]com

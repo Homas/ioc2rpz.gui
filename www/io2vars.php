@@ -36,7 +36,7 @@ function initSQLiteDB(){
   $db->exec($sql);
   
   #create servers table, tkeys and mgmt_ips
-  $sql="create table if not exists servers (user_id integer, name text uniq, ip text uniq, ns text, email text, mgmt integer, disbld integer, foreign key(user_id) references users(rowid));".
+  $sql="create table if not exists servers (user_id integer, name text uniq, ip text uniq, ns text, email text, mgmt integer, disabled integer, foreign key(user_id) references users(rowid));".
        "create table if not exists servers_tsig (server_id integer, user_id integer, tsig_id integer, foreign key(tsig_id) references tkeys(rowid), foreign key(user_id) references users(rowid), foreign key(server_id) references servers(rowid));\n".
        "create table if not exists mgmt_ips (server_id integer, user_id integer, mgmt_ip text, foreign key(user_id) references users(rowid), foreign key(server_id) references servers(rowid));";
   $db->exec($sql);
@@ -50,7 +50,7 @@ function initSQLiteDB(){
   $db->exec($sql);
 
   #create rpzs table, servers, whitelists, sources, tkeys, notify
-  $sql="create table if not exists rpzs (user_id integer, name text, soa_refresh integer, soa_update_retry integer, soa_expiration integer, soa_nx_ttl integer, cache integer, wildcard integer, action text, ioc_type text, axfr_update integer, ixfr_update integer, foreign key(user_id) references users(rowid));".
+  $sql="create table if not exists rpzs (user_id integer, name text, soa_refresh integer, soa_update_retry integer, soa_expiration integer, soa_nx_ttl integer, cache integer, wildcard integer, action text, ioc_type text, axfr_update integer, ixfr_update integer, disabled integer, foreign key(user_id) references users(rowid));".
        "create table if not exists rpzs_servers (rpz_id integer, user_id integer, server_id integer, foreign key(rpz_id) references rpzs(rowid), foreign key(user_id) references users(rowid), foreign key(server_id) references servers(rowid));".
        "create table if not exists rpzs_tkeys (rpz_id integer, user_id integer, tkey_id integer, foreign key(rpz_id) references rpzs(rowid), foreign key(user_id) references users(rowid), foreign key(tkey_id) references tkeys(rowid));".
        "create table if not exists rpzs_whitelists (rpz_id integer, user_id integer, whitelist_id integer, foreign key(rpz_id) references rpzs(rowid), foreign key(user_id) references users(rowid), foreign key(whitelist_id) references whitelists(rowid));".
@@ -78,7 +78,7 @@ function initSQLiteDB(){
   $sql='insert into sources values(1,"dns-bh","http://mirror1.malwaredomains.com/files/spywaredomains.zones","[:AXFR:]",\'^zone \"([A-Za-z0-9\-\._]+)\".*$\');';
   $db->exec($sql);
 
-  $sql='insert into rpzs values(1,"dns-bh.ioc2rpz",86400,3600,2592000,7200,1,1,"nxdomain","mixed",604800,86400);'.
+  $sql='insert into rpzs values(1,"dns-bh.ioc2rpz",86400,3600,2592000,7200,1,1,"nx","m",604800,86400,0);'.
        'insert into rpzs_servers values(1,1,1);'.
        'insert into rpzs_whitelists values(1,1,1);'.
        'insert into rpzs_sources values(1,1,1);'.

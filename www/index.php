@@ -42,6 +42,8 @@ require 'io2auth.php';
     
         <!-- Right aligned nav items -->
         <b-navbar-nav class="ml-auto">
+          <b-nav-form><b-button variant="warning" v-show="publishUpdates">Publish configuration</b-button></b-nav-form>
+          <div class="spacer"></div>
     
 <!--
           <b-nav-form>
@@ -169,27 +171,27 @@ require 'io2auth.php';
       <span class='text-center'>
         <div>
           <b-row>
-            <b-col :sm="12" class="form_row"><b-input v-model.trim="ftSrvName" :state="srvNameValid" ref="formSrvName" :readonly="infoWindow" placeholder="Enter server name" /></b-col>
+            <b-col :sm="12" class="form_row"><b-input v-model.trim="ftSrvName" :state="srvNameValid" ref="formSrvName" :readonly="infoWindow" placeholder="Enter server name"  v-b-tooltip.hover title="Name" /></b-col>
           </b-row>
           <b-row>
-            <b-col :sm="12" class="form_row"><b-input v-model.trim="ftSrvIP" :state="srvIPValid" ref="formSrvIP" :readonly="infoWindow" placeholder="Enter management IP address" /></b-col>
+            <b-col :sm="12" class="form_row"><b-input v-model.trim="ftSrvIP" :state="srvIPValid" ref="formSrvIP" :readonly="infoWindow" placeholder="Enter Server IP address"  v-b-tooltip.hover title="Server IP" /></b-col>
           </b-row>
           <b-row>
-            <b-col :sm="12" class="form_row"><b-input v-model.trim="ftSrvNS" :state="srvNSValid" ref="formSrvNS" :readonly="infoWindow" placeholder="Enter NS name" /></b-col>
+            <b-col :sm="12" class="form_row"><b-input v-model.trim="ftSrvNS" :state="srvNSValid" ref="formSrvNS" :readonly="infoWindow" placeholder="Enter NS name"  v-b-tooltip.hover title="Name server name"/></b-col>
           </b-row>
           <b-row>
-            <b-col :sm="12" class="form_row"><b-input v-model.trim="ftSrvEmail" :state="srvEmailValid" ref="formSrvEmail" :readonly="infoWindow" placeholder="Enter admin email" /></b-col>
+            <b-col :sm="12" class="form_row"><b-input v-model.trim="ftSrvEmail" :state="srvEmailValid" ref="formSrvEmail" :readonly="infoWindow" placeholder="Enter admin email"  v-b-tooltip.hover title="Administrator's email"/></b-col>
           </b-row>
           <b-row>
             <b-col :sm="12" class="form_row text-left">
-              <b-form-group style="height: 4em; overflow-y: scroll; border: 1px solid #ced4da; border-radius: .25rem; margin: 0; padding: 5px">
+              <b-form-group style="height: 4em; overflow-y: scroll; border: 1px solid #ced4da; border-radius: .25rem; margin: 0; padding: 5px" v-b-tooltip.hover title="TSIG Keys">
                 <b-form-checkbox-group :disabled="infoWindow" plain stacked v-model="ftSrvTKeys" :options="ftSrvTKeysAll" />
               </b-form-group>
             </b-col>
           </b-row>
           <b-row>
             <b-col :sm="12" class="form_row text-left">
-              <b-textarea v-model="ftSrvMGMTIP" :rows="3" ref="formSrcNotify" :readonly="infoWindow" placeholder="Enter management IPs" :no-resize=true />
+              <b-textarea v-model="ftSrvMGMTIP" :rows="3" ref="formSrcNotify" :readonly="infoWindow" placeholder="Enter management IPs" :no-resize=true  v-b-tooltip.hover title="Management IPs" />
             </b-col>
           </b-row>
           <b-row>
@@ -209,33 +211,54 @@ require 'io2auth.php';
       <span class='text-center'>
         <div>
           <b-row>
-            <b-col :sm="12" class="form_row"><b-input v-model.trim="ftRPZName" :state="rpzNameValid" ref="formRPZName" :readonly="infoWindow" placeholder="Enter RPZ name" /></b-col>
+            <b-col :sm="12" class="form_row"><b-input v-model.trim="ftRPZName" :state="rpzNameValid" ref="formRPZName" :readonly="infoWindow" placeholder="Enter RPZ name"  v-b-tooltip.hover title="RPZ Name" /></b-col>
           </b-row>
 
           <b-row>
-            <b-col :sm="6" class="form_row">
-            Servers
+            <b-col :sm="6" class="form_row text-left">
+              <b-form-group style="height: 4em; overflow-y: scroll; border: 1px solid #ced4da; border-radius: .25rem; margin: 0; padding: 5px"  v-b-tooltip.hover title="Servers" >
+                <b-form-checkbox-group :disabled="infoWindow" plain stacked v-model="ftRPZSrvs" :options="ftRPZSrvsAll" />
+              </b-form-group>
             </b-col>
-            <b-col :sm="6" class="form_row">
-            Actions
-            </b-col>
-          </b-row>
-          <b-row>
-            <b-col :sm="6" class="form_row">
-            Sources
-            </b-col>
-            <b-col :sm="6" class="form_row">
-            Whitelists
+            <b-col :sm="6" class="form_row text-left">
+              <b-form-group style="height: 4em; overflow-y: scroll; border: 1px solid #ced4da; border-radius: .25rem; margin: 0; padding: 5px"  v-b-tooltip.hover title="TSIG Keys">
+                <b-form-checkbox-group :disabled="infoWindow" plain stacked v-model="ftRPZTKeys" :options="ftRPZTKeysAll" />
+              </b-form-group>
             </b-col>
           </b-row>
           <b-row>
-            <b-col :sm="4" class="form_row">
-            IOC type
+            <b-col :sm="6" class="form_row text-left">
+              <b-form-group style="height: 4em; overflow-y: scroll; border: 1px solid #ced4da; border-radius: .25rem; margin: 0; padding: 5px" v-b-tooltip.hover title="Sources">
+                <b-form-checkbox-group :disabled="infoWindow" plain stacked v-model="ftRPZSrc" :options="ftRPZSrcAll" />
+              </b-form-group>
             </b-col>
-            <b-col :sm="4" class="form_row">
+            <b-col :sm="6" class="form_row text-left">
+              <b-form-group style="height: 4em; overflow-y: scroll; border: 1px solid #ced4da; border-radius: .25rem; margin: 0; padding: 5px" v-b-tooltip.hover title="Whitelists">
+                <b-form-checkbox-group :disabled="infoWindow" plain stacked v-model="ftRPZWL" :options="ftRPZWLAll" />
+              </b-form-group>
+            </b-col>
+          </b-row>
+          <b-row>
+            <b-col :sm="6" class="form_row text-left">
+              <b-form-select v-model="ftRPZAction" :options="RPZ_Act_Options" :disabled="infoWindow"  v-b-tooltip.hover title="Action" />
+            </b-col>
+            <b-col :sm="6" class="form_row text-left">
+              <b-textarea v-model="ftRPZNotify" :rows="1" ref="formRPZNotify" :readonly="infoWindow" placeholder="Enter IPs to notify" :no-resize=true  v-b-tooltip.hover title="IPs to notify" />
+            </b-col>
+          </b-row>
+          <b-row v-show="ftRPZAction === 'loc'">
+            <b-col :sm="12" class="form_row text-left">
+              <b-textarea v-model="ftRPZActionCustom" :rows="3" ref="formRPZActionCustom" :readonly="infoWindow" placeholder="Enter local records" :no-resize=true  v-b-tooltip.hover title="Local records" />
+            </b-col>
+          </b-row>
+          <b-row>
+            <b-col :sm="4" class="form_row text-center">
+              <b-form-select v-model="ftRPZIOCType" :options="RPZ_IType_Options" :disabled="infoWindow" v-b-tooltip.hover title="IOCs type" />
+            </b-col>
+            <b-col :sm="4" class="form_row text-center">
               <b-form-checkbox unchecked-value=0 value=1 :disabled="infoWindow"  v-model="ftRPZCache">Cache zone</b-form-checkbox>
             </b-col>
-            <b-col :sm="4" class="form_row">
+            <b-col :sm="4" class="form_row text-center">
               <b-form-checkbox unchecked-value=0 value=1 :disabled="infoWindow"  v-model="ftRPZWildcard">Generate wildcard rules</b-form-checkbox>
             </b-col>
           </b-row>
