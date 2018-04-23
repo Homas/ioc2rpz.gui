@@ -17,10 +17,14 @@ ioc2rpz.gui is a web interface for [ioc2rpz](https://github.com/Homas/ioc2rpz)
 - [ ] Link to a community
 - [ ] Utils
     - [ ] Publish updates to managed servers
+    - [ ] Inttelectual "publishing"
     - [ ] Export ioc2rpz configuration
+- [ ] DB creation in a separate script
+- [ ] S3 support
 
 ## Bugs
-- [ ] Window scroll on size of navbar
+- [x] Window scroll (size of navbar)
+- [ ] Unchecked checkboxes in tables on odd lines
 
 # License
 Copyright 2017 - 2018 Vadim Pavlov pvm(dot)del[at]gmail[.]com

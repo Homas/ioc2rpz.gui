@@ -24,9 +24,8 @@ html,body {height: 100%;}
 .corners {
    padding: 0;
 }
-.width150{
-  width: 150px;
-}
+.width150{width: 150px;}
+.width200{width: 200px;}
 
 .page-item.active > a {
     background-color: #6c757d!important;

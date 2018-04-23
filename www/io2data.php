@@ -76,14 +76,14 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
       break;
 
     case "PUT servers":
-      $tkeys_new=json_decode($REQUEST['tSrvTKeys']);
+      $tkeys_new=DB_selectArray($db,"select rowid from tkeys where user_id=$USERID and rowid in (".implode(",",json_decode($REQUEST['tSrvTKeys'])).")");
       $tkeys_old=DB_selectArray($db,"select rowid,tsig_id from servers_tsig where user_id=$USERID and server_id=${REQUEST['tSrvId']}");
       $sql='';
       foreach($tkeys_old as $tkey){
-        if (in_array($tkey['tsig_id'],$tkeys_new)) unset($tkeys_new[$tkey['tsig_id']]); else $sql.="delete from servers_tsig where rowid=${tkey['rowid']};\n";
+        if ($k=array_search($tkey['tsig_id'],$tkeys_new)) unset($tkeys_new[$k]); else $sql.="delete from servers_tsig where rowid=${tkey['rowid']};\n";
       };       
-      $tkeys=DB_selectArray($db,"select rowid from tkeys where user_id=$USERID and rowid in (".implode(",",$tkeys_new).")");
-      foreach($tkeys as $tkey){
+      //$tkeys=DB_selectArray($db,"select rowid from tkeys where user_id=$USERID and rowid in (".implode(",",$tkeys_new).")");
+      foreach($tkeys_new as $tkey){
         $sql.="insert into servers_tsig values(${REQUEST['tSrvId']},$USERID,${tkey['rowid']});\n";
       };
       $mgmtip_new=array_unique(json_decode($REQUEST['tSrvMGMTIP']));
@@ -155,8 +155,8 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
       if (DB_execute($db,$sql)) $response='{"status":"ok"}'; else $response='{"status":"failed", "sql":"'.$sql.'"}'; //TODO remove SQL
       break;
     case "DELETE servers":
-      $sql="delete from mgmt_ips where user_id=$USERID and rowid=${REQUEST['rowid']};\n";
-      $sql.="delete from servers_tsig where user_id=$USERID and rowid=${REQUEST['rowid']};\n";
+      $sql="delete from mgmt_ips where user_id=$USERID and server_id=${REQUEST['rowid']};\n";
+      $sql.="delete from servers_tsig where user_id=$USERID and server_id=${REQUEST['rowid']};\n";
       $sql.="delete from servers where user_id=$USERID and rowid=${REQUEST['rowid']};\n";
       if (DB_execute($db,$sql)) $response='{"status":"ok"}'; else $response='{"status":"failed", "sql":"'.$sql.'"}'; //TODO remove SQL
       break;
@@ -168,6 +168,9 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
       $result=DB_select($db,"select rowid,* from rpzs where user_id=$USERID;");
       while ($row = DB_fetchArray($result)) {
         unset($row['user_id']);
+
+        //actioncustom nx/nod/pass/drop/tcp/loc
+        if (in_array($row['action'],["nx","nod","pass","drop","tcp"])) $row['actioncustom']="";else{$row['actioncustom']=$row['action'];$row['action']="loc";};
 
         $subres=DB_selectArray($db,"select tkeys.rowid,tkeys.name from rpzs_tkeys left join tkeys on tkeys.rowid=rpzs_tkeys.tkey_id where rpzs_tkeys.user_id=$USERID and rpzs_tkeys.rpz_id=${row['rowid']};");
         $row['tkeys']=$subres;
@@ -188,6 +191,97 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
       };
       $response=json_encode($rarray);
       break;
+    case "POST rpzs":
+      //actioncustom nx/nod/pass/drop/tcp/loc
+      
+      $tkeys=DB_selectArray($db,"select rowid from tkeys where user_id=$USERID and rowid in (".implode(",",json_decode($REQUEST['tRPZTKeys'])).")");
+      $servers=DB_selectArray($db,"select rowid from servers where user_id=$USERID and rowid in (".implode(",",json_decode($REQUEST['tRPZSrvs'])).")");
+      $sources=DB_selectArray($db,"select rowid from sources where user_id=$USERID and rowid in (".implode(",",json_decode($REQUEST['tRPZSrc'])).")");
+      $whlists=DB_selectArray($db,"select rowid from whitelists where user_id=$USERID and rowid in (".implode(",",json_decode($REQUEST['tRPZWL'])).")");
+
+      if (in_array($REQUEST['tRPZAction'],["nx","nod","pass","drop","tcp"])) $action=$REQUEST['tRPZAction'];else $action=$REQUEST['tRPZActionCustom'];
+
+      $sql="insert into rpzs values($USERID,'${REQUEST['tRPZName']}',${REQUEST['tRPZSOA_Refresh']},${REQUEST['tRPZSOA_UpdRetry']},${REQUEST['tRPZSOA_Exp']},".
+           "${REQUEST['tRPZSOA_NXTTL']},${REQUEST['tRPZCache']},${REQUEST['tRPZWildcard']},'$action','${REQUEST['tRPZIOCType']}',${REQUEST['tRPZAXFR']},".
+           "${REQUEST['tRPZIXFR']},${REQUEST['tRPZDisabled']});";
+      if (DB_execute($db,$sql)) {
+        //safest way to get id?
+        $rpzid=DB_selectArray($db,"select max(rowid) as rowid from rpzs where user_id=$USERID and name='${REQUEST['tRPZName']}'")[0]['rowid'];
+        $sql='';
+        foreach($tkeys as $tkey){
+          $sql.="insert into rpzs_tkeys values($rpzid,$USERID,${tkey['rowid']});\n";
+        };
+        foreach($servers as $tkey){
+          $sql.="insert into rpzs_servers values($rpzid,$USERID,${tkey['rowid']});\n";
+        };
+        foreach($sources as $tkey){
+          $sql.="insert into rpzs_sources values($rpzid,$USERID,${tkey['rowid']});\n";
+        };
+        foreach($whlists as $tkey){
+          $sql.="insert into rpzs_whitelists values($rpzid,$USERID,${tkey['rowid']});\n";
+        };        
+        foreach(array_unique(json_decode($REQUEST['tRPZNotify'])) as $ip){
+          //TODO add uniq only
+          $sql.="insert into rpzs_notify values($rpzid,$USERID,'$ip');\n";
+        };        
+        if (DB_execute($db,$sql)) {          
+          $response='{"status":"ok"}';
+        }else $response='{"status":"failed", "sql":"'.$sql.'"}'; //TODO remove SQL
+      }else $response='{"status":"failed", "sql":"'.$sql.'"}'; //TODO remove SQL
+      break;
+    case "PUT rpzs":
+
+      $tkeys_new=DB_selectArray($db,"select rowid from tkeys where user_id=$USERID and rowid in (".implode(",",json_decode($REQUEST['tRPZTKeys'])).")");
+      $tkeys_old=DB_selectArray($db,"select rowid,tkey_id from rpzs_tkeys where user_id=$USERID and rpz_id=${REQUEST['tRPZId']}");
+      $servers_new=DB_selectArray($db,"select rowid from servers where user_id=$USERID and rowid in (".implode(",",json_decode($REQUEST['tRPZSrvs'])).")");
+      $servers_old=DB_selectArray($db,"select rowid,server_id from rpzs_servers where user_id=$USERID and rpz_id=${REQUEST['tRPZId']}");
+      $sources_new=DB_selectArray($db,"select rowid from sources where user_id=$USERID and rowid in (".implode(",",json_decode($REQUEST['tRPZSrc'])).")");
+      $sources_old=DB_selectArray($db,"select rowid,source_id from rpzs_sources where user_id=$USERID and rpz_id=${REQUEST['tRPZId']}");
+      $whlists_new=DB_selectArray($db,"select rowid from whitelists where user_id=$USERID and rowid in (".implode(",",json_decode($REQUEST['tRPZWL'])).")");
+      $whlists_old=DB_selectArray($db,"select rowid,whitelist_id from rpzs_whitelists where user_id=$USERID and rpz_id=${REQUEST['tRPZId']}");
+
+      if (in_array($REQUEST['tRPZAction'],["nx","nod","pass","drop","tcp"])) $action=$REQUEST['tRPZAction'];else $action=$REQUEST['tRPZActionCustom'];
+
+      $sql='';
+      foreach($tkeys_old as $tkey){if ($k=array_search($tkey['tkey_id'],$tkeys_new)) unset($tkeys_new[$k]); else $sql.="delete from rpzs_tkeys where rowid=${tkey['rowid']};\n";};       
+      foreach($tkeys_new as $tkey){$sql.="insert into rpzs_tkeys values(${REQUEST['tRPZId']},$USERID,${tkey['rowid']});\n";};
+
+      foreach($servers_old as $item){if ($k=array_search($item['server_id'],$tkeys_new)) unset($servers_new[$k]); else $sql.="delete from rpzs_servers where rowid=${item['rowid']};\n";};       
+      foreach($servers_new as $item){$sql.="insert into rpzs_servers values(${REQUEST['tRPZId']},$USERID,${item['rowid']});\n";};
+
+      foreach($sources_old as $item){if ($k=array_search($item['source_id'],$tkeys_new)) unset($sources_new[$k]); else $sql.="delete from rpzs_sources where rowid=${item['rowid']};\n";};       
+      foreach($sources_new as $item){$sql.="insert into rpzs_sources values(${REQUEST['tRPZId']},$USERID,${item['rowid']});\n";};
+
+      foreach($whlists_old as $item){if ($k=array_search($item['whitelist_id'],$tkeys_new)) unset($whlists_new[$k]); else $sql.="delete from rpzs_whitelists where rowid=${item['rowid']};\n";};       
+      foreach($whlists_new as $item){$sql.="insert into rpzs_whitelists values(${REQUEST['tRPZId']},$USERID,${item['rowid']});\n";};
+
+      $ip_new=array_unique(json_decode($REQUEST['tRPZNotify']));
+      $ip_old=DB_selectArray($db,"select rowid, notify from rpzs_notify where user_id=$USERID and rpz_id=${REQUEST['tRPZId']}");
+
+      foreach($ip_old as $ip){
+        if ($k=array_search($ip['notify'],$ip_new)) unset($ip_new[$k]); else $sql.="delete from rpzs_notify where rowid=${ip['rowid']};\n";
+      };       
+      foreach($ip_new as $ip){
+        $sql.="insert into rpzs_notify values(${REQUEST['tRPZId']},$USERID,'$ip');\n";
+      };
+      
+      $sql.="update rpzs set name='${REQUEST['tRPZName']}', soa_refresh=${REQUEST['tRPZSOA_Refresh']}, soa_update_retry=${REQUEST['tRPZSOA_UpdRetry']},".
+            "soa_expiration=${REQUEST['tRPZSOA_Exp']}, soa_nx_ttl=${REQUEST['tRPZSOA_NXTTL']}, cache=${REQUEST['tRPZCache']}, wildcard=${REQUEST['tRPZWildcard']},".
+            "action='$action',ioc_type='${REQUEST['tRPZIOCType']}',axfr_update=${REQUEST['tRPZAXFR']},ixfr_update=${REQUEST['tRPZIXFR']},".
+            "disabled=${REQUEST['tRPZDisabled']} where user_id=$USERID and rowid=${REQUEST['tRPZId']}";
+      
+      if (DB_execute($db,$sql)) $response='{"status":"ok"}'; else $response='{"status":"failed", "sql":"'.$sql.'"}'; //TODO remove SQL
+
+      break;
+    case "DELETE rpzs":
+      $sql="delete from rpzs_notify where user_id=$USERID and rpz_id=${REQUEST['rowid']};\n";
+      $sql.="delete from rpzs_tkeys where user_id=$USERID and rpz_id=${REQUEST['rowid']};\n";
+      $sql.="delete from rpzs_servers where user_id=$USERID and rpz_id=${REQUEST['rowid']};\n";
+      $sql.="delete from rpzs_whitelists where user_id=$USERID and rpz_id=${REQUEST['rowid']};\n";
+      $sql.="delete from rpzs_sources where user_id=$USERID and rpz_id=${REQUEST['rowid']};\n";
+      $sql.="delete from rpzs where user_id=$USERID and rowid=${REQUEST['rowid']};\n";
+      if (DB_execute($db,$sql)) $response='{"status":"ok"}'; else $response='{"status":"failed", "sql":"'.$sql.'"}'; //TODO remove SQL
+      break;
 
     case "GET rpz_servers":
       $response=json_encode(DB_selectArray($db,"select rowid as value, name as text from servers where user_id=$USERID;"));
@@ -205,9 +299,14 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
       $response=json_encode(DB_selectArray($db,"select rowid as value, name as text from whitelists where user_id=$USERID;"));
       break;
     
-    case "GET newtkey":
-      //hash_hmac
-      //https://github.com/menandmice/b10-gentsigkey/blob/master/b10-gentsigkey.py
+    case "GET servercfg": //generate ioc2rpz configuration and pass it to the client
+
+      break;
+
+    case "POST publishcfg": //save ioc2rpz configuration and reconfigure service
+      //support local file via local script. Here just set a relevant field in DB.
+      //support S3. Upload file to S3 and send reconfugure signal
+
       break;
     default:
       $response='{"status":"failed", "reason":"not supported"}';

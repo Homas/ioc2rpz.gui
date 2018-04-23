@@ -27,8 +27,9 @@ Vue.component('io2-table', {
               <slot></slot>
               <template slot="actions_e" slot-scope="row">
                 <b-button size="sm" @click.stop="mgmtRec('info', table, row, $event.target)" class="" v-b-tooltip.hover title="Information" variant="outline-secondary"><i class="fa fa-info-circle"></i></b-button>
+                <b-button size="sm" @click.stop="mgmtRec('export', table, row, $event.target)" class="" v-if="table == 'servers'" v-b-tooltip.hover title="Export Configuration" variant="outline-secondary"><i class="fa fa-download"></i></b-button>
                 <b-button size="sm" @click.stop="mgmtRec('edit', table, row, $event.target)" class=""  v-b-tooltip.hover title="Edit" variant="outline-secondary"><i class="fa fa-pencil-alt"></i></b-button>
-                <b-button size="sm" @click.stop="mgmtRec('clone', table, row, $event.target)" class=""  v-b-tooltip.hover title="Clone" variant="outline-secondary"><i class="fa fa-clone"></i></b-button>
+                <b-button size="sm" @click.stop="mgmtRec('clone', table, row, $event.target)" class="" v-if="table != 'tkeys'" v-b-tooltip.hover title="Clone" variant="outline-secondary"><i class="fa fa-clone"></i></b-button>
                 <b-button size="sm" @click.stop="requestDelete(table,row)" class="" v-b-tooltip.hover title="Delete" variant="outline-secondary"><i class="fa fa-times-circle"></i></b-button>
               </template>  
               <template slot="mgmt" slot-scope="row">
@@ -209,6 +210,9 @@ Vue.component('io2-table', {
           
           this.$root.$emit('bv::show::modal', 'mConfEditSrv');
         break;
+        case "export servers":
+          alert("export "+row.item.name+" configuration");
+        break;
         case "add rpzs":
           this.$root.ftRPZId=-1;
           this.$root.ftRPZName='';
@@ -231,6 +235,7 @@ Vue.component('io2-table', {
           this.$root.ftRPZWL=[];
           
           this.$root.ftRPZAction="nx";
+          this.$root.ftRPZActionCustom=""; 
           this.$root.ftRPZIOCType="m";          
           this.$root.ftRPZNotify="";
 
@@ -250,6 +255,7 @@ Vue.component('io2-table', {
           this.$root.ftRPZCache=row.item.cache;
           this.$root.ftRPZWildcard=row.item.wildcard;
           this.$root.ftRPZAction=row.item.action;
+          this.$root.ftRPZActionCustom=row.item.actioncustom; 
           this.$root.ftRPZIOCType=row.item.ioc_type;
           var RPZNotify='';
           row.item.notify.forEach(function(el) {
@@ -284,7 +290,7 @@ Vue.component('io2-table', {
           row.item.whitelists.forEach(function(el) {
             list.push(el.rowid);
           });
-          this.$root.ftRPZSrc=list;
+          this.$root.ftRPZWL=list;
 
           
           this.$root.$emit('bv::show::modal', 'mConfEditRPZ');
@@ -313,7 +319,7 @@ new Vue({
         { key: 'email', label: 'Admin Email' },
         { key: 'mgmt', label: 'Monitoring', 'class': 'text-center' },
         { key: 'disabled', label: 'Disabled', 'class': 'text-center' },
-        { key: 'actions_e', label: 'Actions', 'class': 'text-center',  'tdClass': 'width150'}
+        { key: 'actions_e', label: 'Actions', 'class': 'text-center',  'tdClass': 'width200'}
       ],
       tkeys_fields: [
         { key: 'name', label: 'Name', sortable: true },
@@ -339,10 +345,10 @@ new Vue({
       rpzs_fields: [
         { key: 'name', label: 'Name', sortable: true },
         { key: 'servers_list', label: 'Servers', sortable: true },
-        { key: 'ioc_type', label: 'IOC type', sortable: true },
+        { key: 'ioc_type', label: 'IOC type', sortable: true, formatter: (value) => { return value=="m"?"mixed":value=="i"?"ip":"hostnames"; } },
         { key: 'cache', label: 'Cachable', sortable: true, 'class': 'text-center' },
         { key: 'wildcard', label: 'Wildcards', sortable: true, 'class': 'text-center' },
-        { key: 'action', label: 'Responce action', sortable: true },
+        { key: 'action', label: 'Responce action', sortable: true, formatter: (value) => { return value=="nx"?"NXDomain":value=="nod"?"NoData":value=="pass"?"Passthru":value=="drop"?"Drop":value=="tcp"?"TCP-Only":"Local Records"; } },
         { key: 'sources_list', label: 'Sources', sortable: true },
         { key: 'update', label: 'Update time', sortable: true  },
         { key: 'disabled', label: 'Disabled', 'class': 'text-center' },
@@ -408,6 +414,11 @@ new Vue({
       ftRPZWildcard: 0,
       ftRPZAction: "nx", //nx/nxdomain, nod/nodata, pass/passthru, drop, tcp/tcp-only, loc/local records
       ftRPZActionCustom: "", 
+      ftRPZIOCType: "m", // m/mixed, f/fqdn, i/ip
+      ftRPZAXFR: 0,
+      ftRPZIXFR: 0,
+      ftRPZDisabled: 0, //TODO to add
+
       RPZ_Act_Options: [
         { value: 'nx', text: 'NXDomain' },
         { value: 'nod', text: 'NoData' },
@@ -421,13 +432,9 @@ new Vue({
         { value: 'f', text: 'Hosts' },
         { value: 'i', text: 'IPs' },
       ],
-      ftRPZIOCType: "m", // m/mixed, f/fqdn, i/ip
-      ftRPZAXFR: 0,
-      ftRPZIXFR: 0,
       
 //  $sql="create table if not exists rpzs (user_id integer, name text, soa_refresh integer, soa_update_retry integer, soa_expiration integer, soa_nx_ttl integer, cache integer, wildcard integer, action text, ioc_type text, axfr_update integer, ixfr_update integer, foreign key(user_id) references users(rowid));".
 
-      ftRPZDisabled: 0, //TODO to add
 
       infoWindow: true,
       publishUpdates: false, //TODO save in cookie
@@ -485,32 +492,28 @@ new Vue({
     //TKeys
     tblMgmtTKeyRecord: function (table) {
       var obj=this;
+      this.publishUpdates=true;
+      var data={tKeyId: this.ftKeyId, tKeyName: this.ftKeyName, tKey: this.ftKey, tKeyAlg: this.ftKeyAlg, tKeyMGMT: this.ftKeyMGMT};
       if (this.ftKeyId==-1){
         //Add
-        axios.post('/io2data.php/'+table,
-                   {tKeyName: this.ftKeyName, tKey: this.ftKey, tKeyAlg: this.ftKeyAlg, tKeyMGMT: this.ftKeyMGMT}
-                   ).then(function (response) {obj.mgmtTableOk(response,obj,table)}).catch(function (error){obj.mgmtTableError(error,obj,table)})
+        axios.post('/io2data.php/'+table,data).then(function (response) {obj.mgmtTableOk(response,obj,table)}).catch(function (error){obj.mgmtTableError(error,obj,table)})
       }else{
         //Modify
-        axios.put('/io2data.php/'+table,
-                   {tKeyId: this.ftKeyId, tKeyName: this.ftKeyName, tKey: this.ftKey, tKeyAlg: this.ftKeyAlg, tKeyMGMT: this.ftKeyMGMT}
-                   ).then(function (response) {obj.mgmtTableOk(response,obj,table)}).catch(function (error){obj.mgmtTableError(error,obj,table)})
+        axios.put('/io2data.php/'+table,data).then(function (response) {obj.mgmtTableOk(response,obj,table)}).catch(function (error){obj.mgmtTableError(error,obj,table)})
       };
     },
     
     //Sources/Whitelists
     tblMgmtSrcRecord: function (table) {
       var obj=this;
+      this.publishUpdates=true;
+      var data={tSrcId: this.ftSrcId, tSrcName: this.ftSrcName, tSrcURL: this.ftSrcURL, tSrcREGEX: this.ftSrcREGEX, tSrcURLIXFR: this.ftSrcURLIXFR};
       if (this.ftSrcId==-1){
         //Add
-        axios.post('/io2data.php/'+table,
-                   {tSrcName: this.ftSrcName, tSrcURL: this.ftSrcURL, tSrcREGEX: this.ftSrcREGEX, tSrcURLIXFR: this.ftSrcURLIXFR}
-                   ).then(function (response) {obj.mgmtTableOk(response,obj,table)}).catch(function (error){obj.mgmtTableError(error,obj,table)})
+        axios.post('/io2data.php/'+table,data).then(function (response) {obj.mgmtTableOk(response,obj,table)}).catch(function (error){obj.mgmtTableError(error,obj,table)})
       }else{
         //Modify
-        axios.put('/io2data.php/'+table,
-                   {tSrcId: this.ftSrcId, tSrcName: this.ftSrcName, tSrcURL: this.ftSrcURL, tSrcREGEX: this.ftSrcREGEX, tSrcURLIXFR: this.ftSrcURLIXFR}
-                   ).then(function (response) {obj.mgmtTableOk(response,obj,table)}).catch(function (error){obj.mgmtTableError(error,obj,table)})
+        axios.put('/io2data.php/'+table,data).then(function (response) {obj.mgmtTableOk(response,obj,table)}).catch(function (error){obj.mgmtTableError(error,obj,table)})
       };
     },
 
@@ -518,40 +521,40 @@ new Vue({
     tblMgmtSrvRecord: function (table) {
       var obj=this;
       this.publishUpdates=true;
+      var data={tSrvId: this.ftSrvId, tSrvName: this.ftSrvName, tSrvIP: this.ftSrvIP, tSrvNS: this.ftSrvNS, tSrvEmail: this.ftSrvEmail, tSrvMGMT: this.ftSrvMGMT,
+                tSrvMGMTIP: JSON.stringify(this.ftSrvMGMTIP.split(/,|\s/g).filter(String)), tSrvTKeys: JSON.stringify(this.ftSrvTKeys), tSrvDisabled: this.ftSrvDisabled};
       if (this.ftSrvId==-1){
         //Add
-        axios.post('/io2data.php/'+table,
-                   {tSrvName: this.ftSrvName, tSrvIP: this.ftSrvIP, tSrvNS: this.ftSrvNS, tSrvEmail: this.ftSrvEmail, tSrvMGMT: this.ftSrvMGMT, tSrvMGMTIP: JSON.stringify(this.ftSrvMGMTIP.split(/,|\s/g).filter(String)), tSrvTKeys: JSON.stringify(this.ftSrvTKeys), tSrvDisabled: this.ftSrvDisabled}
-                   ).then(function (response) {obj.mgmtTableOk(response,obj,table)}).catch(function (error){obj.mgmtTableError(error,obj,table)})
+        axios.post('/io2data.php/'+table,data).then(function (response) {obj.mgmtTableOk(response,obj,table)}).catch(function (error){obj.mgmtTableError(error,obj,table)})
       }else{
         //Modify
-        axios.put('/io2data.php/'+table,
-                   {tSrvId: this.ftSrvId, tSrvName: this.ftSrvName, tSrvIP: this.ftSrvIP, tSrvNS: this.ftSrvNS, tSrvEmail: this.ftSrvEmail, tSrvMGMT: this.ftSrvMGMT, tSrvMGMTIP: JSON.stringify(this.ftSrvMGMTIP.split(/,|\s/g).filter(String)), tSrvTKeys: JSON.stringify(this.ftSrvTKeys), tSrvDisabled: this.ftSrvDisabled}
-                   ).then(function (response) {obj.mgmtTableOk(response,obj,table)}).catch(function (error){obj.mgmtTableError(error,obj,table)})
+        axios.put('/io2data.php/'+table,data).then(function (response) {obj.mgmtTableOk(response,obj,table)}).catch(function (error){obj.mgmtTableError(error,obj,table)})
       };
     },
 
-
+    
     //RPZ
     tblMgmtRPZRecord: function (table) {
       var obj=this;
-      if (this.ftSrvId==-1){
-        //Add
-//        axios.post('/io2data.php/'+table,
-//                   {tSrcName: this.ftSrcName, tSrcURL: this.ftSrcURL, tSrcREGEX: this.ftSrcREGEX, tSrcURLIXFR: this.ftSrcURLIXFR}
-//                   ).then(function (response) {obj.mgmtTableOk(response,obj,table)}).catch(function (error){obj.mgmtTableError(error,obj,table)})
+      this.publishUpdates=true;
+      var data={tRPZId: this.ftRPZId, tRPZName: this.ftRPZName, tRPZSOA_Refresh: this.ftRPZSOA_Refresh, tRPZSOA_UpdRetry: this.ftRPZSOA_UpdRetry,
+                tRPZSOA_Exp: this.ftRPZSOA_Exp, tRPZSOA_NXTTL: this.ftRPZSOA_NXTTL, tRPZCache: this.ftRPZCache,tRPZWildcard: this.ftRPZWildcard, 
+                tRPZNotify: JSON.stringify(this.ftRPZNotify.split(/,|\s/g).filter(String)), tRPZSrvs: JSON.stringify(this.ftRPZSrvs),
+                tRPZIOCType: this.ftRPZIOCType, tRPZAXFR: this.ftRPZAXFR, tRPZIXFR: this.ftRPZIXFR, tRPZDisabled: this.ftRPZDisabled,
+                tRPZTKeys: JSON.stringify(this.ftRPZTKeys), tRPZWL: JSON.stringify(this.ftRPZWL), tRPZSrc: JSON.stringify(this.ftRPZSrc),
+                tRPZAction: this.ftRPZAction, tRPZActionCustom: JSON.stringify(this.ftRPZActionCustom.split(/,|\s/g).filter(String))};
+      if (this.ftRPZId==-1){
+        //Add RPZ
+        axios.post('/io2data.php/'+table,data).then(function (response) {obj.mgmtTableOk(response,obj,table)}).catch(function (error){obj.mgmtTableError(error,obj,table)})
       }else{
-        //Modify
-//        axios.put('/io2data.php/'+table,
-//                   {tSrcId: this.ftSrcId, tSrcName: this.ftSrcName, tSrcURL: this.ftSrcURL, tSrcREGEX: this.ftSrcREGEX, tSrcURLIXFR: this.ftSrcURLIXFR}
-//                   ).then(function (response) {obj.mgmtTableOk(response,obj,table)}).catch(function (error){obj.mgmtTableError(error,obj,table)})
+        //Modify RPZ
+        axios.put('/io2data.php/'+table,data).then(function (response) {obj.mgmtTableOk(response,obj,table)}).catch(function (error){obj.mgmtTableError(error,obj,table)})
       };
     },
 
-        
-
     tblDeleteRecord: function (table,rowid) {
       var el=this;
+      this.publishUpdates=true;
       axios.delete('/io2data.php/'+table+'?rowid='+rowid).then(function (response) {
         if (response.data.status == "ok"){
           el.$root.$refs['io2tbl_'+table].refreshTblKeepPage(table);

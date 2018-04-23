@@ -24,8 +24,8 @@ require 'io2auth.php';
     <link type="text/css" rel="stylesheet" href="/css/io2.css"/>
   </head>
   <body>
-  <div id="app" fluid class="h-100" v-cloak>
-    <div id="navbar">
+  <div id="app" fluid class="h-100 d-flex flex-column" v-cloak>
+    <div id="navbar" v-cloak>
     <b-navbar toggleable="md" type="dark" class="menu-bkgr">
     
       <b-navbar-toggle target="nav_collapse"></b-navbar-toggle>
@@ -78,8 +78,8 @@ require 'io2auth.php';
     </b-navbar>
   </div>
     
-  <div id="ConfApp" class="h-100">
-    <b-container fluid  class="h-100">
+  <div id="ConfApp" class="h-100 d-flex flex-column" v-cloak>
+    <b-container fluid  class="h-100 d-flex flex-column">
         <b-tabs ref="tabs_menu" pills vertical nav-wrapper-class="menu-bkgr h-100 col-md-2" class="h-100 corners" content-class="curl_angels" :value="cfgTab">
           <b-tab id="tab_overview" title="Overview" href='#/cfg/overview'>
             Overview
@@ -116,7 +116,7 @@ require 'io2auth.php';
     </b-modal>
     
 <!-- TKey Add/Modify -->
-    <b-modal id='mConfEditTSIG' centered title="TSIG Key" @ok="tblMgmtTKeyRecord('tkeys')">
+    <b-modal id='mConfEditTSIG' centered title="TSIG Key" @ok="tblMgmtTKeyRecord('tkeys')" v-cloak>
       <span class='text-center'>
         <div>
           <b-row>
@@ -147,7 +147,7 @@ require 'io2auth.php';
     </b-modal>
     
 <!-- Whitelists/Sources Add/Modify -->
-    <b-modal id='mConfEditSources' centered :title="ftSrcTitle" @ok="tblMgmtSrcRecord(ftSrcType)" size="lg">
+    <b-modal id='mConfEditSources' centered :title="ftSrcTitle" @ok="tblMgmtSrcRecord(ftSrcType)" size="lg" v-cloak>
       <span class='text-center'>
         <div>
           <b-row>
@@ -167,7 +167,7 @@ require 'io2auth.php';
     </b-modal>
 
 <!-- Servers Add/Modify -->
-    <b-modal id='mConfEditSrv' centered title="Server" @ok="tblMgmtSrvRecord('servers')">
+    <b-modal id='mConfEditSrv' centered title="Server" @ok="tblMgmtSrvRecord('servers')" v-cloak>
       <span class='text-center'>
         <div>
           <b-row>
@@ -207,7 +207,7 @@ require 'io2auth.php';
 
 
 <!-- RPZ Add/Modify -->
-    <b-modal id='mConfEditRPZ' centered title="RPZ" @ok="tblMgmtRPZRecord('rpzs')" size="lg">
+    <b-modal id='mConfEditRPZ' centered title="RPZ" @ok="tblMgmtRPZRecord('rpzs')" size="lg" v-cloak>
       <span class='text-center'>
         <div>
           <b-row>
@@ -295,7 +295,7 @@ require 'io2auth.php';
     <!-- Axios -->
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <!-- JS -->
-    <script src="/js/io2.js"></script>
+    <script src="/js/io2.js?<?=$io2ver?>"></script>
 
   </body>
 </html>
