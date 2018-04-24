@@ -199,7 +199,7 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
       $sources=DB_selectArray($db,"select rowid from sources where user_id=$USERID and rowid in (".implode(",",json_decode($REQUEST['tRPZSrc'])).")");
       $whlists=DB_selectArray($db,"select rowid from whitelists where user_id=$USERID and rowid in (".implode(",",json_decode($REQUEST['tRPZWL'])).")");
 
-      if (in_array($REQUEST['tRPZAction'],["nx","nod","pass","drop","tcp"])) $action=$REQUEST['tRPZAction'];else $action=$REQUEST['tRPZActionCustom'];
+      if (in_array($REQUEST['tRPZAction'],["nx","nod","pass","drop","tcp"])) $action=$REQUEST['tRPZAction'];else $action=erlChLRecords($REQUEST['tRPZActionCustom']);
 
       $sql="insert into rpzs values($USERID,'${REQUEST['tRPZName']}',${REQUEST['tRPZSOA_Refresh']},${REQUEST['tRPZSOA_UpdRetry']},${REQUEST['tRPZSOA_Exp']},".
            "${REQUEST['tRPZSOA_NXTTL']},${REQUEST['tRPZCache']},${REQUEST['tRPZWildcard']},'$action','${REQUEST['tRPZIOCType']}',${REQUEST['tRPZAXFR']},".
@@ -240,7 +240,7 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
       $whlists_new=DB_selectArray($db,"select rowid from whitelists where user_id=$USERID and rowid in (".implode(",",json_decode($REQUEST['tRPZWL'])).")");
       $whlists_old=DB_selectArray($db,"select rowid,whitelist_id from rpzs_whitelists where user_id=$USERID and rpz_id=${REQUEST['tRPZId']}");
 
-      if (in_array($REQUEST['tRPZAction'],["nx","nod","pass","drop","tcp"])) $action=$REQUEST['tRPZAction'];else $action=$REQUEST['tRPZActionCustom'];
+      if (in_array($REQUEST['tRPZAction'],["nx","nod","pass","drop","tcp"])) $action=$REQUEST['tRPZAction'];else $action=erlChLRecords($REQUEST['tRPZActionCustom']);
 
       $sql='';
       foreach($tkeys_old as $tkey){if ($k=array_search($tkey['tkey_id'],$tkeys_new)) unset($tkeys_new[$k]); else $sql.="delete from rpzs_tkeys where rowid=${tkey['rowid']};\n";};       
@@ -300,7 +300,10 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
       break;
     
     case "GET servercfg": //generate ioc2rpz configuration and pass it to the client
-
+      $cfg=genConfig($db,$USERID,$REQUEST['rowid']);
+      header("Content-Type: text/plain");
+      header('Content-Disposition: attachment; filename="'.$cfg['filename'].'"');
+      $response=$cfg['cfg'];
       break;
 
     case "POST publishcfg": //save ioc2rpz configuration and reconfigure service
@@ -312,7 +315,7 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
       $response='{"status":"failed", "reason":"not supported"}';
 endswitch;
 
-echo $response."\n";
+echo $response;
 
 DB_close($db);
 

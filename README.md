@@ -21,6 +21,7 @@ ioc2rpz.gui is a web interface for [ioc2rpz](https://github.com/Homas/ioc2rpz)
     - [ ] Export ioc2rpz configuration
 - [ ] DB creation in a separate script
 - [ ] S3 support
+- [ ] Container
 
 ## Bugs
 - [x] Window scroll (size of navbar)

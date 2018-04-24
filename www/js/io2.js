@@ -211,7 +211,16 @@ Vue.component('io2-table', {
           this.$root.$emit('bv::show::modal', 'mConfEditSrv');
         break;
         case "export servers":
-          alert("export "+row.item.name+" configuration");
+          //alert("export "+row.item.name+" configuration");
+          axios.get('/io2data.php/servercfg?rowid='+row.item.rowid,{responseType: 'blob'}).then(function (response) {
+                let blob = new Blob([response.data], {type:'text/plain'});
+                let link = document.createElement('a');
+                link.href = window.URL.createObjectURL(blob);               
+                var sFN=response.headers['content-disposition'].match(/filename="([^"]+)"/)[1];
+                link.download = sFN?sFN:row.item.name+'.conf';
+                link.click();
+            }).catch(function (error){alert("export failed")})
+          
         break;
         case "add rpzs":
           this.$root.ftRPZId=-1;
@@ -255,7 +264,7 @@ Vue.component('io2-table', {
           this.$root.ftRPZCache=row.item.cache;
           this.$root.ftRPZWildcard=row.item.wildcard;
           this.$root.ftRPZAction=row.item.action;
-          this.$root.ftRPZActionCustom=row.item.actioncustom; 
+          this.$root.ftRPZActionCustom=JSON.parse(row.item.actioncustom);  //TODO check
           this.$root.ftRPZIOCType=row.item.ioc_type;
           var RPZNotify='';
           row.item.notify.forEach(function(el) {
@@ -364,7 +373,7 @@ new Vue({
       deleteRec: 0,
       deleteTbl: '',
 
-      cfgTab: 5,
+      cfgTab: 1, //Open CFG page
       //tkeys
       ftKeyId: 0,
       ftKeyName: '',
@@ -542,7 +551,7 @@ new Vue({
                 tRPZNotify: JSON.stringify(this.ftRPZNotify.split(/,|\s/g).filter(String)), tRPZSrvs: JSON.stringify(this.ftRPZSrvs),
                 tRPZIOCType: this.ftRPZIOCType, tRPZAXFR: this.ftRPZAXFR, tRPZIXFR: this.ftRPZIXFR, tRPZDisabled: this.ftRPZDisabled,
                 tRPZTKeys: JSON.stringify(this.ftRPZTKeys), tRPZWL: JSON.stringify(this.ftRPZWL), tRPZSrc: JSON.stringify(this.ftRPZSrc),
-                tRPZAction: this.ftRPZAction, tRPZActionCustom: JSON.stringify(this.ftRPZActionCustom.split(/,|\s/g).filter(String))};
+                tRPZAction: this.ftRPZAction, tRPZActionCustom: JSON.stringify(this.ftRPZActionCustom)}; //this.ftRPZActionCustom.split(/,|\s/g).filter(String)
       if (this.ftRPZId==-1){
         //Add RPZ
         axios.post('/io2data.php/'+table,data).then(function (response) {obj.mgmtTableOk(response,obj,table)}).catch(function (error){obj.mgmtTableError(error,obj,table)})
