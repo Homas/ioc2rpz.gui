@@ -57,7 +57,7 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
       
     case "POST servers":
       $tkeys=DB_selectArray($db,"select rowid from tkeys where user_id=$USERID and rowid in (".implode(",",json_decode($REQUEST['tSrvTKeys'])).")");
-      $sql="insert into servers values($USERID,'${REQUEST['tSrvName']}','${REQUEST['tSrvIP']}','${REQUEST['tSrvNS']}','${REQUEST['tSrvEmail']}',${REQUEST['tSrvMGMT']},${REQUEST['tSrvDisabled']})";
+      $sql="insert into servers values($USERID,'${REQUEST['tSrvName']}','${REQUEST['tSrvIP']}','${REQUEST['tSrvNS']}','${REQUEST['tSrvEmail']}',${REQUEST['tSrvMGMT']},${REQUEST['tSrvDisabled']},${REQUEST['tSrvSType']},'${REQUEST['tSrvURL']}',${REQUEST['tSrvMGMT']},0)";
       if (DB_execute($db,$sql)) {
         //safest way to get id?
         $srvid=DB_selectArray($db,"select max(rowid) as rowid from servers where user_id=$USERID and name='${REQUEST['tSrvName']}'")[0]['rowid'];
@@ -94,7 +94,7 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
       foreach($mgmtip_new as $ip){
         $sql.="insert into mgmt_ips values(${REQUEST['tSrvId']},$USERID,'$ip');\n";
       };
-      $sql.="update servers set name='${REQUEST['tSrvName']}', ip='${REQUEST['tSrvIP']}', ns='${REQUEST['tSrvNS']}', email='${REQUEST['tSrvEmail']}', mgmt=${REQUEST['tSrvMGMT']}, disabled=${REQUEST['tSrvDisabled']} where user_id=$USERID and rowid=${REQUEST['tSrvId']}";
+      $sql.="update servers set name='${REQUEST['tSrvName']}', ip='${REQUEST['tSrvIP']}', ns='${REQUEST['tSrvNS']}', email='${REQUEST['tSrvEmail']}', mgmt=${REQUEST['tSrvMGMT']}, disabled=${REQUEST['tSrvDisabled']} ,stype=${REQUEST['tSrvSType']}, URL='${REQUEST['tSrvURL']}', cfg_updated=${REQUEST['tSrvMGMT']} where user_id=$USERID and rowid=${REQUEST['tSrvId']}";
       
       if (DB_execute($db,$sql)) $response='{"status":"ok"}'; else $response='{"status":"failed", "sql":"'.$sql.'"}'; //TODO remove SQL
       break;
@@ -306,9 +306,12 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
       $response=$cfg['cfg'];
       break;
 
-    case "POST publishcfg": //save ioc2rpz configuration and reconfigure service
+    case "POST publish_upd":
+      //save ioc2rpz configuration and reconfigure service
       //support local file via local script. Here just set a relevant field in DB.
       //support S3. Upload file to S3 and send reconfugure signal
+      $sql="update servers set publish_upd=1 where user_id=$USERID and cfg_updated=1 and mgmt=1";
+      if (DB_execute($db,$sql)) $response='{"status":"ok"}'; else $response='{"status":"failed", "sql":"'.$sql.'"}'; //TODO remove SQL
 
       break;
     default:

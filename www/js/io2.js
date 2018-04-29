@@ -183,6 +183,8 @@ Vue.component('io2-table', {
           this.$root.ftSrvMGMT=0;
           this.$root.ftSrvTKeys=[];
           this.$root.ftSrvMGMTIP='';
+          this.$root.ftSrvSType=0; //0 - local, 1 - sftp/scp, 3 - aws s3
+          this.$root.ftSrvURL="";
           this.$root.get_lists('tkeys_mgmt','ftSrvTKeysAll');
           this.$root.$emit('bv::show::modal', 'mConfEditSrv');
         break;
@@ -195,6 +197,8 @@ Vue.component('io2-table', {
           this.$root.ftSrvNS=row.item.ns;
           this.$root.ftSrvEmail=row.item.email;
           this.$root.ftSrvMGMT=row.item.mgmt;
+          this.$root.ftSrvSType=row.item.stype; //0 - local, 1 - sftp/scp, 3 - aws s3
+          this.$root.ftSrvURL=row.item.URL;
           var IPs='';
           row.item.mgmt_ips.forEach(function(el) {
             IPs+=el.mgmt_ip+' ';
@@ -264,7 +268,7 @@ Vue.component('io2-table', {
           this.$root.ftRPZCache=row.item.cache;
           this.$root.ftRPZWildcard=row.item.wildcard;
           this.$root.ftRPZAction=row.item.action;
-          this.$root.ftRPZActionCustom=JSON.parse(row.item.actioncustom);  //TODO check
+          this.$root.ftRPZActionCustom=row.item.actioncustom?JSON.parse(row.item.actioncustom):"";  //TODO check
           this.$root.ftRPZIOCType=row.item.ioc_type;
           var RPZNotify='';
           row.item.notify.forEach(function(el) {
@@ -323,7 +327,7 @@ new Vue({
 //          return {
       servers_fields: [
         { key: 'name', label: 'Name', sortable: true },
-        { key: 'ip', label: 'Management IP', sortable: true },
+        { key: 'ip', label: 'MGMT IP/FQDN', sortable: true },
         { key: 'ns', label: 'Name Server' },
         { key: 'email', label: 'Admin Email' },
         { key: 'mgmt', label: 'Monitoring', 'class': 'text-center' },
@@ -402,6 +406,8 @@ new Vue({
       ftSrvTKeys: [],
       ftSrvTKeysAll: [],
       ftSrvDisabled: 0, //TODO to add
+      ftSrvSType: 0, //0 - local, 1 - sftp/scp, 3 - aws s3
+      ftSrvURL: "",
 
       //RPZs
       ftRPZId: 0,
@@ -531,7 +537,8 @@ new Vue({
       var obj=this;
       this.publishUpdates=true;
       var data={tSrvId: this.ftSrvId, tSrvName: this.ftSrvName, tSrvIP: this.ftSrvIP, tSrvNS: this.ftSrvNS, tSrvEmail: this.ftSrvEmail, tSrvMGMT: this.ftSrvMGMT,
-                tSrvMGMTIP: JSON.stringify(this.ftSrvMGMTIP.split(/,|\s/g).filter(String)), tSrvTKeys: JSON.stringify(this.ftSrvTKeys), tSrvDisabled: this.ftSrvDisabled};
+                tSrvMGMTIP: JSON.stringify(this.ftSrvMGMTIP.split(/,|\s/g).filter(String)), tSrvTKeys: JSON.stringify(this.ftSrvTKeys), tSrvDisabled: this.ftSrvDisabled,
+                tSrvSType: this.ftSrvSType, tSrvURL: this.ftSrvURL};
       if (this.ftSrvId==-1){
         //Add
         axios.post('/io2data.php/'+table,data).then(function (response) {obj.mgmtTableOk(response,obj,table)}).catch(function (error){obj.mgmtTableError(error,obj,table)})
@@ -574,6 +581,21 @@ new Vue({
       }).catch(function (error){
         //TODO better error handeling
         alert('error while deleting '+table+' ' + rowid);
+      })
+    },
+    
+    pushUpdatestoSRV: function () {
+      var obj=this;
+      axios.post('/io2data.php/publish_upd').then(function (response) {
+        if (response.data.status == "ok"){
+          obj.publishUpdates=false;
+          alert('Configuration will be updated in a few seconds'); //TODO message
+        }else{
+          //TODO better error handeling
+          alert('Publishing error');
+        };
+      }).catch(function (error){
+        alert('Publishing error'); //TODO message
       })
     },
 

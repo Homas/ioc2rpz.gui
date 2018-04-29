@@ -6,6 +6,8 @@ ioc2rpz.gui is a web interface for [ioc2rpz](https://github.com/Homas/ioc2rpz)
 
 <p align="center"><img src="https://github.com/Homas/ioc2rpz.gui/blob/master/ioc2rpz.gui.png"></p>
 
+The project is still under development but you can create and export the configuration already.
+
 
 ## TODO
 - [ ] Check input in browser
@@ -17,15 +19,16 @@ ioc2rpz.gui is a web interface for [ioc2rpz](https://github.com/Homas/ioc2rpz)
 - [ ] Link to a community
 - [ ] Utils
     - [ ] Publish updates to managed servers
-    - [ ] Inttelectual "publishing"
-    - [ ] Export ioc2rpz configuration
-- [ ] DB creation in a separate script
+    - [ ] Intelectual "publishing"
+- [x] Export ioc2rpz configuration
+- [x] DB creation in a separate script
 - [ ] S3 support
 - [ ] Container
 
 ## Bugs
 - [x] Window scroll (size of navbar)
 - [ ] Unchecked checkboxes in tables on odd lines
+
 
 # License
 Copyright 2017 - 2018 Vadim Pavlov pvm(dot)del[at]gmail[.]com

@@ -42,7 +42,7 @@ require 'io2auth.php';
     
         <!-- Right aligned nav items -->
         <b-navbar-nav class="ml-auto">
-          <b-nav-form><b-button variant="warning" v-show="publishUpdates">Publish configuration</b-button></b-nav-form>
+          <b-nav-form><b-button variant="warning" v-show="publishUpdates" @click.stop="pushUpdatestoSRV">Publish configuration</b-button></b-nav-form>
           <div class="spacer"></div>
     
 <!--
@@ -167,35 +167,44 @@ require 'io2auth.php';
     </b-modal>
 
 <!-- Servers Add/Modify -->
-    <b-modal id='mConfEditSrv' centered title="Server" @ok="tblMgmtSrvRecord('servers')" v-cloak>
+
+    <b-modal id='mConfEditSrv' ref='refmConfEditSrv' centered title="Server" @ok="tblMgmtSrvRecord('servers')" size="lg" v-cloak>
       <span class='text-center'>
         <div>
           <b-row>
-            <b-col :sm="12" class="form_row"><b-input v-model.trim="ftSrvName" :state="srvNameValid" ref="formSrvName" :readonly="infoWindow" placeholder="Enter server name"  v-b-tooltip.hover title="Name" /></b-col>
+            <b-col :sm="6" class="form_row"><b-input v-model.trim="ftSrvName" :state="srvNameValid" ref="formSrvName" :readonly="infoWindow" placeholder="Enter server name"  v-b-tooltip.hover title="Name" /></b-col>
+            <b-col :sm="6" class="form_row"><b-input v-model.trim="ftSrvIP" :state="srvIPValid" ref="formSrvIP" :readonly="infoWindow" placeholder="Enter Server IP or FQDN"  v-b-tooltip.hover title="Server IP/FQDN" /></b-col>
           </b-row>
           <b-row>
-            <b-col :sm="12" class="form_row"><b-input v-model.trim="ftSrvIP" :state="srvIPValid" ref="formSrvIP" :readonly="infoWindow" placeholder="Enter Server IP address"  v-b-tooltip.hover title="Server IP" /></b-col>
+            <b-col :sm="6" class="form_row"><b-input v-model.trim="ftSrvNS" :state="srvNSValid" ref="formSrvNS" :readonly="infoWindow" placeholder="Enter NS name"  v-b-tooltip.hover title="Name server name"/></b-col>
+            <b-col :sm="6" class="form_row"><b-input v-model.trim="ftSrvEmail" :state="srvEmailValid" ref="formSrvEmail" :readonly="infoWindow" placeholder="Enter admin email"  v-b-tooltip.hover title="Administrator's email"/></b-col>
           </b-row>
           <b-row>
-            <b-col :sm="12" class="form_row"><b-input v-model.trim="ftSrvNS" :state="srvNSValid" ref="formSrvNS" :readonly="infoWindow" placeholder="Enter NS name"  v-b-tooltip.hover title="Name server name"/></b-col>
-          </b-row>
-          <b-row>
-            <b-col :sm="12" class="form_row"><b-input v-model.trim="ftSrvEmail" :state="srvEmailValid" ref="formSrvEmail" :readonly="infoWindow" placeholder="Enter admin email"  v-b-tooltip.hover title="Administrator's email"/></b-col>
-          </b-row>
-          <b-row>
-            <b-col :sm="12" class="form_row text-left">
-              <b-form-group style="height: 4em; overflow-y: scroll; border: 1px solid #ced4da; border-radius: .25rem; margin: 0; padding: 5px" v-b-tooltip.hover title="TSIG Keys">
+            <b-col :sm="6" class="form_row text-left">
+              <b-form-group style="height: 5em; overflow-y: scroll; border: 1px solid #ced4da; border-radius: .25rem; margin: 0; padding: 5px" v-b-tooltip.hover title="TSIG Keys">
                 <b-form-checkbox-group :disabled="infoWindow" plain stacked v-model="ftSrvTKeys" :options="ftSrvTKeysAll" />
               </b-form-group>
             </b-col>
-          </b-row>
-          <b-row>
-            <b-col :sm="12" class="form_row text-left">
-              <b-textarea v-model="ftSrvMGMTIP" :rows="3" ref="formSrcNotify" :readonly="infoWindow" placeholder="Enter management IPs" :no-resize=true  v-b-tooltip.hover title="Management IPs" />
+            <b-col :sm="6" class="form_row text-left">
+              <b-textarea v-model="ftSrvMGMTIP" style="height: 5em;" :rows="3" ref="formSrcNotify" :readonly="infoWindow" placeholder="Enter management IPs" :no-resize=true  v-b-tooltip.hover title="Management IPs" />
             </b-col>
           </b-row>
           <b-row>
             <b-col :sm="12" class="form_row text-left"><b-form-checkbox unchecked-value=0 value=1 :disabled="infoWindow"  v-model="ftSrvMGMT">Manage server</b-form-checkbox></b-col>
+          </b-row>
+          <b-row>
+            <b-col :sm="12" class="form_row text-left">
+              <b-form-radio-group :disabled="infoWindow || (ftSrvMGMT == 0)" name="nSrvSType" v-model="ftSrvSType">
+                <b-form-radio value="0">Local</b-form-radio>
+                <b-form-radio value="1" disabled>SCP/SFTP</b-form-radio>
+                <b-form-radio value="2" disabled>AWS S3</b-form-radio>
+              </b-form-radio-group>
+            </b-col>
+          </b-row>
+          <b-row>
+            <b-col :sm="12" class="form_row text-left">
+              <b-input v-model.trim="ftSrvURL" ref="formSrvURL" :readonly="infoWindow" placeholder="Enter file name"  v-b-tooltip.hover title="File Name" />
+            </b-col>
           </b-row>
           <b-row>
             <b-col :sm="12" class="form_row text-left"><b-form-checkbox unchecked-value=0 value=1 :disabled="infoWindow"  v-model="ftSrvDisabled">Disabled</b-form-checkbox></b-col>
