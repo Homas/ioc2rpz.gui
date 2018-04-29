@@ -5,7 +5,7 @@
 #chmod 664 /srv/www/io2cfg/io2db.sqlite
 #sudo chown homas:_apache /srv/www/io2cfg/io2db.sqlite
 
-define("IO2PATH", "/srv"); #/opt/ioc2rpz.gui
+define("IO2PATH", "/opt/ioc2rpz.gui"); #/opt/ioc2rpz.gui
 require IO2PATH."/www/io2vars.php";
 
 function initSQLiteDB($DBF){
