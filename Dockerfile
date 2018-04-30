@@ -18,15 +18,16 @@ FROM alpine:latest
 MAINTAINER Vadim Pavlov<pvm.del@gmail.com>
 WORKDIR /opt/ioc2rpz.gui
 
-RUN mkdir -p /run/apache2 /opt/ioc2rpz.gui/www /opt/ioc2rpz.gui/www/io2cfg  /opt/ioc2rpz.gui/cfg /opt/ioc2rpz.gui/scripts && apk update && apk upgrade && apk add bash openrc curl openssl apache2 libxml2-dev apache2-utils php7-apache2 php7-json php7-curl apache2-ssl sqlite php7-sqlite && \
-    rm -rf /var/cache/apk/* /tmp/* /var/tmp/*; \
-    sed -i -e "s%\(DocumentRoot\).*%\1 /opt/ioc2rpz.gui/www%" -e "s%^#\(.*mod_rewrite.so\).*%\1%"  /etc/apache2/httpd.conf; \
-    echo -e "<Directory /opt/ioc2rpz.gui/www/>\nOptions FollowSymLinks\nAllowOverride Indexes\nRequire all granted\nRewriteEngine on\nRewriteCond %{REQUEST_FILENAME} !-d\nRewriteCond %{REQUEST_FILENAME} !-f\nRewriteRule . /index.php [L]\n</Directory>\n"  >> /etc/apache2/httpd.conf
-ADD www/* /opt/ioc2rpz.gui/www
-ADD scripts/* /opt/ioc2rpz.gui/scripts
+RUN mkdir -p /run/apache2 /etc/apache2/ssl /opt/ioc2rpz.gui/www /opt/ioc2rpz.gui/www/js /opt/ioc2rpz.gui/www/css /opt/ioc2rpz.gui/img /opt/ioc2rpz.gui/www/io2cfg /opt/ioc2rpz.gui/export-cfg /opt/ioc2rpz.gui/scripts && apk update && apk upgrade && apk add bash openrc curl coreutils openssl apache2 libxml2-dev apache2-utils php7 php7-apache2 php7-json php7-curl apache2-ssl sqlite php7-sqlite3 && \
+    rm -rf /var/cache/apk/* /tmp/* /var/tmp/*
+ADD www/* /opt/ioc2rpz.gui/www/
+ADD www/js/* /opt/ioc2rpz.gui/www/js/
+ADD www/css/* /opt/ioc2rpz.gui/www/css/
+#ADD www/img/* /opt/ioc2rpz.gui/www/img/
+ADD scripts/* /opt/ioc2rpz.gui/scripts/
 
-VOLUME ["/opt/ioc2rpz.gui/cfg", "/opt/ioc2rpz.gui/www/io2cfg"]
+VOLUME ["/opt/ioc2rpz.gui/export-cfg", "/opt/ioc2rpz.gui/www/io2cfg", "/etc/apache2/ssl"]
 
 
 EXPOSE 80/tcp 443/tcp
-CMD ["/bin/bash", "/opt/ioc2rpz.gui/scripts/ioc2rpz.gui.sh"]
+CMD ["/bin/bash", "/opt/ioc2rpz.gui/scripts/run_ioc2rpz.gui.sh"]
