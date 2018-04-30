@@ -2,12 +2,12 @@
 #(c) Vadim Pavlov 2018
 #ioc2rpz GUI DB init
 
-define("IO2PATH", "/srv"); #/opt/ioc2rpz.gui
+define("IO2PATH", "/opt/ioc2rpz.gui"); #/opt/ioc2rpz.gui
 const DBFile=IO2PATH."/www/io2cfg/io2db.sqlite";
 
 require IO2PATH."/www/io2vars.php";
 
-define("localCFGPath", IO2PATH."/io2cfg"); #/opt/ioc2rpz.gui
+define("localCFGPath", IO2PATH."/export-cfg"); #/opt/ioc2rpz.gui
 
 
 $db=DB_open();
