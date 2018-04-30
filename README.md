@@ -28,6 +28,7 @@ The project is still under development but you can create and export the configu
 ## Bugs
 - [x] Window scroll (size of navbar)
 - [ ] Unchecked checkboxes in tables on odd lines
+- [ ] Not all RPZs were exported
 
 
 # License
