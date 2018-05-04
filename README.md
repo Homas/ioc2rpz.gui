@@ -7,6 +7,7 @@ ioc2rpz.gui is a web interface for [ioc2rpz](https://github.com/Homas/ioc2rpz)
 <p align="center"><img src="https://github.com/Homas/ioc2rpz.gui/blob/master/ioc2rpz.gui.png"></p>
 
 The project is still under development but you can create and export the configuration already.
+[Video preview](https://youtu.be/rFhmmGy-MSs)
 
 ## Setup
 ### Dependencies
