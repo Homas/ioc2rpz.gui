@@ -8,27 +8,35 @@ ioc2rpz.gui is a web interface for [ioc2rpz](https://github.com/Homas/ioc2rpz)
 
 The project is still under development but you can create and export the configuration already.
 
+## Setup
+### Dependencies
+### Configuration script
+
+## Container
+
 
 ## TODO
-- [ ] Check input in browser
-- [ ] Check input on server side
-- [ ] Navigation/routing, to keep current page after a refresh/passing a link
 - [ ] Authentication/Authozitaion, password management
+- [ ] Input validation
+- [ ] Tables update on an active tab change
+- [ ] Navigation/routing, to keep current page after a refresh/passing a link
 - [ ] Intelligent publish updates
 - [ ] Monitoring/dashboards
 - [ ] Link to a community
 - [ ] Utils
-    - [ ] Publish updates to managed servers
-    - [ ] Intelectual "publishing"
+    - [ ] Import configuration
+    - [ ] Status check
 - [x] Export ioc2rpz configuration
 - [x] DB creation in a separate script
 - [ ] S3 support
-- [ ] Container
+- [x] Container
+- [ ] Export ISC Bind configuration
+- [ ] Export PowerDNS configuration
 
 ## Bugs
 - [x] Window scroll (size of navbar)
 - [ ] Unchecked checkboxes in tables on odd lines
-- [ ] Not all RPZs were exported
+- [x] Not all RPZs were exported
 
 
 # License

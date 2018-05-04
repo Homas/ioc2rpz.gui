@@ -7,6 +7,7 @@ Vue.component('io2-table', {
           <b-col md="4" class="my-1">
             <b-button v-b-tooltip.hover title="Add" @click.stop="mgmtRec('add', table, '', $event.target)" variant="outline-secondary" size="sm"><i class="fa fa-plus"></i></b-button>
             <b-button v-b-tooltip.hover title="Refresh" variant="outline-secondary" size="sm" @click.stop="refreshTbl(table)"><i class="fa fa-sync"></i></b-button>
+            <b-button size="sm" @click.stop="requestDeleteMult(table)" class="" v-b-tooltip.hover title="Delete selected" variant="outline-secondary"><i class="fa fa-times-circle"></i></b-button>
           </b-col>
           <b-col md="4" class="my-1">
           </b-col>
@@ -23,7 +24,7 @@ Vue.component('io2-table', {
         </b-row>
         <b-row>
           <b-col md="12">
-            <b-table :busy.sync="busy" :items="get_tables" :id="table" :ref="table" :fields="fields" :api-url="'/io2data.php/'+table" :current-page="currentPage" :per-page="perPage" :no-provider-paging=true :no-provider-sorting=true :no-provider-filtering=true :outlined=true :striped=true :small=true :filter="filter" @filtered="onFiltered">
+            <b-table :busy.sync="busy" :items="get_tables" :id="table" :ref="table" :fields="fields" :api-url="'/io2data.php/'+table" :current-page="currentPage" :per-page="perPage" :no-provider-paging=true :no-provider-sorting=true :no-provider-filtering=true :outlined=true :striped=true :small=true :filter="filter" @filtered="onFiltered" v-model="tblDispl">
               <slot></slot>
               <template slot="actions_e" slot-scope="row">
                 <b-button size="sm" @click.stop="mgmtRec('info', table, row, $event.target)" class="" v-b-tooltip.hover title="Information" variant="outline-secondary"><i class="fa fa-info-circle"></i></b-button>
@@ -31,6 +32,15 @@ Vue.component('io2-table', {
                 <b-button size="sm" @click.stop="mgmtRec('edit', table, row, $event.target)" class=""  v-b-tooltip.hover title="Edit" variant="outline-secondary"><i class="fa fa-pencil-alt"></i></b-button>
                 <b-button size="sm" @click.stop="mgmtRec('clone', table, row, $event.target)" class="" v-if="table != 'tkeys'" v-b-tooltip.hover title="Clone" variant="outline-secondary"><i class="fa fa-clone"></i></b-button>
                 <b-button size="sm" @click.stop="requestDelete(table,row)" class="" v-b-tooltip.hover title="Delete" variant="outline-secondary"><i class="fa fa-times-circle"></i></b-button>
+              </template>  
+
+              
+              <template slot="HEAD_rowid" slot-scope="table">
+                <b-form-checkbox @click.native.stop @change="toggleAll" v-model="checkAll"/>
+              </template>              
+
+              <template slot="rowid" slot-scope="row">
+                <b-form-checkbox :value="row.item.rowid" :name="'ch_tbl_'+table" v-model="checkedItems"/>
               </template>  
               <template slot="mgmt" slot-scope="row">
                 <b-form-checkbox unchecked-value=0 value=1 disabled :checked="row.item.mgmt"/>
@@ -91,10 +101,18 @@ Vue.component('io2-table', {
       perPage: 10,
       totalRows: 0,
       pageOptions: [ 5, 10, 20 ],            
+      checkedItems: [],
+      tblDispl: [],
+      checkAll: false,
     }
   },
   methods: {
     //Get data from table
+    
+    toggleAll: function (obj){
+      if (!this.checkAll) this.checkedItems=this.tblDispl.map(a => a.rowid); else this.checkedItems=[];
+    },
+    
     get_tables (obj) {
       let promise = axios.get(obj.apiUrl)
       return promise.then((data) => {
@@ -107,6 +125,8 @@ Vue.component('io2-table', {
     },
     //Update pagination on a filter
     onFiltered (filteredItems) {
+      this.checkedItems = [];
+      this.checkAll = false;
       this.totalRows = filteredItems.length;
       this.currentPage = 1;
     },
@@ -126,6 +146,7 @@ Vue.component('io2-table', {
       this.toPage=this.currentPage;
       this.$root.$emit('bv::refresh::table', table);
     },
+        
     //Row management buttons
     mgmtRec: function (action, table, row, target) {
       this.$root.infoWindow=action == 'info'?true:false;
@@ -318,6 +339,16 @@ Vue.component('io2-table', {
       this.$root.modalMSG='<b>Do you want to delete '+row.item.name+'?</b>';
       this.$root.$emit('bv::show::modal', 'mConfDel');
     },
+    
+    requestDeleteMult: function (table){
+      if (this.checkedItems.length>0){
+        this.$root.deleteRec=this.checkedItems;
+        this.$root.deleteTbl=table;
+        this.$root.modalMSG='<b>Do you want to delete '+this.checkedItems.length+' record'+(this.checkedItems.length==1?'':'s')+'?</b>';
+        this.$root.$emit('bv::show::modal', 'mConfDel');
+      }
+    }
+    
   }
 });
       
@@ -326,6 +357,7 @@ new Vue({
   data: {
 //          return {
       servers_fields: [
+        { key: 'rowid', label: '', sortable: true },
         { key: 'name', label: 'Name', sortable: true },
         { key: 'ip', label: 'MGMT IP/FQDN', sortable: true },
         { key: 'ns', label: 'Name Server' },
@@ -335,6 +367,7 @@ new Vue({
         { key: 'actions_e', label: 'Actions', 'class': 'text-center',  'tdClass': 'width200'}
       ],
       tkeys_fields: [
+        { key: 'rowid', label: '', sortable: true },
         { key: 'name', label: 'Name', sortable: true },
         { key: 'alg', label: 'Algorithm', sortable: true  },
         { key: 'tkey', label: 'TSIG Key', formatter: (value) => { return value.length>45?value.substring(0, 44)+' ...':value; } },
@@ -343,19 +376,22 @@ new Vue({
         { key: 'actions_e', label: 'Actions', 'class': 'text-center',  'tdClass': 'width150'}
       ],
       whitelists_fields: [
+        { key: 'rowid', label: '', sortable: true },
         { key: 'name', label: 'Name', sortable: true },
         { key: 'url', label: 'URL', sortable: true  },
         { key: 'regex', label: 'RegEx', sortable: true},
         { key: 'actions_e', label: 'Actions', 'class': 'text-center',  'tdClass': 'width150' }
       ],
       sources_fields: [
+        { key: 'rowid', label: '', sortable: true },
         { key: 'name', label: 'Name', sortable: true },
-        { key: 'url', label: 'URL', sortable: true  },
-        { key: 'url_ixfr', label: 'URL update', sortable: true  },
-        { key: 'regex', label: 'RegEx', sortable: true  },
+        { key: 'url', label: 'URL', sortable: true, formatter: (value) => { return value.length>35?value.substring(0, 34)+' ...':value; }   },
+        { key: 'url_ixfr', label: 'URL update', sortable: true, formatter: (value) => { return value.length>35?value.substring(0, 34)+' ...':value; }   },
+        { key: 'regex', label: 'RegEx', sortable: true, formatter: (value) => { return value.length>25?value.substring(0, 24)+' ...':value; }  }, //encodeURI
         { key: 'actions_e', label: 'Actions', 'class': 'text-center',  'tdClass': 'width150' }
       ],
       rpzs_fields: [
+        { key: 'rowid', label: '', sortable: true },
         { key: 'name', label: 'Name', sortable: true },
         { key: 'servers_list', label: 'Servers', sortable: true },
         { key: 'ioc_type', label: 'IOC type', sortable: true, formatter: (value) => { return value=="m"?"mixed":value=="i"?"ip":"hostnames"; } },
@@ -377,6 +413,7 @@ new Vue({
       deleteRec: 0,
       deleteTbl: '',
 
+      
       cfgTab: 1, //Open CFG page
       //tkeys
       ftKeyId: 0,
@@ -454,28 +491,66 @@ new Vue({
       infoWindow: true,
       publishUpdates: false, //TODO save in cookie
       
+      mInfoMSGvis: false,
+      msgInfoMSG: '',
+      
+      ftImpServName: '',
+      ftImpFiles: [],
+      ftImpFileDesc: '',
+      ftImpPrefix: '',
+      ftImpAction: 0,
+      
+      
 //          }
   },
 
   computed: {
-    
-    //TODO implement
-    nameTKeyValid() {return this.infoWindow?null:this.validateName(this.ftKeyName)},
-    nameSourceValid() {return this.infoWindow?null:this.validateName(this.ftSrcName)},
-    srvNameValid() {return this.infoWindow?null:this.validateName(this.ftSrvName)},
-    srvINTValid() {return this.infoWindow?null:true},
-    srvIPValid() {return this.infoWindow?null:true},
-    srvNSValid() {return this.infoWindow?null:true},
-    srvEmailValid() {return this.infoWindow?null:true},
-    URLValid() {return this.infoWindow?null:true},
-    URLIXFRValid() {return this.infoWindow?null:true},
-    REGEXValid() {return this.infoWindow?null:true},
-    rpzNameValid() {return this.infoWindow?null:true},
+    validateCustomAction() {return this.infoWindow?null:true},
   },
   
   methods: {
-    validateName: function(name){
-      return name.length > 2 ? true : name.length == 0 ? null:false;
+    validateName: function(vrbl){
+      return (this.$data[vrbl].length > 2 && /^[a-zA-Z0-9\.\-\_]+$/.test(this.$data[vrbl])) ? true : this.$data[vrbl].length == 0 ? null:false;
+    },
+    
+    validateB64: function(vrbl){
+      return (this.$data[vrbl].length>31 && /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(this.$data[vrbl])) ? true : this.$data[vrbl].length == 0 ? null:false;
+    },
+
+    validateInt: function(vrbl){
+      //TODO FIX
+      return (this.$data[vrbl].length > 0 && /^[0-9]+$/.test(this.$data[vrbl])) ? true : this.$data[vrbl].length == 0 ? null:false;
+    },
+
+    validateURL: function (vrbl) {
+      // file: http: https: ftp:
+      return (this.$data[vrbl].length > 0 && /^.+$/.test(this.$data[vrbl])) ? true : this.$data[vrbl].length == 0 ? null:false;
+    },
+    
+    validateIXFRURL: function (vrbl) {
+      return this.validateURL(vrbl) || this.$data[vrbl]=='[:AXFR:]';
+    },
+    
+    validateREGEX: function(vrbl){
+      //none
+      return (this.$data[vrbl].length > 0 && /^.+$/.test(this.$data[vrbl])) ? true : this.$data[vrbl].length == 0 ? null:false;
+    },
+    
+    validateIP: function(vrbl){
+      return (this.$data[vrbl].length > 0 && /^.+$/.test(this.$data[vrbl])) ? true : this.$data[vrbl].length == 0 ? null:false;
+    },
+ 
+    validateIPList: function(vrbl){
+      //this.$data[vrbl].split(/,|\s/g)
+      return (this.$data[vrbl].length > 0 && /^.+$/.test(this.$data[vrbl])) ? true : this.$data[vrbl].length == 0 ? null:false;
+    },
+
+    validateHostname: function(vrbl){
+      return (this.$data[vrbl].length > 0 && /^.+$/.test(this.$data[vrbl])) ? true : this.$data[vrbl].length == 0 ? null:false;
+    },
+ 
+    validateEmail: function(vrbl){
+      return (this.$data[vrbl].length > 0 && /^.+$/.test(this.$data[vrbl])) ? true : this.$data[vrbl].length == 0 ? null:false;
     },
  
     get_lists: function(table,variable) {
@@ -483,7 +558,7 @@ new Vue({
       var items=promise.then((data) => {
          this.$root.$data[variable]=data.data;
       }).catch(error => {
-        this.$root.ftSrvTKeysAll=[];
+        this.$root.$data[variable]=[];
       })
     },
     
@@ -571,7 +646,7 @@ new Vue({
     tblDeleteRecord: function (table,rowid) {
       var el=this;
       this.publishUpdates=true;
-      axios.delete('/io2data.php/'+table+'?rowid='+rowid).then(function (response) {
+      axios.delete('/io2data.php/'+table+'?rowid='+JSON.stringify(rowid)).then(function (response) {
         if (response.data.status == "ok"){
           el.$root.$refs['io2tbl_'+table].refreshTblKeepPage(table);
         }else{
@@ -589,7 +664,7 @@ new Vue({
       axios.post('/io2data.php/publish_upd').then(function (response) {
         if (response.data.status == "ok"){
           obj.publishUpdates=false;
-          alert('Configuration will be updated in a few seconds'); //TODO message
+          obj.showInfo('Configuration will be updated in a few seconds',3);
         }else{
           //TODO better error handeling
           alert('Publishing error');
@@ -599,6 +674,139 @@ new Vue({
       })
     },
 
+    showInfo: function (msg,time) {
+      var self=this;
+      this.msgInfoMSG=msg;
+      this.mInfoMSGvis=true;
+      setTimeout(function(){
+        self.mInfoMSGvis = false; // Use your variable name
+      }, time * 1000);
+    },
+
+    
+    ImportConfig: function () {
+      var file = new FileReader();
+      var vm = this;
+      //onprogress, onabort, onerror, onloadstart
+      file.onload = async function(e) {
+        let p1 = axios.get('/io2data.php/servers');
+        let p2 = axios.get('/io2data.php/tkeys');
+        let p3 = axios.get('/io2data.php/sources');
+        let p4 = axios.get('/io2data.php/whitelists');
+        let p5 = axios.get('/io2data.php/rpzs');
+        var [servers, tkeys, sources, whitelists, rpzs] = await Promise.all([p1, p2, p3, p4, p5]);
+        var TKeysAll=[], SrvAll=[], WLAll=[], SrcAll=[], RpzAll=[];
+        var TKeys=[], Srv=[], WL=[], Src=[], Rpz=[];
+        if (servers.data) servers.data.forEach(function(el){SrvAll[el['name']]=el['rowid']});
+        if (tkeys.data) tkeys.data.forEach(function(el){TKeysAll[el['name']]=el['rowid']});
+        if (sources.data) sources.data.forEach(function(el){SrcAll[el['name']]=el['rowid']});
+        if (whitelists.data) whitelists.data.forEach(function(el){WLAll[el['name']]=el['rowid']});
+        if (rpzs.data) rpzs.data.forEach(function(el){RpzAll[el['name']]=el['rowid']});
+        
+        for(let line of e.target.result.split(/\r|\n/)){
+          //this.ftImpServName: '',
+          //this.ftImpPrefix: '',
+          //this.ftImpAction: 0,
+          // {rpz,{
+          var l=line.trim();
+          if (m = l.match(/^{srv,{"([^"]+)","([^"]+)",\[([^\]]*)\],\[([^\]]*)\]}}\.$/) ){
+            Srv['ns']=m[1];Srv['email']=m[2];Srv['tkeys']=[];
+            m[3].split(/,|\s|"/g).filter(String).forEach(function(el){Srv['tkeys'].push(el);});
+            Srv['notify']=m[4].replace(/"/g,'');//.split(/,|\s|"/g).filter(String);
+          };
+//{rpz,{"dga.ioc2rpz",21600,3600,2592000,7200,"true","true","nxdomain",["pub_demokey_1","at_demokey_1","priv_key_1"],"fqdn",172800,86400,["dga"],[],["whitelist_1"]}}.
+
+          if (m = l.match(/^{rpz,{"([^"]+)",([0-9]+),([0-9]+),([0-9]+),([0-9]+),"([^"]+)","([^"]+)","?([^"]+|\[[^\]]*\])"?,\[([^\]]*)\],"([^"]+)",([0-9]+),([0-9]+),\[([^\]]*)\],\[([^\]]*)\],\[([^\]]*)\]}}\.$/) ){
+            Rpz[m[1]]=m[1];
+          };
+          if (m = l.match(/^{key,{"([^"]+)","([^"]+)","([^"]+)"}}\.$/)){
+            if (vm.ftImpAction==1 || (vm.ftImpAction==2 && (!TKeysAll[m[1]] || (!TKeysAll[vm.ftImpPrefix+m[1]] && vm.ftImpPrefix)))|| (vm.ftImpAction==0 && (!TKeysAll[vm.ftImpPrefix+m[1]]))) {
+              vm.ftKeyId=(TKeysAll[vm.ftImpPrefix+m[1]] && vm.ftImpAction==1)?TKeysAll[vm.ftImpPrefix+m[1]]:-1;
+              vm.ftKeyName=vm.ftImpAction!=2?vm.ftImpPrefix+m[1]:(TKeysAll[m[1]] && vm.ftImpAction==2)?vm.ftImpPrefix+m[1]:m[1];
+
+              vm.ftKeyAlg=m[2]; vm.ftKey=m[3]; vm.ftKeyMGMT=Srv['tkeys'].includes(m[1])?1:0; //TODO check SRV first
+              TKeys[vm.ftKeyName]=vm.ftKeyName;
+              TKeys[m[1]]=vm.ftKeyName;
+              vm.tblMgmtTKeyRecord('tkeys');
+              await sleep(10); //SQLite too slow
+            }else{
+              TKeys[m[1]]=(TKeysAll[vm.ftImpPrefix+m[1]] && vm.ftImpAction!=2)?vm.ftImpPrefix+m[1]:(TKeysAll[m[1]] && vm.ftImpAction==2)?vm.ftImpPrefix+m[1]:m[1];
+            };
+          };
+          if (m = l.match(/^{whitelist,{"([^"]+)","([^"]+)",(none|"(.*)")}}\.$/)){
+            if (vm.ftImpAction==1 || (vm.ftImpAction==2 && (!WLAll[m[1]] || (!WLAll[vm.ftImpPrefix+m[1]] && vm.ftImpPrefix)))|| (vm.ftImpAction==0 && (!WLAll[vm.ftImpPrefix+m[1]]))) {
+              vm.ftSrcId=(WLAll[vm.ftImpPrefix+m[1]] && vm.ftImpAction==1)?WLAll[vm.ftImpPrefix+m[1]]:-1;
+              vm.ftSrcName=vm.ftImpAction!=2?vm.ftImpPrefix+m[1]:(WLAll[m[1]] && vm.ftImpAction==2)?vm.ftImpPrefix+m[1]:m[1];
+              vm.ftSrcURL=m[2]; vm.ftSrcREGEX=m[4]!==undefined?m[4]:m[3]; vm.ftSrcURLIXFR="";
+              WL[vm.ftSrcName]=vm.ftSrcName;
+              WL[m[1]]=vm.ftSrcName;
+              vm.tblMgmtSrcRecord('whitelists');
+              await sleep(10); //SQLite too slow
+            };
+          };
+          if (m = l.match(/^{source,{"([^"]+)","([^"]+)","([^"]*)",(none|"(.*)")}}\.$/)){
+            if (vm.ftImpAction==1 || (vm.ftImpAction==2 && (!SrcAll[m[1]] || (!SrcAll[vm.ftImpPrefix+m[1]] && vm.ftImpPrefix)))|| (vm.ftImpAction==0 && (!SrcAll[vm.ftImpPrefix+m[1]]))) {
+              vm.ftSrcId=(SrcAll[vm.ftImpPrefix+m[1]] && vm.ftImpAction==1)?SrcAll[vm.ftImpPrefix+m[1]]:-1;
+              vm.ftSrcName=vm.ftImpAction!=2?vm.ftImpPrefix+m[1]:(SrcAll[m[1]] && vm.ftImpAction==2)?vm.ftImpPrefix+m[1]:m[1];
+              vm.ftSrcURL=m[2]; vm.ftSrcURLIXFR=m[3]; vm.ftSrcREGEX=m[5]!==undefined?m[5]:m[4];
+              Src[vm.ftSrcName]=vm.ftSrcName;
+              Src[m[1]]=vm.ftSrcName;
+              vm.tblMgmtSrcRecord('sources'); 
+              await sleep(10); //SQLite too slow
+            };
+          };
+        };
+
+        p1 = axios.get('/io2data.php/tkeys');
+        p2 = axios.get('/io2data.php/sources');
+        p3 = axios.get('/io2data.php/whitelists');
+        [tkeys, sources, whitelists] = await Promise.all([p1, p2, p3]);
+        var TKeysAll=[], WLAll=[], SrcAll=[];
+        if (tkeys.data) tkeys.data.forEach(function(el){TKeysAll[el['name']]=el['rowid']});
+        if (sources.data) sources.data.forEach(function(el){SrcAll[el['name']]=el['rowid']});
+        if (whitelists.data) whitelists.data.forEach(function(el){WLAll[el['name']]=el['rowid']});
+        if(Srv !=[]){
+          vm.ftSrvId=-1;
+          vm.ftSrvName=vm.ftImpServName;
+          //vm.ftSrvIP vm.ftSrvMGMT vm.ftSrvDisabled
+          vm.ftSrvNS=Srv['ns'];
+          vm.ftSrvEmail=Srv['email'];
+          vm.ftSrvMGMTIP=Srv['notify'];
+          Srv['tkeys'].forEach(function(el){
+            if (TKeys[el] && TKeysAll[TKeys[el]]) vm.ftSrvTKeys.push(TKeysAll[TKeys[el]]);
+          });
+          vm.ftSrvSType=0;
+          vm.ftSrvURL=vm.ftImpFiles[0].name
+          vm.tblMgmtSrvRecord('servers');
+          await sleep(10); //SQLite too slow
+          p1 = axios.get('/io2data.php/servers');
+          [servers] = await Promise.all([p1]);
+          var SrvId;
+          if (servers.data) tkeys.data.forEach(function(el){if (vm.ftSrvName==el['name']) SrvId=el['rowid']});
+        };
+        
+        //vm.tblMgmtRPZRecord('rpzs');
+        await sleep(10); //SQLite too slow
+      //var data={tRPZId: this.ftRPZId, tRPZName: this.ftRPZName, tRPZSOA_Refresh: this.ftRPZSOA_Refresh, tRPZSOA_UpdRetry: this.ftRPZSOA_UpdRetry,
+      //          tRPZSOA_Exp: this.ftRPZSOA_Exp, tRPZSOA_NXTTL: this.ftRPZSOA_NXTTL, tRPZCache: this.ftRPZCache,tRPZWildcard: this.ftRPZWildcard, 
+      //          tRPZNotify: JSON.stringify(this.ftRPZNotify.split(/,|\s/g).filter(String)), tRPZSrvs: JSON.stringify(this.ftRPZSrvs),
+      //          tRPZIOCType: this.ftRPZIOCType, tRPZAXFR: this.ftRPZAXFR, tRPZIXFR: this.ftRPZIXFR, tRPZDisabled: this.ftRPZDisabled,
+      //          tRPZTKeys: JSON.stringify(this.ftRPZTKeys), tRPZWL: JSON.stringify(this.ftRPZWL), tRPZSrc: JSON.stringify(this.ftRPZSrc),
+      //          tRPZAction: this.ftRPZAction, tRPZActionCustom: JSON.stringify(this.ftRPZActionCustom)}; //this.ftRPZActionCustom.split(/,|\s/g).filter(String)
+        
+      }
+      file.readAsText(vm.ftImpFiles[0]);      
+    },
+    
+    checkImpFile: function (e) {
+      this.ftImpFiles = e.dataTransfer.files;
+      this.ftImpFileDesc='File name: '+encodeURI(this.ftImpFiles[0].name)+", size: "+this.ftImpFiles[0].size+' bytes';
+    },
+    
+    alert: function (txt) {
+      alert(txt);
+    },
+    
     copyToClipboard(ref) {
       this.$refs[ref].$el.select();
       document.execCommand('copy');
@@ -621,5 +829,10 @@ new Vue({
     
   }
 });
+
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 

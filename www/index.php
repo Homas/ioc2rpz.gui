@@ -100,6 +100,15 @@ require 'io2auth.php';
             <io2-table table="rpzs" ref="io2tbl_rpzs" :fields="rpzs_fields" />
           </b-tab>
           <b-tab id="tab_rpzs" title="Utils" href='#/cfg/utils'>
+            <br>
+            <br>
+            <b-button v-b-tooltip.hover title="Import ioc2rpz configuration" variant="outline-secondary" size="sm" @click.stop="$emit('bv::show::modal', 'mImportConfig')"><i class="fa fa-upload"> Import</i></b-button>
+            <br>
+            <br>
+            <b-button v-b-tooltip.hover title="Export ISC Bind configuration" variant="outline-secondary" size="sm"><i class="fa fa-download"> Export ISC Bind</i></b-button>
+            <br>
+            <br>
+            <b-button v-b-tooltip.hover title="Export PoerDNS configuration" variant="outline-secondary" size="sm"><i class="fa fa-download"> Export PowerDNS</i></b-button>
           </b-tab>
       </b-tabs>
     </b-container>
@@ -111,7 +120,7 @@ require 'io2auth.php';
     </b-modal>
 
 <!-- Delete confirmation -->
-    <b-modal id='mConfDel' centered title="Confirmation required" @ok="tblDeleteRecord(deleteTbl,deleteRec)" ok-title="Confirm">
+    <b-modal id='mConfDel' centered title="Confirmation required" @ok="tblDeleteRecord(deleteTbl,deleteRec)" ok-title="Confirm" v-cloak>
       <span class='text-center'><span v-html="modalMSG"></span></span>
     </b-modal>
     
@@ -120,7 +129,7 @@ require 'io2auth.php';
       <span class='text-center'>
         <div>
           <b-row>
-            <b-col :sm="infoWindow?10:9" class="form_row"><b-input v-model.trim="ftKeyName" :state="nameTKeyValid" ref="formKeyName" :readonly="infoWindow" placeholder="Enter TSIG Key Name" /></b-col>
+            <b-col :sm="infoWindow?10:9" class="form_row"><b-input v-model.trim="ftKeyName" :state="validateName('ftKeyName')" ref="formKeyName" :readonly="infoWindow" placeholder="Enter TSIG Key Name" /></b-col>
             <b-col :sm="infoWindow?2:3" class="form_row text-left">
               <b-button v-b-tooltip.hover title="Generate" variant="outline-secondary" v-if="!infoWindow" @click="genRandom('tkeyName')"><i class="fa fa-sync-alt"></i></b-button>
               <b-button v-b-tooltip.hover title="Copy" variant="outline-secondary" @click="copyToClipboard('formKeyName')"><i class="fa fa-copy"></i></b-button>
@@ -128,7 +137,7 @@ require 'io2auth.php';
           </b-row>
           <b-row>
             <b-col :sm="infoWindow?10:9" class="form_row">
-              <b-input v-model.trim="ftKey" ref="formKey" :readonly="infoWindow" placeholder="Enter TSIG Key Name" /></b-col>
+              <b-input v-model.trim="ftKey" ref="formKey" :readonly="infoWindow" placeholder="Enter TSIG Key" :state="validateB64('ftKey')" /></b-col>
             <b-col :sm="infoWindow?2:3" class="form_row text-left">
               <b-button v-b-tooltip.hover title="Generate" variant="outline-secondary" v-if="!infoWindow" @click="genRandom('tkey')"><i class="fa fa-sync-alt"></i></b-button>
               <b-button v-b-tooltip.hover title="Copy" variant="outline-secondary" @click="copyToClipboard('formKey')"><i class="fa fa-copy"></i></b-button>
@@ -151,16 +160,16 @@ require 'io2auth.php';
       <span class='text-center'>
         <div>
           <b-row>
-            <b-col :sm="12" class="form_row"><b-input v-model.trim="ftSrcName" :state="nameSourceValid" ref="formSrcName" :readonly="infoWindow" placeholder="Enter source name" /></b-col>
+            <b-col :sm="12" class="form_row"><b-input v-model.trim="ftSrcName" :state="validateName('ftSrcName')" ref="formSrcName" :readonly="infoWindow" placeholder="Enter source name" /></b-col>
           </b-row>
           <b-row>
-            <b-col :sm="12" class="form_row"><b-textarea v-model="ftSrcURL" :rows="3" ref="formSrcURL" :readonly="infoWindow" placeholder="Enter source URL" /></b-col>
+            <b-col :sm="12" class="form_row"><b-textarea v-model="ftSrcURL" :state="validateURL('ftSrcURL')" :rows="3" ref="formSrcURL" :readonly="infoWindow" placeholder="Enter source URL" /></b-col>
           </b-row>
           <b-row v-show="ftSrcType == 'sources'">
-            <b-col :sm="12" class="form_row"><b-textarea v-model="ftSrcURLIXFR" :rows="3" ref="formSrcURLIXFR" :readonly="infoWindow" placeholder="Enter source update URL" /></b-col>
+            <b-col :sm="12" class="form_row"><b-textarea v-model="ftSrcURLIXFR" :state="validateIXFRURL('ftSrcURLIXFR')" :rows="3" ref="formSrcURLIXFR" :readonly="infoWindow" placeholder="Enter source update URL" /></b-col>
           </b-row>
           <b-row>
-            <b-col :sm="12" class="form_row"><b-textarea v-model="ftSrcREGEX" :rows="3" ref="formREGEX" :readonly="infoWindow" placeholder="Enter REGEX" /></b-col>
+            <b-col :sm="12" class="form_row"><b-textarea v-model="ftSrcREGEX" :state="validateREGEX('ftSrcREGEX')" :rows="3" ref="formREGEX" :readonly="infoWindow" placeholder="Enter REGEX" /></b-col>
           </b-row>
         </div>
       </span>
@@ -172,12 +181,12 @@ require 'io2auth.php';
       <span class='text-center'>
         <div>
           <b-row>
-            <b-col :sm="6" class="form_row"><b-input v-model.trim="ftSrvName" :state="srvNameValid" ref="formSrvName" :readonly="infoWindow" placeholder="Enter server name"  v-b-tooltip.hover title="Name" /></b-col>
-            <b-col :sm="6" class="form_row"><b-input v-model.trim="ftSrvIP" :state="srvIPValid" ref="formSrvIP" :readonly="infoWindow" placeholder="Enter Server IP or FQDN"  v-b-tooltip.hover title="Server IP/FQDN" /></b-col>
+            <b-col :sm="6" class="form_row"><b-input v-model.trim="ftSrvName" :state="validateName('ftSrvName')" ref="formSrvName" :readonly="infoWindow" placeholder="Enter server name"  v-b-tooltip.hover title="Name" /></b-col>
+            <b-col :sm="6" class="form_row"><b-input v-model.trim="ftSrvIP" :state="validateIP('ftSrvIP')" ref="formSrvIP" :readonly="infoWindow" placeholder="Enter Server IP or FQDN"  v-b-tooltip.hover title="Server IP/FQDN" /></b-col>
           </b-row>
           <b-row>
-            <b-col :sm="6" class="form_row"><b-input v-model.trim="ftSrvNS" :state="srvNSValid" ref="formSrvNS" :readonly="infoWindow" placeholder="Enter NS name"  v-b-tooltip.hover title="Name server name"/></b-col>
-            <b-col :sm="6" class="form_row"><b-input v-model.trim="ftSrvEmail" :state="srvEmailValid" ref="formSrvEmail" :readonly="infoWindow" placeholder="Enter admin email"  v-b-tooltip.hover title="Administrator's email"/></b-col>
+            <b-col :sm="6" class="form_row"><b-input v-model.trim="ftSrvNS" :state="validateHostname('ftSrvNS')" ref="formSrvNS" :readonly="infoWindow" placeholder="Enter NS name"  v-b-tooltip.hover title="Name server name"/></b-col>
+            <b-col :sm="6" class="form_row"><b-input v-model.trim="ftSrvEmail" :state="validateEmail('ftSrvEmail')" ref="formSrvEmail" :readonly="infoWindow" placeholder="Enter admin email"  v-b-tooltip.hover title="Administrator's email"/></b-col>
           </b-row>
           <b-row>
             <b-col :sm="6" class="form_row text-left">
@@ -186,7 +195,7 @@ require 'io2auth.php';
               </b-form-group>
             </b-col>
             <b-col :sm="6" class="form_row text-left">
-              <b-textarea v-model="ftSrvMGMTIP" style="height: 5em;" :rows="3" ref="formSrcNotify" :readonly="infoWindow" placeholder="Enter management IPs" :no-resize=true  v-b-tooltip.hover title="Management IPs" />
+              <b-textarea v-model="ftSrvMGMTIP" :state="validateIPList('ftSrvMGMTIP')" style="height: 5em;" :rows="3" ref="formSrcNotify" :readonly="infoWindow" placeholder="Enter management IPs" :no-resize=true  v-b-tooltip.hover title="Management IPs" />
             </b-col>
           </b-row>
           <b-row>
@@ -203,7 +212,7 @@ require 'io2auth.php';
           </b-row>
           <b-row>
             <b-col :sm="12" class="form_row text-left">
-              <b-input v-model.trim="ftSrvURL" ref="formSrvURL" :readonly="infoWindow" placeholder="Enter file name"  v-b-tooltip.hover title="File Name" />
+              <b-input v-model.trim="ftSrvURL" :state="validateName('ftSrvURL')"  ref="formSrvURL" :readonly="infoWindow" placeholder="Enter file name"  v-b-tooltip.hover title="File Name" />
             </b-col>
           </b-row>
           <b-row>
@@ -220,7 +229,7 @@ require 'io2auth.php';
       <span class='text-center'>
         <div>
           <b-row>
-            <b-col :sm="12" class="form_row"><b-input v-model.trim="ftRPZName" :state="rpzNameValid" ref="formRPZName" :readonly="infoWindow" placeholder="Enter RPZ name"  v-b-tooltip.hover title="RPZ Name" /></b-col>
+            <b-col :sm="12" class="form_row"><b-input v-model.trim="ftRPZName" :state="validateHostname('ftRPZName')" ref="formRPZName" :readonly="infoWindow" placeholder="Enter RPZ name"  v-b-tooltip.hover title="RPZ Name" /></b-col>
           </b-row>
 
           <b-row>
@@ -252,12 +261,12 @@ require 'io2auth.php';
               <b-form-select v-model="ftRPZAction" :options="RPZ_Act_Options" :disabled="infoWindow"  v-b-tooltip.hover title="Action" />
             </b-col>
             <b-col :sm="6" class="form_row text-left">
-              <b-textarea v-model="ftRPZNotify" :rows="1" ref="formRPZNotify" :readonly="infoWindow" placeholder="Enter IPs to notify" :no-resize=true  v-b-tooltip.hover title="IPs to notify" />
+              <b-textarea v-model="ftRPZNotify" :state="validateIPList('ftRPZNotify')" :rows="1" ref="formRPZNotify" :readonly="infoWindow" placeholder="Enter IPs to notify" :no-resize=true  v-b-tooltip.hover title="IPs to notify" />
             </b-col>
           </b-row>
           <b-row v-show="ftRPZAction === 'loc'">
             <b-col :sm="12" class="form_row text-left">
-              <b-textarea v-model="ftRPZActionCustom" :rows="3" ref="formRPZActionCustom" :readonly="infoWindow" placeholder="Enter local records" :no-resize=true  v-b-tooltip.hover title="Local records" />
+              <b-textarea v-model="ftRPZActionCustom" :state="validateCustomAction" :rows="3" ref="formRPZActionCustom" :readonly="infoWindow" placeholder="Enter local records" :no-resize=true  v-b-tooltip.hover title="Local records" />
             </b-col>
           </b-row>
           <b-row>
@@ -272,12 +281,12 @@ require 'io2auth.php';
             </b-col>
           </b-row>
           <b-row>
-            <b-col :sm="2" class="form_row"><b-input v-model.trim="ftRPZSOA_Refresh" :state="srvINTValid" ref="formRPZSOA_Refresh" :readonly="infoWindow" placeholder="Refresh" v-b-tooltip.hover title="SOA Record. Zone refresh time"  /></b-col>
-            <b-col :sm="2" class="form_row"><b-input v-model.trim="ftRPZSOA_UpdRetry" :state="srvINTValid" ref="formRPZSOA_UpdRetry" :readonly="infoWindow" placeholder="Update retry" v-b-tooltip.hover title="SOA Record. Zone update retry time"  /></b-col>
-            <b-col :sm="2" class="form_row"><b-input v-model.trim="ftRPZSOA_Exp" :state="srvINTValid" ref="formRPZSOA_Exp" :readonly="infoWindow" placeholder="Expiration" v-b-tooltip.hover title="SOA Record. Zone expiration time"  /></b-col>
-            <b-col :sm="2" class="form_row"><b-input v-model.trim="ftRPZSOA_NXTTL" :state="srvINTValid" ref="formRPZSOA_NXTTL" :readonly="infoWindow" placeholder="NX TTL" v-b-tooltip.hover title="SOA Record. NXDomain TTL"  /></b-col>
-            <b-col :sm="2" class="form_row"><b-input v-model.trim="ftRPZAXFR" :state="srvINTValid" ref="formRPZAXFR" :readonly="infoWindow" placeholder="Full update" v-b-tooltip.hover title="Zone full update time"  /></b-col>
-            <b-col :sm="2" class="form_row"><b-input v-model.trim="ftRPZIXFR" :state="srvINTValid" ref="formRPZIXFR" :readonly="infoWindow" placeholder="Inc update" v-b-tooltip.hover title="Zone incrimental update time"  /></b-col>
+            <b-col :sm="2" class="form_row"><b-input v-model.trim="ftRPZSOA_Refresh" :state="validateInt('ftRPZSOA_Refresh')" ref="formRPZSOA_Refresh" :readonly="infoWindow" placeholder="Refresh" v-b-tooltip.hover title="SOA Record. Zone refresh time"  /></b-col>
+            <b-col :sm="2" class="form_row"><b-input v-model.trim="ftRPZSOA_UpdRetry" :state="validateInt('ftRPZSOA_UpdRetry')" ref="formRPZSOA_UpdRetry" :readonly="infoWindow" placeholder="Update retry" v-b-tooltip.hover title="SOA Record. Zone update retry time"  /></b-col>
+            <b-col :sm="2" class="form_row"><b-input v-model.trim="ftRPZSOA_Exp" :state="validateInt('ftRPZSOA_Exp')" ref="formRPZSOA_Exp" :readonly="infoWindow" placeholder="Expiration" v-b-tooltip.hover title="SOA Record. Zone expiration time"  /></b-col>
+            <b-col :sm="2" class="form_row"><b-input v-model.trim="ftRPZSOA_NXTTL" :state="validateInt('ftRPZSOA_NXTTL')" ref="formRPZSOA_NXTTL" :readonly="infoWindow" placeholder="NX TTL" v-b-tooltip.hover title="SOA Record. NXDomain TTL"  /></b-col>
+            <b-col :sm="2" class="form_row"><b-input v-model.trim="ftRPZAXFR" :state="validateInt('ftRPZAXFR')" ref="formRPZAXFR" :readonly="infoWindow" placeholder="Full update" v-b-tooltip.hover title="Zone full update time"  /></b-col>
+            <b-col :sm="2" class="form_row"><b-input v-model.trim="ftRPZIXFR" :state="validateInt('ftRPZIXFR')" ref="formRPZIXFR" :readonly="infoWindow" placeholder="Inc update" v-b-tooltip.hover title="Zone incrimental update time"  /></b-col>
           </b-row>
           <b-row>
             <b-col :sm="12" class="form_row text-left"><b-form-checkbox unchecked-value=0 value=1 :disabled="infoWindow"  v-model="ftRPZDisabled">Disabled</b-form-checkbox></b-col>
@@ -286,6 +295,39 @@ require 'io2auth.php';
       </span>
     </b-modal>
 
+<!-- Message Modal -->
+    <b-modal centered :hide-header="true" :hide-footer="true" :visible="mInfoMSGvis" body-class="text-center">
+      <span class='text-center' v-html="msgInfoMSG"></span>
+    </b-modal>
+ 
+<!-- Import ioc2rpz config -->
+    <b-modal id='mImportConfig' ref='refImportConfig' centered title="Import ioc2rpz configuration" @ok="ImportConfig()" ok-title="Import" size="lg" v-cloak>
+      <span class='text-center'>
+        <div>
+          <b-row>
+            <b-col :sm="12" class="form_row">
+              <div class="drop_zone" @dragover.stop.prevent @drop.stop.prevent="checkImpFile">Drop file here</div>
+              <output class="text-left"><strong>{{ ftImpFileDesc }}</strong></output>
+            </b-col>
+          </b-row>
+          <b-row>
+            <b-col :sm="6" class="form_row">
+              <div style="margin-bottom:10px"><b-input v-model="ftImpServName" :state="validateName('ftImpServName')" placeholder="Enter server name" /></div>
+              <div><b-input v-model="ftImpPrefix" :state="validateName('ftImpPrefix')" placeholder="Enter prefix" /></div>
+            </b-col>
+            <b-col :sm="6" class="form_row text-left">
+              <b-form-radio-group v-model="ftImpAction">
+                <b-form-radio value=0>Keep existing records</b-form-radio>
+                <b-form-radio value=1>Replace existing records</b-form-radio>
+                <b-form-radio value=2>Add prefix on duplicates only</b-form-radio>
+              </b-form-radio-group>
+            </b-col>
+          </b-row>
+        </div>
+      </span>
+    </b-modal> 
+ 
+ 
     
 <!-- End Modals -->
   </div>

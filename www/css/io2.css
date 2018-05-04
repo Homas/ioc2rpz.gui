@@ -61,6 +61,18 @@ html,body {height: 100%;}
 
 .spacer { margin: 0 10px;}
 
+
+.drop_zone {
+  border: 2px dashed #bbb;
+  -moz-border-radius: 5px;
+  -webkit-border-radius: 5px;
+  border-radius: 5px;
+  padding: 25px;
+  text-align: center;
+  font: 20pt bold 'Vollkorn';
+  color: #bbb;
+}
+
 [v-cloak] {
   display: none;
 }
