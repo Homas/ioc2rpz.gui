@@ -23,6 +23,9 @@ RUN mkdir -p /run/apache2 /etc/apache2/ssl /opt/ioc2rpz.gui/www /opt/ioc2rpz.gui
     apk add bash openrc curl coreutils openssl apache2 libxml2-dev apache2-utils php7 php7-apache2 php7-json php7-curl apache2-ssl sqlite php7-sqlite3 && \
     ln -sf /proc/self/fd/1 /var/log/apache2/access.log && \
     ln -sf /proc/self/fd/1 /var/log/apache2/error.log && \
+    ln -sf /proc/self/fd/1 /var/log/apache2/ssl_access.log && \
+    ln -sf /proc/self/fd/1 /var/log/apache2/ssl_error.log && \
+    ln -sf /proc/self/fd/1 /var/log/apache2/ssl_request.log && \
     rm -rf /var/cache/apk/* /tmp/* /var/tmp/*
 
 ADD www/* /opt/ioc2rpz.gui/www/
