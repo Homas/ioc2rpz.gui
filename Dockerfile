@@ -18,8 +18,13 @@ FROM alpine:latest
 MAINTAINER Vadim Pavlov<pvm.del@gmail.com>
 WORKDIR /opt/ioc2rpz.gui
 
-RUN mkdir -p /run/apache2 /etc/apache2/ssl /opt/ioc2rpz.gui/www /opt/ioc2rpz.gui/www/js /opt/ioc2rpz.gui/www/css /opt/ioc2rpz.gui/img /opt/ioc2rpz.gui/www/io2cfg /opt/ioc2rpz.gui/export-cfg /opt/ioc2rpz.gui/scripts && apk update && apk upgrade && apk add bash openrc curl coreutils openssl apache2 libxml2-dev apache2-utils php7 php7-apache2 php7-json php7-curl apache2-ssl sqlite php7-sqlite3 && \
+RUN mkdir -p /run/apache2 /etc/apache2/ssl /opt/ioc2rpz.gui/www /opt/ioc2rpz.gui/www/js /opt/ioc2rpz.gui/www/css /opt/ioc2rpz.gui/img /opt/ioc2rpz.gui/www/io2cfg \
+    /opt/ioc2rpz.gui/export-cfg /opt/ioc2rpz.gui/scripts && apk update && apk upgrade && \
+    apk add bash openrc curl coreutils openssl apache2 libxml2-dev apache2-utils php7 php7-apache2 php7-json php7-curl apache2-ssl sqlite php7-sqlite3 && \
+    ln -sf /proc/self/fd/1 /var/log/apache2/access.log && \
+    ln -sf /proc/self/fd/1 /var/log/apache2/error.log && \
     rm -rf /var/cache/apk/* /tmp/* /var/tmp/*
+
 ADD www/* /opt/ioc2rpz.gui/www/
 ADD www/js/* /opt/ioc2rpz.gui/www/js/
 ADD www/css/* /opt/ioc2rpz.gui/www/css/

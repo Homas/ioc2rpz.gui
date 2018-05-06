@@ -9,7 +9,7 @@ const DBCreateIfNotExists=true;
 const ioc2rpzConf="io2cfg";
 
 $USERID=1;
-$io2ver=2018050301;
+$io2ver=2018050501;
 
 function filterIntArr($array){
   $result = [];
@@ -28,7 +28,9 @@ function DB_open()
 { 
   switch (DB){
     case "sqlite":
-      $db = new SQLite3(DBFile); 
+      $db = new SQLite3(DBFile);
+      $db->busyTimeout(5000);
+      $db->exec('PRAGMA journal_mode = wal;');
     break;
   }
   return $db; 
@@ -158,20 +160,12 @@ function erlChLRecords($str){
 
 function erlAction($str){
   switch($str){
-    case "nx":
-      $result='"nxdomain"';
-      break;
-    case "nod":
-      $result='"nodata"';
-      break;
-    case "pass":
-      $result='"passthru"';
-      break;
+    case "nxdomain":
+    case "nodata":
+    case "passthru":
     case "drop":
-      $result='"drop"';
-      break;
-    case "tcp":
-      $result='"tcp-only"';
+    case "tcp-only":
+      $result='"'+$str+'"';
       break;
     default:
       $lstr="";$cmm="";

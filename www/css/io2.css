@@ -24,7 +24,7 @@ html,body {height: 100%;}
 .corners {
    padding: 0;
 }
-.width150{width: 150px;}
+.width150{width: 155px;}
 .width200{width: 200px;}
 
 .page-item.active > a {
@@ -61,6 +61,7 @@ html,body {height: 100%;}
 
 .spacer { margin: 0 10px;}
 
+.v-spacer { margin: 10px 0;}
 
 .drop_zone {
   border: 2px dashed #bbb;
@@ -72,6 +73,11 @@ html,body {height: 100%;}
   font: 20pt bold 'Vollkorn';
   color: #bbb;
 }
+
+.items_list{
+  height: 4em; overflow-y: scroll; border: 1px solid #ced4da; border-radius: .25rem; margin: 0; padding: 5px
+}
+
 
 [v-cloak] {
   display: none;

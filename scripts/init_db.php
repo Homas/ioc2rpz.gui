@@ -73,7 +73,7 @@ function initSQLiteDB($DBF){
   $sql='insert into sources values(1,"dns-bh","http://mirror1.malwaredomains.com/files/spywaredomains.zones","[:AXFR:]",\'^zone \"([A-Za-z0-9\-\._]+)\".*$\');';
   $db->exec($sql);
 
-  $sql='insert into rpzs values(1,"dns-bh.ioc2rpz",86400,3600,2592000,7200,1,1,"nx","m",604800,86400,0);'.
+  $sql='insert into rpzs values(1,"dns-bh.ioc2rpz",86400,3600,2592000,7200,1,1,"nxdomain","mixed",604800,86400,0);'.
        'insert into rpzs_servers values(1,1,1);'.
        'insert into rpzs_whitelists values(1,1,1);'.
        'insert into rpzs_sources values(1,1,1);'.

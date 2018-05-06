@@ -1,8 +1,7 @@
 <?php
 #(c) Vadim Pavlov 2018
 #ioc2rpz configuration
-
-require 'io2auth.php';
+  require 'io2auth.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -21,7 +20,7 @@ require 'io2auth.php';
     <!-- https://fontawesome.com/icons?d=gallery&m=free -->
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.9/css/all.css" integrity="sha384-5SOiIsAziJl6AWe0HWRKTXlfcSHKmYV4RBF18PPJ173Kzn7jzMyFuTtk8JA7QQG1" crossorigin="anonymous">
     <!-- ioc2rpz CSS -->
-    <link type="text/css" rel="stylesheet" href="/css/io2.css"/>
+    <link type="text/css" rel="stylesheet" href="/css/io2.css?<?=$io2ver?>"/>
   </head>
   <body>
   <div id="app" fluid class="h-100 d-flex flex-column" v-cloak>
@@ -80,35 +79,29 @@ require 'io2auth.php';
     
   <div id="ConfApp" class="h-100 d-flex flex-column" v-cloak>
     <b-container fluid  class="h-100 d-flex flex-column">
-        <b-tabs ref="tabs_menu" pills vertical nav-wrapper-class="menu-bkgr h-100 col-md-2" class="h-100 corners" content-class="curl_angels" :value="cfgTab">
-          <b-tab id="tab_overview" title="Overview" href='#/cfg/overview'>
+        <b-tabs ref="tabs_menu" pills vertical nav-wrapper-class="menu-bkgr h-100 col-md-2" class="h-100 corners" content-class="curl_angels" :value="cfgTab" @input="changeTab">
+          <b-tab title="Overview" href='#/cfg/overview'>
             Overview
           </b-tab>
-          <b-tab id="tab_servers" title="Servers" href="#/cfg/servers">
+          <b-tab table="servers" title="Servers" href="#/cfg/servers">
             <io2-table table="servers" ref="io2tbl_servers" :fields="servers_fields" /> 
           </b-tab>
-          <b-tab id="tab_tkeys" title="TSIG keys" href="#/cfg/tkeys" > 
+          <b-tab table="tkeys" title="TSIG keys" href="#/cfg/tkeys" > 
             <io2-table table="tkeys" ref="io2tbl_tkeys" :fields="tkeys_fields" />              
           </b-tab>
-          <b-tab id="tab_whitelists" title="Whitelists" href='#/cfg/whitelists'>
+          <b-tab table="whitelists" title="Whitelists" href='#/cfg/whitelists'>
             <io2-table table="whitelists" ref="io2tbl_whitelists" :fields="whitelists_fields" />
           </b-tab>
-          <b-tab id="tab_sources" title="Sources" href='#/cfg/sources'>
+          <b-tab table="sources" title="Sources" href='#/cfg/sources'>
             <io2-table table="sources" ref="io2tbl_sources" :fields="sources_fields" />
           </b-tab>
-          <b-tab id="tab_rpzs" title="RPZs" href='#/cfg/rpzs'>
+          <b-tab table="rpzs" title="RPZs" href='#/cfg/rpzs'>
             <io2-table table="rpzs" ref="io2tbl_rpzs" :fields="rpzs_fields" />
           </b-tab>
-          <b-tab id="tab_rpzs" title="Utils" href='#/cfg/utils'>
-            <br>
-            <br>
-            <b-button v-b-tooltip.hover title="Import ioc2rpz configuration" variant="outline-secondary" size="sm" @click.stop="$emit('bv::show::modal', 'mImportConfig')"><i class="fa fa-upload"> Import</i></b-button>
-            <br>
-            <br>
-            <b-button v-b-tooltip.hover title="Export ISC Bind configuration" variant="outline-secondary" size="sm"><i class="fa fa-download"> Export ISC Bind</i></b-button>
-            <br>
-            <br>
-            <b-button v-b-tooltip.hover title="Export PoerDNS configuration" variant="outline-secondary" size="sm"><i class="fa fa-download"> Export PowerDNS</i></b-button>
+          <b-tab title="Utils" href='#/cfg/utils'>
+           <?php
+            require 'utils.php';
+            ?>
           </b-tab>
       </b-tabs>
     </b-container>
@@ -190,7 +183,7 @@ require 'io2auth.php';
           </b-row>
           <b-row>
             <b-col :sm="6" class="form_row text-left">
-              <b-form-group style="height: 5em; overflow-y: scroll; border: 1px solid #ced4da; border-radius: .25rem; margin: 0; padding: 5px" v-b-tooltip.hover title="TSIG Keys">
+              <b-form-group :style="{ height: (this.ftSrvTKeysAll.length<5?'5':'10')+'em' }" class="items_list" v-b-tooltip.hover title="TSIG Keys">
                 <b-form-checkbox-group :disabled="infoWindow" plain stacked v-model="ftSrvTKeys" :options="ftSrvTKeysAll" />
               </b-form-group>
             </b-col>
@@ -234,24 +227,24 @@ require 'io2auth.php';
 
           <b-row>
             <b-col :sm="6" class="form_row text-left">
-              <b-form-group style="height: 4em; overflow-y: scroll; border: 1px solid #ced4da; border-radius: .25rem; margin: 0; padding: 5px"  v-b-tooltip.hover title="Servers" >
+              <b-form-group :style="{ height: (this.ftRPZSrvsAll.length<4 && ftRPZTKeysAll.length<4?'4':'8')+'em' }" class="items_list" v-b-tooltip.hover title="Servers" >
                 <b-form-checkbox-group :disabled="infoWindow" plain stacked v-model="ftRPZSrvs" :options="ftRPZSrvsAll" />
               </b-form-group>
             </b-col>
             <b-col :sm="6" class="form_row text-left">
-              <b-form-group style="height: 4em; overflow-y: scroll; border: 1px solid #ced4da; border-radius: .25rem; margin: 0; padding: 5px"  v-b-tooltip.hover title="TSIG Keys">
+              <b-form-group :style="{ height: (this.ftRPZSrvsAll.length<4 && ftRPZTKeysAll.length<4?'4':'8')+'em' }"   v-b-tooltip.hover title="TSIG Keys">
                 <b-form-checkbox-group :disabled="infoWindow" plain stacked v-model="ftRPZTKeys" :options="ftRPZTKeysAll" />
               </b-form-group>
             </b-col>
           </b-row>
           <b-row>
             <b-col :sm="6" class="form_row text-left">
-              <b-form-group style="height: 4em; overflow-y: scroll; border: 1px solid #ced4da; border-radius: .25rem; margin: 0; padding: 5px" v-b-tooltip.hover title="Sources">
+              <b-form-group :style="{ height: (this.ftRPZSrcAll.length<4 && ftRPZWLAll.length<4?'4':'8')+'em' }" class="items_list" v-b-tooltip.hover title="Sources">
                 <b-form-checkbox-group :disabled="infoWindow" plain stacked v-model="ftRPZSrc" :options="ftRPZSrcAll" />
               </b-form-group>
             </b-col>
             <b-col :sm="6" class="form_row text-left">
-              <b-form-group style="height: 4em; overflow-y: scroll; border: 1px solid #ced4da; border-radius: .25rem; margin: 0; padding: 5px" v-b-tooltip.hover title="Whitelists">
+              <b-form-group :style="{ height: (this.ftRPZSrcAll.length<4 && ftRPZWLAll.length<4?'4':'8')+'em' }" class="items_list" v-b-tooltip.hover title="Whitelists">
                 <b-form-checkbox-group :disabled="infoWindow" plain stacked v-model="ftRPZWL" :options="ftRPZWLAll" />
               </b-form-group>
             </b-col>
@@ -264,7 +257,7 @@ require 'io2auth.php';
               <b-textarea v-model="ftRPZNotify" :state="validateIPList('ftRPZNotify')" :rows="1" ref="formRPZNotify" :readonly="infoWindow" placeholder="Enter IPs to notify" :no-resize=true  v-b-tooltip.hover title="IPs to notify" />
             </b-col>
           </b-row>
-          <b-row v-show="ftRPZAction === 'loc'">
+          <b-row v-show="ftRPZAction === 'local'">
             <b-col :sm="12" class="form_row text-left">
               <b-textarea v-model="ftRPZActionCustom" :state="validateCustomAction" :rows="3" ref="formRPZActionCustom" :readonly="infoWindow" placeholder="Enter local records" :no-resize=true  v-b-tooltip.hover title="Local records" />
             </b-col>

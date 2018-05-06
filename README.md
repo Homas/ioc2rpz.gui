@@ -19,18 +19,22 @@ The project is still under development but you can create and export the configu
 ## TODO
 - [ ] Authentication/Authozitaion, password management
 - [ ] Input validation
-- [ ] Tables update on an active tab change
-- [ ] Navigation/routing, to keep current page after a refresh/passing a link
-- [ ] Intelligent publish updates
+- [x] Tables update on an active tab change
+- [x] Navigation/routing, to keep current page after a refresh/passing a link
+- [ ] Intelligent updates publishing
 - [ ] Monitoring/dashboards
 - [ ] Link to a community
 - [ ] Utils
-    - [ ] Import configuration
+    - [x] Import configuration
     - [ ] Status check
+    - [ ] ISC Bind config export
+    - [ ] PowerDNS config export
 - [x] Export ioc2rpz configuration
 - [x] DB creation in a separate script
+- [ ] MySQL support
 - [ ] S3 support
 - [x] Container
+- [-] Apache2 logs to stdout
 - [ ] Export ISC Bind configuration
 - [ ] Export PowerDNS configuration
 

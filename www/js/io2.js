@@ -394,12 +394,12 @@ new Vue({
         { key: 'rowid', label: '', sortable: true },
         { key: 'name', label: 'Name', sortable: true },
         { key: 'servers_list', label: 'Servers', sortable: true },
-        { key: 'ioc_type', label: 'IOC type', sortable: true, formatter: (value) => { return value=="m"?"mixed":value=="i"?"ip":"hostnames"; } },
+        { key: 'ioc_type', label: 'IOC type', sortable: true, /*formatter: (value) => { return value=="m"?"mixed":value=="i"?"ip":"hostnames"; }*/ },
         { key: 'cache', label: 'Cachable', sortable: true, 'class': 'text-center' },
         { key: 'wildcard', label: 'Wildcards', sortable: true, 'class': 'text-center' },
-        { key: 'action', label: 'Responce action', sortable: true, formatter: (value) => { return value=="nx"?"NXDomain":value=="nod"?"NoData":value=="pass"?"Passthru":value=="drop"?"Drop":value=="tcp"?"TCP-Only":"Local Records"; } },
+        { key: 'action', label: 'Responce action', sortable: true, formatter: (value) => { return value=="nxdomain"?"NXDomain":value=="nodata"?"NoData":value=="passthru"?"Passthru":value=="drop"?"Drop":value=="tcp-only"?"TCP-Only":"Local Records"; } },
         { key: 'sources_list', label: 'Sources', sortable: true },
-        { key: 'update', label: 'Update time', sortable: true  },
+        //{ key: 'update', label: 'Update time', sortable: true  },
         { key: 'disabled', label: 'Disabled', 'class': 'text-center' },
         { key: 'actions_e', label: 'Actions', 'class': 'text-center',  'tdClass': 'width150' }
       ],
@@ -414,7 +414,7 @@ new Vue({
       deleteTbl: '',
 
       
-      cfgTab: 1, //Open CFG page
+      cfgTab: 0, //Open CFG page
       //tkeys
       ftKeyId: 0,
       ftKeyName: '',
@@ -464,25 +464,25 @@ new Vue({
       ftRPZSOA_NXTTL: 0,
       ftRPZCache: 0,
       ftRPZWildcard: 0,
-      ftRPZAction: "nx", //nx/nxdomain, nod/nodata, pass/passthru, drop, tcp/tcp-only, loc/local records
+      ftRPZAction: "nxdomain", //nx/nxdomain, nod/nodata, pass/passthru, drop, tcp/tcp-only, loc/local records
       ftRPZActionCustom: "", 
-      ftRPZIOCType: "m", // m/mixed, f/fqdn, i/ip
+      ftRPZIOCType: "mixed", // m/mixed, f/fqdn, i/ip
       ftRPZAXFR: 0,
       ftRPZIXFR: 0,
       ftRPZDisabled: 0, //TODO to add
 
       RPZ_Act_Options: [
-        { value: 'nx', text: 'NXDomain' },
-        { value: 'nod', text: 'NoData' },
-        { value: 'pass', text: 'Passthru' },
+        { value: 'nxdomain', text: 'NXDomain' },
+        { value: 'nodata', text: 'NoData' },
+        { value: 'passthru', text: 'Passthru' },
         { value: 'drop', text: 'Drop' },
-        { value: 'tcp', text: 'TCP-only' },
-        { value: 'loc', text: 'Local records' },
+        { value: 'tcp-only', text: 'TCP-only' },
+        { value: 'local', text: 'Local records' },
       ],
       RPZ_IType_Options: [
-        { value: 'm', text: 'Mixed' },
-        { value: 'f', text: 'Hosts' },
-        { value: 'i', text: 'IPs' },
+        { value: 'mixed', text: 'mixed' },
+        { value: 'fqdn', text: 'fqdn' },
+        { value: 'ip', text: 'ip' },
       ],
       
 //  $sql="create table if not exists rpzs (user_id integer, name text, soa_refresh integer, soa_update_retry integer, soa_expiration integer, soa_nx_ttl integer, cache integer, wildcard integer, action text, ioc_type text, axfr_update integer, ixfr_update integer, foreign key(user_id) references users(rowid));".
@@ -504,6 +504,17 @@ new Vue({
 //          }
   },
 
+  mounted: function () {
+    if (window.location.hash) {
+      var a=window.location.hash.split(/#|\//).filter(String);
+      switch (a[0]){
+        case "tabs_menu":
+          this.cfgTab=parseInt(a[1]);        
+      };
+    };
+  },
+  
+  
   computed: {
     validateCustomAction() {return this.infoWindow?null:true},
   },
@@ -687,6 +698,7 @@ new Vue({
     ImportConfig: function () {
       var file = new FileReader();
       var vm = this;
+      var SrvId;
       //onprogress, onabort, onerror, onloadstart
       file.onload = async function(e) {
         let p1 = axios.get('/io2data.php/servers');
@@ -709,17 +721,41 @@ new Vue({
           //this.ftImpAction: 0,
           // {rpz,{
           var l=line.trim();
-          if (m = l.match(/^{srv,{"([^"]+)","([^"]+)",\[([^\]]*)\],\[([^\]]*)\]}}\.$/) ){
+          if (m = l.match(/^{srv,{"([^"]+)","([^"]+)",\[([^\]]*)\],\[([^\]]*)\]}}\.(\t* *| *\t*%.*)$/) ){
             Srv['ns']=m[1];Srv['email']=m[2];Srv['tkeys']=[];
             m[3].split(/,|\s|"/g).filter(String).forEach(function(el){Srv['tkeys'].push(el);});
-            Srv['notify']=m[4].replace(/"/g,'');//.split(/,|\s|"/g).filter(String);
+            Srv['mgmt']=m[4].replace(/"/g,'');//.split(/,|\s|"/g).filter(String);
           };
 //{rpz,{"dga.ioc2rpz",21600,3600,2592000,7200,"true","true","nxdomain",["pub_demokey_1","at_demokey_1","priv_key_1"],"fqdn",172800,86400,["dga"],[],["whitelist_1"]}}.
+//rpz record: name, SOA refresh, SOA update retry, SOA expiration, SOA NXDomain TTL, Cache, Wildcards, Action, [tkeys], ioc_type, AXFR_time, IXFR_time, [sources], [notify], [whitelists]
+          if (m = l.match(/^{rpz,{"([^"]+)",([0-9]+),([0-9]+),([0-9]+),([0-9]+),"([^"]+)","([^"]+)","?([^"]+|\[[^\]]*\])"?,\[([^\]]*)\],"([^"]+)",([0-9]+),([0-9]+),\[([^\]]*)\],\[([^\]]*)\],\[([^\]]*)\]}}\.(\t* *| *\t*%.*)$/) ){
+            Rpz[m[1]]=[];
+            Rpz[m[1]]['tkeys']=[];
+            if (m[9]) m[9].split(/,|\s|"/g).filter(String).forEach(function(el){Rpz[m[1]]['tkeys'].push(el);});
 
-          if (m = l.match(/^{rpz,{"([^"]+)",([0-9]+),([0-9]+),([0-9]+),([0-9]+),"([^"]+)","([^"]+)","?([^"]+|\[[^\]]*\])"?,\[([^\]]*)\],"([^"]+)",([0-9]+),([0-9]+),\[([^\]]*)\],\[([^\]]*)\],\[([^\]]*)\]}}\.$/) ){
-            Rpz[m[1]]=m[1];
+            Rpz[m[1]]['sources']=[];
+            m[13].split(/,|\s|"/g).filter(String).forEach(function(el){Rpz[m[1]]['sources'].push(el);});
+
+            Rpz[m[1]]['notify']=m[14].replace(/"/g,'');
+
+            Rpz[m[1]]['whitelists']=[];
+            if (m[15]) m[15].split(/,|\s|"/g).filter(String).forEach(function(el){Rpz[m[1]]['whitelists'].push(el);});
+          
+            Rpz[m[1]]['name']=m[1];
+            Rpz[m[1]]['soa_refresh']=m[2];
+            Rpz[m[1]]['soa_update']=m[3];
+            Rpz[m[1]]['soa_exp']=m[4];
+            Rpz[m[1]]['soa_nxttl']=m[5];
+            Rpz[m[1]]['cache']=m[6]=="true"?1:0;
+            Rpz[m[1]]['wildcards']=m[7]=="true"?1:0;
+
+            Rpz[m[1]]['action']=m[8]; //
+            
+            Rpz[m[1]]['ioc_type']=m[10];
+            Rpz[m[1]]['AXFR_time']=m[11];
+            Rpz[m[1]]['IXFR_time']=m[12];
           };
-          if (m = l.match(/^{key,{"([^"]+)","([^"]+)","([^"]+)"}}\.$/)){
+          if (m = l.match(/^{key,{"([^"]+)","([^"]+)","([^"]+)"}}\.(\t* *| *\t*%.*)$/)){
             if (vm.ftImpAction==1 || (vm.ftImpAction==2 && (!TKeysAll[m[1]] || (!TKeysAll[vm.ftImpPrefix+m[1]] && vm.ftImpPrefix)))|| (vm.ftImpAction==0 && (!TKeysAll[vm.ftImpPrefix+m[1]]))) {
               vm.ftKeyId=(TKeysAll[vm.ftImpPrefix+m[1]] && vm.ftImpAction==1)?TKeysAll[vm.ftImpPrefix+m[1]]:-1;
               vm.ftKeyName=vm.ftImpAction!=2?vm.ftImpPrefix+m[1]:(TKeysAll[m[1]] && vm.ftImpAction==2)?vm.ftImpPrefix+m[1]:m[1];
@@ -727,32 +763,34 @@ new Vue({
               vm.ftKeyAlg=m[2]; vm.ftKey=m[3]; vm.ftKeyMGMT=Srv['tkeys'].includes(m[1])?1:0; //TODO check SRV first
               TKeys[vm.ftKeyName]=vm.ftKeyName;
               TKeys[m[1]]=vm.ftKeyName;
-              vm.tblMgmtTKeyRecord('tkeys');
-              await sleep(10); //SQLite too slow
+              await vm.tblMgmtTKeyRecord('tkeys');
+              //await sleep(10); //SQLite too slow
             }else{
               TKeys[m[1]]=(TKeysAll[vm.ftImpPrefix+m[1]] && vm.ftImpAction!=2)?vm.ftImpPrefix+m[1]:(TKeysAll[m[1]] && vm.ftImpAction==2)?vm.ftImpPrefix+m[1]:m[1];
             };
           };
-          if (m = l.match(/^{whitelist,{"([^"]+)","([^"]+)",(none|"(.*)")}}\.$/)){
+          if (m = l.match(/^{whitelist,{"([^"]+)","([^"]+)",(none|"(.*)")}}\.(\t* *| *\t*%.*)$/)){
             if (vm.ftImpAction==1 || (vm.ftImpAction==2 && (!WLAll[m[1]] || (!WLAll[vm.ftImpPrefix+m[1]] && vm.ftImpPrefix)))|| (vm.ftImpAction==0 && (!WLAll[vm.ftImpPrefix+m[1]]))) {
               vm.ftSrcId=(WLAll[vm.ftImpPrefix+m[1]] && vm.ftImpAction==1)?WLAll[vm.ftImpPrefix+m[1]]:-1;
               vm.ftSrcName=vm.ftImpAction!=2?vm.ftImpPrefix+m[1]:(WLAll[m[1]] && vm.ftImpAction==2)?vm.ftImpPrefix+m[1]:m[1];
               vm.ftSrcURL=m[2]; vm.ftSrcREGEX=m[4]!==undefined?m[4]:m[3]; vm.ftSrcURLIXFR="";
               WL[vm.ftSrcName]=vm.ftSrcName;
               WL[m[1]]=vm.ftSrcName;
-              vm.tblMgmtSrcRecord('whitelists');
-              await sleep(10); //SQLite too slow
+              await vm.tblMgmtSrcRecord('whitelists');
+            }else{
+              WL[m[1]]=(WLAll[vm.ftImpPrefix+m[1]] && vm.ftImpAction!=2)?vm.ftImpPrefix+m[1]:(WLAll[m[1]] && vm.ftImpAction==2)?vm.ftImpPrefix+m[1]:m[1];
             };
           };
-          if (m = l.match(/^{source,{"([^"]+)","([^"]+)","([^"]*)",(none|"(.*)")}}\.$/)){
+          if (m = l.match(/^{source,{"([^"]+)","([^"]+)","([^"]*)",(none|"(.*)")}}\.(\t* *| *\t*%.*)$/)){
             if (vm.ftImpAction==1 || (vm.ftImpAction==2 && (!SrcAll[m[1]] || (!SrcAll[vm.ftImpPrefix+m[1]] && vm.ftImpPrefix)))|| (vm.ftImpAction==0 && (!SrcAll[vm.ftImpPrefix+m[1]]))) {
               vm.ftSrcId=(SrcAll[vm.ftImpPrefix+m[1]] && vm.ftImpAction==1)?SrcAll[vm.ftImpPrefix+m[1]]:-1;
               vm.ftSrcName=vm.ftImpAction!=2?vm.ftImpPrefix+m[1]:(SrcAll[m[1]] && vm.ftImpAction==2)?vm.ftImpPrefix+m[1]:m[1];
               vm.ftSrcURL=m[2]; vm.ftSrcURLIXFR=m[3]; vm.ftSrcREGEX=m[5]!==undefined?m[5]:m[4];
               Src[vm.ftSrcName]=vm.ftSrcName;
               Src[m[1]]=vm.ftSrcName;
-              vm.tblMgmtSrcRecord('sources'); 
-              await sleep(10); //SQLite too slow
+              await vm.tblMgmtSrcRecord('sources'); 
+            }else{
+              Src[m[1]]=(SrcAll[vm.ftImpPrefix+m[1]] && vm.ftImpAction!=2)?vm.ftImpPrefix+m[1]:(SrcAll[m[1]] && vm.ftImpAction==2)?vm.ftImpPrefix+m[1]:m[1];
             };
           };
         };
@@ -771,29 +809,60 @@ new Vue({
           //vm.ftSrvIP vm.ftSrvMGMT vm.ftSrvDisabled
           vm.ftSrvNS=Srv['ns'];
           vm.ftSrvEmail=Srv['email'];
-          vm.ftSrvMGMTIP=Srv['notify'];
-          Srv['tkeys'].forEach(function(el){
+          vm.ftSrvMGMTIP=Srv['mgmt'];
+          if (Srv['tkeys']) Srv['tkeys'].forEach(function(el){
             if (TKeys[el] && TKeysAll[TKeys[el]]) vm.ftSrvTKeys.push(TKeysAll[TKeys[el]]);
           });
           vm.ftSrvSType=0;
           vm.ftSrvURL=vm.ftImpFiles[0].name
-          vm.tblMgmtSrvRecord('servers');
-          await sleep(10); //SQLite too slow
+          await vm.tblMgmtSrvRecord('servers');
           p1 = axios.get('/io2data.php/servers');
           [servers] = await Promise.all([p1]);
-          var SrvId;
-          if (servers.data) tkeys.data.forEach(function(el){if (vm.ftSrvName==el['name']) SrvId=el['rowid']});
+          if (servers.data) servers.data.forEach(function(el){if (vm.ftSrvName==el['name']) SrvId=el['rowid']});
         };
         
-        //vm.tblMgmtRPZRecord('rpzs');
-        await sleep(10); //SQLite too slow
-      //var data={tRPZId: this.ftRPZId, tRPZName: this.ftRPZName, tRPZSOA_Refresh: this.ftRPZSOA_Refresh, tRPZSOA_UpdRetry: this.ftRPZSOA_UpdRetry,
-      //          tRPZSOA_Exp: this.ftRPZSOA_Exp, tRPZSOA_NXTTL: this.ftRPZSOA_NXTTL, tRPZCache: this.ftRPZCache,tRPZWildcard: this.ftRPZWildcard, 
-      //          tRPZNotify: JSON.stringify(this.ftRPZNotify.split(/,|\s/g).filter(String)), tRPZSrvs: JSON.stringify(this.ftRPZSrvs),
-      //          tRPZIOCType: this.ftRPZIOCType, tRPZAXFR: this.ftRPZAXFR, tRPZIXFR: this.ftRPZIXFR, tRPZDisabled: this.ftRPZDisabled,
-      //          tRPZTKeys: JSON.stringify(this.ftRPZTKeys), tRPZWL: JSON.stringify(this.ftRPZWL), tRPZSrc: JSON.stringify(this.ftRPZSrc),
-      //          tRPZAction: this.ftRPZAction, tRPZActionCustom: JSON.stringify(this.ftRPZActionCustom)}; //this.ftRPZActionCustom.split(/,|\s/g).filter(String)
-        
+      //          tRPZSrvs: JSON.stringify(this.ftRPZSrvs),
+      //          tRPZDisabled: this.ftRPZDisabled,
+
+        if(Rpz !=[]){
+          vm.ftRPZId=-1
+          vm.ftRPZSrvs=[SrvId];
+          for (var RpzName in Rpz) {
+            vm.ftRPZName=RpzName; //If exists --- add srv???
+            vm.ftRPZSOA_Refresh=Rpz[RpzName]['soa_refresh'];
+            vm.ftRPZSOA_UpdRetry=Rpz[RpzName]['soa_update'];
+            vm.ftRPZSOA_Exp=Rpz[RpzName]['soa_exp'];
+            vm.ftRPZSOA_NXTTL=Rpz[RpzName]['soa_nxttl'];
+            vm.ftRPZCache=Rpz[RpzName]['cache'];
+            vm.ftRPZWildcard=Rpz[RpzName]['wildcards'];
+
+            if (["nxdomain","nodata","passthru","drop","tcp-only"].includes(Rpz[RpzName]['action'])){
+              vm.ftRPZAction=Rpz[RpzName]['action']; vm.ftRPZActionCustom="";
+            }else{
+              vm.ftRPZAction="local"; vm.ftRPZActionCustom=Rpz[RpzName]['action'];
+            };
+            
+            vm.ftRPZIOCType=Rpz[RpzName]['ioc_type'];
+            vm.ftRPZAXFR=Rpz[RpzName]['AXFR_time'];
+            vm.ftRPZIXFR=Rpz[RpzName]['IXFR_time'];
+
+            if (Rpz[RpzName]['tkeys']) Rpz[RpzName]['tkeys'].forEach(function(el){
+              if (TKeys[el] && TKeysAll[TKeys[el]]) vm.ftRPZTKeys.push(TKeysAll[TKeys[el]]);
+            });
+
+            Rpz[RpzName]['sources'].forEach(function(el){
+              if (Src[el] && SrcAll[Src[el]]) vm.ftRPZSrc.push(SrcAll[Src[el]]);
+            });
+
+            vm.ftRPZNotify=Rpz[RpzName]['notify'];
+            if (Rpz[RpzName]['whitelists']) Rpz[RpzName]['whitelists'].forEach(function(el){
+              if (WL[el] && WLAll[WL[el]]) vm.ftRPZSrc.push(WLAll[WL[el]]);
+            });
+
+            vm.tblMgmtRPZRecord('rpzs');
+          };
+        };
+
       }
       file.readAsText(vm.ftImpFiles[0]);      
     },
@@ -827,6 +896,13 @@ new Vue({
       }
     },
     
+    changeTab: function(tab){
+      //update table
+      //history.pushState(null, null, this.$refs.tabs_menu.$children[tab].href);
+      history.pushState(null, null, '#tabs_menu/'+tab);
+      if (this.$refs.tabs_menu.$children[tab].$attrs.table) this.$root.$emit('bv::refresh::table', this.$refs.tabs_menu.$children[tab].$attrs.table);
+    },
+        
   }
 });
 

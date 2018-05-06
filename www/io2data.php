@@ -24,7 +24,7 @@ function getRequest(){
 
 
 $REQUEST=getRequest();
-$ReqRowId=ctype_digit($REQUEST['rowid'])?$REQUEST['rowid']:implode(",",array_filter(json_decode($REQUEST['rowid'],true),'is_numeric'));
+if (!empty($REQUEST['rowid'])) $ReqRowId=ctype_digit($REQUEST['rowid'])?$REQUEST['rowid']:implode(",",array_filter(json_decode($REQUEST['rowid'],true),'is_numeric'));
 
 $db=DB_open();
 
@@ -32,6 +32,7 @@ $db=DB_open();
 
 switch ($REQUEST['method'].' '.$REQUEST["req"]):
     case "GET servers":
+      $rarray=[];
       $result=DB_select($db,"select rowid,* from servers where user_id=$USERID;");
       while ($row = DB_fetchArray($result)) {
         unset($row['user_id']);
@@ -156,11 +157,12 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
 #      $response='[{"name":"dns-bh.ioc2rpz", "servers":["server-1"], "soa_refresh":86400, "soa_update_retry":3600, "soa_expiration":2592000, "soa_nx_ttl":7200, "cache":"true", "wildcard":"true", "action":"nxdomain", "tkeys":["pub_demokey_1","at_demokey_1","priv_key_1"], "ioc_type":"mixed", "axfr_update":604800, "ixfr_update":86400, "sources":["dns-bh","dns-bh1"], "notify":[], "whitelists":["whitelist_1"]}]';
 
       $result=DB_select($db,"select rowid,* from rpzs where user_id=$USERID;");
+      $rarray=[];
       while ($row = DB_fetchArray($result)) {
         unset($row['user_id']);
 
         //actioncustom nx/nod/pass/drop/tcp/loc
-        if (in_array($row['action'],["nx","nod","pass","drop","tcp"])) $row['actioncustom']="";else{$row['actioncustom']=$row['action'];$row['action']="loc";};
+        if (in_array($row['action'],["nxdomain","nodata","passthru","drop","tcp-only"])) $row['actioncustom']="";else{$row['actioncustom']=$row['action'];$row['action']="local";};
 
         $subres=DB_selectArray($db,"select tkeys.rowid,tkeys.name from rpzs_tkeys left join tkeys on tkeys.rowid=rpzs_tkeys.tkey_id where rpzs_tkeys.user_id=$USERID and rpzs_tkeys.rpz_id=${row['rowid']};");
         $row['tkeys']=$subres;
@@ -189,7 +191,7 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
       $sources=DB_selectArray($db,"select rowid from sources where user_id=$USERID and rowid in (".implode(",",filterIntArr(json_decode($REQUEST['tRPZSrc']))).")");
       $whlists=DB_selectArray($db,"select rowid from whitelists where user_id=$USERID and rowid in (".implode(",",filterIntArr(json_decode($REQUEST['tRPZWL']))).")");
 
-      if (in_array($REQUEST['tRPZAction'],["nx","nod","pass","drop","tcp"])) $action=$REQUEST['tRPZAction'];else $action=erlChLRecords($REQUEST['tRPZActionCustom']);
+      if (in_array($REQUEST['tRPZAction'],["nxdomain","nodata","passthru","drop","tcp-only"])) $action=$REQUEST['tRPZAction'];else $action=erlChLRecords($REQUEST['tRPZActionCustom']);
 
       $sql="insert into rpzs values($USERID,'".DB_escape($db,$REQUEST['tRPZName'])."',".intval($REQUEST['tRPZSOA_Refresh']).",".intval($REQUEST['tRPZSOA_UpdRetry']).",".
             intval($REQUEST['tRPZSOA_Exp']).",".intval($REQUEST['tRPZSOA_NXTTL']).",".DB_boolval($REQUEST['tRPZCache']).",".DB_boolval($REQUEST['tRPZWildcard']).",'".
