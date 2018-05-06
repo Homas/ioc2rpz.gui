@@ -34,7 +34,7 @@ The project is still under development but you can create and export the configu
 - [ ] MySQL support
 - [ ] S3 support
 - [x] Container
-- [-] Apache2 logs to stdout
+- [x] Apache2 logs to stdout
 - [ ] Export ISC Bind configuration
 - [ ] Export PowerDNS configuration
 
