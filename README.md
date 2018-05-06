@@ -23,11 +23,12 @@ ioc2rpz.gui is available on the Docker Hub. Just look for ioc2rpz.gui
 - [ ] Authentication/Authozitaion, password management
 - [ ] Input validation and constraints enforcement
 - [ ] Utils
-    - [/] Import configuration (srv and rpz uniqueness, srv params)
+    - [ ] Import configuration (srv and rpz uniqueness, srv params)
     - [ ] Export ISC Bind configuration
     - [ ] Export PowerDNS configuration
 - [ ] Intelligent updates publishing
 - [ ] README.md
+
 ----- cut. an article to be an published -----
 - [ ] Monitoring/dashboards
 - [ ] Wiki: AWS How-to (ioc2rpz & ioc2rpz.gui)
