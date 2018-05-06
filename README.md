@@ -13,35 +13,30 @@ The project is still under development but you can create and export the configu
 ### Dependencies
 ### Configuration script
 
-## Container
+## Docker Container
+ioc2rpz.gui is available on the Docker Hub. Just look for ioc2rpz.gui 
+
 
 
 ## TODO
+- [ ] DNS server IP
 - [ ] Authentication/Authozitaion, password management
-- [ ] Input validation
-- [x] Tables update on an active tab change
-- [x] Navigation/routing, to keep current page after a refresh/passing a link
-- [ ] Intelligent updates publishing
-- [ ] Monitoring/dashboards
-- [ ] Link to a community
+- [ ] Input validation and constraints enforcement
 - [ ] Utils
-    - [x] Import configuration
-    - [ ] Status check
-    - [ ] ISC Bind config export
-    - [ ] PowerDNS config export
-- [x] Export ioc2rpz configuration
-- [x] DB creation in a separate script
+    - [/] Import configuration (srv and rpz uniqueness, srv params)
+    - [ ] Export ISC Bind configuration
+    - [ ] Export PowerDNS configuration
+- [ ] Intelligent updates publishing
+- [ ] README.md
+----- cut. an article to be an published -----
+- [ ] Monitoring/dashboards
+- [ ] Wiki: AWS How-to (ioc2rpz & ioc2rpz.gui)
 - [ ] MySQL support
 - [ ] S3 support
-- [x] Container
-- [x] Apache2 logs to stdout
-- [ ] Export ISC Bind configuration
-- [ ] Export PowerDNS configuration
+- [ ] Link to the community
 
 ## Bugs
-- [x] Window scroll (size of navbar)
 - [ ] Unchecked checkboxes in tables on odd lines
-- [x] Not all RPZs were exported
 
 
 # License
