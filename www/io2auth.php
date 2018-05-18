@@ -134,10 +134,10 @@
         <div>
           <b-row>
             <b-col :sm="12" class="form_row">
-              <b-input v-model.trim="ftUNameProf" :state="validateName('ftUNameProf')" placeholder="Username"  v-b-tooltip.hover title="Username" />
+              <b-input v-model.trim="ftUNameProf" placeholder="Username"  v-b-tooltip.hover title="Username" />
             </b-col>
             <b-col :sm="12" class="form_row">
-              <b-input type="password" v-model.trim="ftUPwd" :state="validatePass('ftUPwd','ftUpwdConf')" placeholder="Password"  v-b-tooltip.hover title="Password" />
+              <b-input type="password" v-model.trim="ftUPwd" placeholder="Password"  v-b-tooltip.hover title="Password" />
             </b-col>
             <b-col :sm="12" class="form_row">
               <b-button @click.stop="signIn($event)" variant="outline-secondary">Sign in</b-button>
