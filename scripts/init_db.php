@@ -22,7 +22,7 @@ function initSQLiteDB($DBF){
   //PRAGMA foreign_keys = ON;
 
   #create users table
-  $sql="create table if not exists users (name text, password text, salt text);";
+  $sql="create table if not exists users (name text, password text, salt text, perm integer, loginattempts integer, lastlogin integer, lastfailedlogin integer);";
   $db->exec($sql);
   
   #create tkeys table
@@ -31,7 +31,7 @@ function initSQLiteDB($DBF){
   
   #create servers table, tkeys and mgmt_ips
   //stype 0 - local, 1  - sftp/scp, 2 - AWS S3
-  $sql="create table if not exists servers (user_id integer, name text uniq, ip text uniq, ns text, email text, mgmt integer, disabled integer, stype integer, URL text, cfg_updated integer, publish_upd integer, foreign key(user_id) references users(rowid));".
+  $sql="create table if not exists servers (user_id integer, name text, ip text, pub_ip text uniq, ns text, email text, mgmt integer, disabled integer, stype integer, URL text, cfg_updated integer, publish_upd integer, foreign key(user_id) references users(rowid));".
        "create table if not exists servers_tsig (server_id integer, user_id integer, tsig_id integer, foreign key(tsig_id) references tkeys(rowid), foreign key(user_id) references users(rowid), foreign key(server_id) references servers(rowid));\n".
        "create table if not exists mgmt_ips (server_id integer, user_id integer, mgmt_ip text, foreign key(user_id) references users(rowid), foreign key(server_id) references servers(rowid));";
   $db->exec($sql);
@@ -54,14 +54,14 @@ function initSQLiteDB($DBF){
   $db->exec($sql);
   
   ###insert sample data assuming that all tables were created empty
-  $sql='insert into users values("io2admin","","");';
-  $db->exec($sql);
+  //$sql='insert into users values("io2admin","","","",0,0,0);';
+  //$db->exec($sql);
 
   $sql='insert into tkeys values(1,"tkey_mgmt_1","md5","TSIG",1);'.
        'insert into tkeys values(1,"tkey_1","md5","TSIG",0);';
   $db->exec($sql);
   
-  $sql='insert into servers values(1,"server_1","127.0.0.1","ns1.ioc2rpz.localdomain","support.ioc2rpz.localdomain",1,0,0,"",1,0);'.
+  $sql='insert into servers values(1,"server_1","127.0.0.1","1.0.0.1","ns1.ioc2rpz.localdomain","support.ioc2rpz.localdomain",1,0,0,"",1,0);'.
        'insert into servers_tsig values(1,1,1);'.
        'insert into mgmt_ips values(1,1,"127.0.0.1");';
   $db->exec($sql);

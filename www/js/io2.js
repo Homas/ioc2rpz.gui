@@ -199,6 +199,7 @@ Vue.component('io2-table', {
           this.$root.ftSrvId=-1;
           this.$root.ftSrvName='';
           this.$root.ftSrvIP='';
+          this.$root.ftSrvPubIP='';
           this.$root.ftSrvNS='';
           this.$root.ftSrvEmail='';
           this.$root.ftSrvMGMT=0;
@@ -215,6 +216,7 @@ Vue.component('io2-table', {
           this.$root.ftSrvId=action=="clone"?-1:row.item.rowid;
           this.$root.ftSrvName=action=="clone"?row.item.name+"_clone":row.item.name;
           this.$root.ftSrvIP=row.item.ip;
+          this.$root.ftSrvPubIP=row.item.pub_ip;
           this.$root.ftSrvNS=row.item.ns;
           this.$root.ftSrvEmail=row.item.email;
           this.$root.ftSrvMGMT=row.item.mgmt;
@@ -435,6 +437,7 @@ new Vue({
       //Servers
       ftSrvId: 0,
       ftSrvName: '',
+      ftSrvPubIP: '',
       ftSrvIP: '',
       ftSrvNS: '',
       ftSrvEmail: '',
@@ -500,6 +503,11 @@ new Vue({
       ftImpPrefix: '',
       ftImpAction: 0,
       
+      ftUName: '',
+      ftUNameProf: '',
+      ftUCPwd: '',
+      ftUPwd: '',
+      ftUpwdConf: '',
       
 //          }
   },
@@ -512,6 +520,8 @@ new Vue({
           this.cfgTab=parseInt(a[1]);        
       };
     };
+    this.ftUName=jsUser;
+    this.ftUNameProf=jsUser;
   },
   
   
@@ -562,6 +572,10 @@ new Vue({
  
     validateEmail: function(vrbl){
       return (this.$data[vrbl].length > 0 && /^.+$/.test(this.$data[vrbl])) ? true : this.$data[vrbl].length == 0 ? null:false;
+    },
+    
+    validatePass: function(pass1, pass2){
+      return (this.$data[pass1].length > 0 && /^.+$/.test(this.$data[pass1])) ? true : this.$data[pass1].length == 0 ? null:false;
     },
  
     get_lists: function(table,variable) {
@@ -622,9 +636,9 @@ new Vue({
     tblMgmtSrvRecord: function (table) {
       var obj=this;
       this.publishUpdates=true;
-      var data={tSrvId: this.ftSrvId, tSrvName: this.ftSrvName, tSrvIP: this.ftSrvIP, tSrvNS: this.ftSrvNS, tSrvEmail: this.ftSrvEmail, tSrvMGMT: this.ftSrvMGMT,
-                tSrvMGMTIP: JSON.stringify(this.ftSrvMGMTIP.split(/,|\s/g).filter(String)), tSrvTKeys: JSON.stringify(this.ftSrvTKeys), tSrvDisabled: this.ftSrvDisabled,
-                tSrvSType: this.ftSrvSType, tSrvURL: this.ftSrvURL};
+      var data={tSrvId: this.ftSrvId, tSrvName: this.ftSrvName, tSrvIP: this.ftSrvIP, tSrvPubIP: this.ftSrvPubIP, tSrvNS: this.ftSrvNS, tSrvEmail: this.ftSrvEmail,
+                tSrvMGMT: this.ftSrvMGMT, tSrvMGMTIP: JSON.stringify(this.ftSrvMGMTIP.split(/,|\s/g).filter(String)), tSrvTKeys: JSON.stringify(this.ftSrvTKeys),
+                tSrvDisabled: this.ftSrvDisabled, tSrvSType: this.ftSrvSType, tSrvURL: this.ftSrvURL};
       if (this.ftSrvId==-1){
         //Add
         axios.post('/io2data.php/'+table,data).then(function (response) {obj.mgmtTableOk(response,obj,table)}).catch(function (error){obj.mgmtTableError(error,obj,table)})
@@ -901,6 +915,11 @@ new Vue({
       //history.pushState(null, null, this.$refs.tabs_menu.$children[tab].href);
       history.pushState(null, null, '#tabs_menu/'+tab);
       if (this.$refs.tabs_menu.$children[tab].$attrs.table) this.$root.$emit('bv::refresh::table', this.$refs.tabs_menu.$children[tab].$attrs.table);
+    },
+    
+    signOut: function(){
+      axios.post('/io2auth.php/logout');
+      window.location.reload(false);
     },
         
   }

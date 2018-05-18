@@ -8,8 +8,7 @@ const DBCreateIfNotExists=true;
 
 const ioc2rpzConf="io2cfg";
 
-$USERID=1;
-$io2ver=2018050501;
+$io2ver=2018051602;
 
 function filterIntArr($array){
   $result = [];

@@ -3,24 +3,7 @@
 #ioc2rpz configuration API
 
 require 'io2auth.php';
-
-function getRequest(){
-  #do it simple for now
-  #support only 1 level request
-  $rawRequest = file_get_contents('php://input');
-  if (empty($rawRequest)){
-    $Data=$_REQUEST;
-  }else{
-    $Data=json_decode($rawRequest,true);
-  };
-  $Data['method'] = $_SERVER['REQUEST_METHOD'];
-  $Data['req'] = explode("/", substr(@$_SERVER['PATH_INFO'], 1))[0];
-  /*
-   * TODO escape values for SQL safety
-   */
-  //if ($Data['method'] == 'PUT') print_r($Data);
-  return $Data;
-};
+require_once 'io2fun.php';
 
 
 $REQUEST=getRequest();
@@ -47,7 +30,8 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
       
     case "POST servers":
       $tkeys=DB_selectArray($db,"select rowid from tkeys where user_id=$USERID and rowid in (".implode(",",filterIntArr(json_decode($REQUEST['tSrvTKeys']))).")");
-      $sql="insert into servers values($USERID,'".DB_escape($db,$REQUEST['tSrvName'])."','".DB_escape($db,$REQUEST['tSrvIP'])."','".DB_escape($db,$REQUEST['tSrvNS'])."','".DB_escape($db,$REQUEST['tSrvEmail'])."',".DB_escape($db,$REQUEST['tSrvMGMT']).",".DB_boolval($REQUEST['tSrvDisabled']).",".intval($REQUEST['tSrvSType']).",'".DB_escape($db,$REQUEST['tSrvURL'])."',".DB_boolval($REQUEST['tSrvMGMT']).",0)";
+      $sql="insert into servers values($USERID,'".DB_escape($db,$REQUEST['tSrvName'])."','".DB_escape($db,$REQUEST['tSrvIP'])."','".DB_escape($db,$REQUEST['tSrvPubIP']).
+      "','".DB_escape($db,$REQUEST['tSrvNS'])."','".DB_escape($db,$REQUEST['tSrvEmail'])."',".DB_escape($db,$REQUEST['tSrvMGMT']).",".DB_boolval($REQUEST['tSrvDisabled']).",".intval($REQUEST['tSrvSType']).",'".DB_escape($db,$REQUEST['tSrvURL'])."',".DB_boolval($REQUEST['tSrvMGMT']).",0)";
       if (DB_execute($db,$sql)) {
         //safest way to get id?
         $srvid=DB_selectArray($db,"select max(rowid) as rowid from servers where user_id=$USERID and name='".DB_escape($db,$REQUEST['tSrvName'])."'")[0]['rowid'];
@@ -85,7 +69,8 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
       foreach($mgmtip_new as $ip){
         $sql.="insert into mgmt_ips values($srvid,$USERID,'".DB_escape($db,$ip)."');\n";
       };
-      $sql.="update servers set name='".DB_escape($db,$REQUEST['tSrvName'])."', ip='".DB_escape($db,$REQUEST['tSrvIP'])."', ns='".DB_escape($db,$REQUEST['tSrvNS'])."', email='".DB_escape($db,$REQUEST['tSrvEmail'])."', mgmt=".DB_boolval($REQUEST['tSrvMGMT']).", disabled=".DB_boolval($REQUEST['tSrvDisabled'])." ,stype=".intval($REQUEST['tSrvSType']).", URL='".DB_escape($db,$REQUEST['tSrvURL'])."', cfg_updated=".DB_boolval($REQUEST['tSrvMGMT'])." where user_id=$USERID and rowid=$srvid";
+      $sql.="update servers set name='".DB_escape($db,$REQUEST['tSrvName'])."', ip='".DB_escape($db,$REQUEST['tSrvIP'])."', pub_ip='".DB_escape($db,$REQUEST['tSrvPubIP']).
+      "', ns='".DB_escape($db,$REQUEST['tSrvNS'])."', email='".DB_escape($db,$REQUEST['tSrvEmail'])."', mgmt=".DB_boolval($REQUEST['tSrvMGMT']).", disabled=".DB_boolval($REQUEST['tSrvDisabled'])." ,stype=".intval($REQUEST['tSrvSType']).", URL='".DB_escape($db,$REQUEST['tSrvURL'])."', cfg_updated=".DB_boolval($REQUEST['tSrvMGMT'])." where user_id=$USERID and rowid=$srvid";
       
       if (DB_execute($db,$sql)) $response='{"status":"ok"}'; else $response='{"status":"failed", "sql":"'.$sql.'"}'; //TODO remove SQL
       break;

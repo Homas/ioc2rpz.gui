@@ -66,10 +66,10 @@
           <b-nav-item-dropdown right>
             <!-- Using button-content slot -->
             <template slot="button-content">
-              <em>io2Admin</em>
+              <em>{{ ftUName }}</em>
             </template>
-            <b-dropdown-item href="#">Profile</b-dropdown-item>
-            <b-dropdown-item href="#">Signout</b-dropdown-item>
+            <b-dropdown-item-button @click.stop="$emit('bv::show::modal', 'mUProfile')">Profile</b-dropdown-item-button>
+            <b-dropdown-item-button @click.stop="signOut">Sign out</b-dropdown-item-button>
           </b-nav-item-dropdown>
         </b-navbar-nav>
     
@@ -105,20 +105,24 @@
           </b-tab>
       </b-tabs>
     </b-container>
+
+
+<!--        -->
 <!-- Modals -->
+<!--        -->
 
 <!-- Error -->
-    <b-modal id='mErrorMSG' centered title="Error">
+    <b-modal id='mErrorMSG' centered title="Error" body-class="pt-0 pb-0">
       <span class='text-center'><span v-html="errorMSG"></span></span>
     </b-modal>
 
 <!-- Delete confirmation -->
-    <b-modal id='mConfDel' centered title="Confirmation required" @ok="tblDeleteRecord(deleteTbl,deleteRec)" ok-title="Confirm" v-cloak>
+    <b-modal id='mConfDel' centered title="Confirmation required" @ok="tblDeleteRecord(deleteTbl,deleteRec)" ok-title="Confirm" body-class="pt-0 pb-0" v-cloak>
       <span class='text-center'><span v-html="modalMSG"></span></span>
     </b-modal>
     
 <!-- TKey Add/Modify -->
-    <b-modal id='mConfEditTSIG' centered title="TSIG Key" @ok="tblMgmtTKeyRecord('tkeys')" v-cloak>
+    <b-modal id='mConfEditTSIG' centered title="TSIG Key" @ok="tblMgmtTKeyRecord('tkeys')" body-class="pt-0 pb-0" v-cloak>
       <span class='text-center'>
         <div>
           <b-row>
@@ -149,7 +153,7 @@
     </b-modal>
     
 <!-- Whitelists/Sources Add/Modify -->
-    <b-modal id='mConfEditSources' centered :title="ftSrcTitle" @ok="tblMgmtSrcRecord(ftSrcType)" size="lg" v-cloak>
+    <b-modal id='mConfEditSources' centered :title="ftSrcTitle" @ok="tblMgmtSrcRecord(ftSrcType)" body-class="pt-0 pb-0" size="lg" v-cloak>
       <span class='text-center'>
         <div>
           <b-row>
@@ -170,12 +174,13 @@
 
 <!-- Servers Add/Modify -->
 
-    <b-modal id='mConfEditSrv' ref='refmConfEditSrv' centered title="Server" @ok="tblMgmtSrvRecord('servers')" size="lg" v-cloak>
+    <b-modal id='mConfEditSrv' ref='refmConfEditSrv' centered title="Server" @ok="tblMgmtSrvRecord('servers')" body-class="pt-0 pb-0" size="lg" v-cloak>
       <span class='text-center'>
         <div>
           <b-row>
-            <b-col :sm="6" class="form_row"><b-input v-model.trim="ftSrvName" :state="validateName('ftSrvName')" ref="formSrvName" :readonly="infoWindow" placeholder="Enter server name"  v-b-tooltip.hover title="Name" /></b-col>
-            <b-col :sm="6" class="form_row"><b-input v-model.trim="ftSrvIP" :state="validateIP('ftSrvIP')" ref="formSrvIP" :readonly="infoWindow" placeholder="Enter Server IP or FQDN"  v-b-tooltip.hover title="Server IP/FQDN" /></b-col>
+            <b-col :sm="4" class="form_row"><b-input v-model.trim="ftSrvName" :state="validateName('ftSrvName')" ref="formSrvName" :readonly="infoWindow" placeholder="Enter server name"  v-b-tooltip.hover title="Name" /></b-col>
+            <b-col :sm="4" class="form_row"><b-input v-model.trim="ftSrvPubIP" :state="validateIP('ftSrvPubIP')" ref="formSrvPubIP" :readonly="infoWindow" placeholder="Enter Server's Public IP or FQDN"  v-b-tooltip.hover title="Server's Public IP/FQDN" /></b-col>
+            <b-col :sm="4" class="form_row"><b-input v-model.trim="ftSrvIP" :state="validateIP('ftSrvIP')" ref="formSrvIP" :readonly="infoWindow" placeholder="Enter Server's MGMT IP or FQDN"  v-b-tooltip.hover title="Server MGMT IP/FQDN" /></b-col>
           </b-row>
           <b-row>
             <b-col :sm="6" class="form_row"><b-input v-model.trim="ftSrvNS" :state="validateHostname('ftSrvNS')" ref="formSrvNS" :readonly="infoWindow" placeholder="Enter NS name"  v-b-tooltip.hover title="Name server name"/></b-col>
@@ -188,7 +193,7 @@
               </b-form-group>
             </b-col>
             <b-col :sm="6" class="form_row text-left">
-              <b-textarea v-model="ftSrvMGMTIP" :state="validateIPList('ftSrvMGMTIP')" style="height: 5em;" :rows="3" ref="formSrcNotify" :readonly="infoWindow" placeholder="Enter management IPs" :no-resize=true  v-b-tooltip.hover title="Management IPs" />
+              <b-textarea v-model="ftSrvMGMTIP" :state="validateIPList('ftSrvMGMTIP')" style="height: 5em;" :rows="3" ref="formSrcNotify" :readonly="infoWindow" placeholder="Enter management stations IPs" :no-resize=true  v-b-tooltip.hover title="ACL/Management stations IPs" />
             </b-col>
           </b-row>
           <b-row>
@@ -218,7 +223,7 @@
 
 
 <!-- RPZ Add/Modify -->
-    <b-modal id='mConfEditRPZ' centered title="RPZ" @ok="tblMgmtRPZRecord('rpzs')" size="lg" v-cloak>
+    <b-modal id='mConfEditRPZ' centered title="RPZ" @ok="tblMgmtRPZRecord('rpzs')" body-class="pt-0 pb-0" size="lg" v-cloak>
       <span class='text-center'>
         <div>
           <b-row>
@@ -294,7 +299,7 @@
     </b-modal>
  
 <!-- Import ioc2rpz config -->
-    <b-modal id='mImportConfig' ref='refImportConfig' centered title="Import ioc2rpz configuration" @ok="ImportConfig()" ok-title="Import" size="lg" v-cloak>
+    <b-modal id='mImportConfig' ref='refImportConfig' centered title="Import ioc2rpz configuration" @ok="ImportConfig()" ok-title="Import" body-class="pt-0 pb-0" size="lg" v-cloak>
       <span class='text-center'>
         <div>
           <b-row>
@@ -320,7 +325,29 @@
       </span>
     </b-modal> 
  
- 
+ <!-- User's profile Modal -->
+    <b-modal centered title="Profile" id="mUProfile" ref="refUProfile" body-class="text-center pt-0 pb-0" size="sm" v-cloak>
+      <span class='text-center'>
+        <div>
+          <b-row>
+            <b-col :sm="12" class="form_row">
+              <b-input v-model.trim="ftUNameProf" :state="validateName('ftUNameProf')" placeholder="Username"  v-b-tooltip.hover title="Username" />
+            </b-col>
+            <b-col :sm="12" class="form_row">
+              <b-input v-model.trim="ftUCPwd" placeholder="Current password"  v-b-tooltip.hover title="Current password" />
+            </b-col>
+            <b-col :sm="12" class="form_row">
+              <b-input v-model.trim="ftUPwd" :state="validatePass('ftUPwd','ftUpwdConf')" placeholder="New password"  v-b-tooltip.hover title="New password" />
+            </b-col>
+            <b-col :sm="12" class="form_row">
+              <b-input v-model.trim="ftUpwdConf" :state="validatePass('ftUPwd','ftUpwdConf')" placeholder="Confirm new password"  v-b-tooltip.hover title="Confirm new password" />
+            </b-col>
+          </b-row>
+        </div>
+
+      </span>
+    </b-modal>
+
     
 <!-- End Modals -->
   </div>
@@ -328,6 +355,9 @@
   <div class="copyright"><p>Copyright © 2018 Vadim Pavlov</p></div>
 <?php
 ?>
+    <script>
+      var jsUser='<?= $ioc2Admin ?>';
+    </script>
     <!-- Vue -->
     <script src="https://cdn.jsdelivr.net/npm/vue@2.5.16/dist/vue.js"></script>
     <!-- BootstrapVue -->
