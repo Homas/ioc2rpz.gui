@@ -19,17 +19,18 @@ ioc2rpz.gui is available on the Docker Hub. Just look for ioc2rpz.gui
 
 
 ## TODO
-- [ ] DNS server IP
-- [ ] Authentication/Authozitaion, password management
-- [ ] Input validation and constraints enforcement
+- [x] DNS server IP
+- [x] Basic authentication/Authozitaion, password management
+- [x] Basic input validation and constraints enforcement
 - [ ] Utils
-    - [ ] Import configuration (srv and rpz uniqueness, srv params)
-    - [ ] Export ISC Bind configuration
-    - [ ] Export PowerDNS configuration
-- [ ] Intelligent updates publishing
+    - [/] Import configuration (srv and rpz uniqueness, srv params)
+    - [ ] Export ISC Bind, PowerDNS, Infoblox configuration
+- [ ] Intelligent update "publishing"
 - [ ] README.md
+- [ ] SSL
 
 ----- cut. an article to be an published -----
+- [ ] Source/whitelist check availability/rechability
 - [ ] Monitoring/dashboards
 - [ ] Wiki: AWS How-to (ioc2rpz & ioc2rpz.gui)
 - [ ] MySQL support

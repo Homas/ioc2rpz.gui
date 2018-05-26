@@ -126,7 +126,7 @@
       <span class='text-center'>
         <div>
           <b-row>
-            <b-col :sm="infoWindow?10:9" class="form_row"><b-input v-model.trim="ftKeyName" :state="validateName('ftKeyName')" ref="formKeyName" :readonly="infoWindow" placeholder="Enter TSIG Key Name" /></b-col>
+            <b-col :sm="infoWindow?10:9" class="form_row"><b-input v-model.trim="ftKeyName" :state="validateName('ftKeyName')" :formatter="formatName" ref="formKeyName" :readonly="infoWindow" placeholder="Enter TSIG Key Name" /></b-col>
             <b-col :sm="infoWindow?2:3" class="form_row text-left">
               <b-button v-b-tooltip.hover title="Generate" variant="outline-secondary" v-if="!infoWindow" @click="genRandom('tkeyName')"><i class="fa fa-sync-alt"></i></b-button>
               <b-button v-b-tooltip.hover title="Copy" variant="outline-secondary" @click="copyToClipboard('formKeyName')"><i class="fa fa-copy"></i></b-button>
@@ -134,7 +134,7 @@
           </b-row>
           <b-row>
             <b-col :sm="infoWindow?10:9" class="form_row">
-              <b-input v-model.trim="ftKey" ref="formKey" :readonly="infoWindow" placeholder="Enter TSIG Key" :state="validateB64('ftKey')" /></b-col>
+              <b-input v-model.trim="ftKey" ref="formKey" :readonly="infoWindow" placeholder="Enter TSIG Key" :state="validateB64('ftKey')" :formatter="formatB64" /></b-col>
             <b-col :sm="infoWindow?2:3" class="form_row text-left">
               <b-button v-b-tooltip.hover title="Generate" variant="outline-secondary" v-if="!infoWindow" @click="genRandom('tkey')"><i class="fa fa-sync-alt"></i></b-button>
               <b-button v-b-tooltip.hover title="Copy" variant="outline-secondary" @click="copyToClipboard('formKey')"><i class="fa fa-copy"></i></b-button>
@@ -157,13 +157,13 @@
       <span class='text-center'>
         <div>
           <b-row>
-            <b-col :sm="12" class="form_row"><b-input v-model.trim="ftSrcName" :state="validateName('ftSrcName')" ref="formSrcName" :readonly="infoWindow" placeholder="Enter source name" /></b-col>
+            <b-col :sm="12" class="form_row"><b-input v-model.trim="ftSrcName" :state="validateName('ftSrcName')" :formatter="formatName" ref="formSrcName" :readonly="infoWindow" placeholder="Enter source name" /></b-col>
           </b-row>
           <b-row>
-            <b-col :sm="12" class="form_row"><b-textarea v-model="ftSrcURL" :state="validateURL('ftSrcURL')" :rows="3" ref="formSrcURL" :readonly="infoWindow" placeholder="Enter source URL" /></b-col>
+            <b-col :sm="12" class="form_row"><b-textarea v-model="ftSrcURL" :state="validateURL('ftSrcURL')" :formatter="formatURL" :rows="3" ref="formSrcURL" :readonly="infoWindow" placeholder="Enter source URL" /></b-col>
           </b-row>
           <b-row v-show="ftSrcType == 'sources'">
-            <b-col :sm="12" class="form_row"><b-textarea v-model="ftSrcURLIXFR" :state="validateIXFRURL('ftSrcURLIXFR')" :rows="3" ref="formSrcURLIXFR" :readonly="infoWindow" placeholder="Enter source update URL" /></b-col>
+            <b-col :sm="12" class="form_row"><b-textarea v-model="ftSrcURLIXFR" :state="validateIXFRURL('ftSrcURLIXFR')" :formatter="formatIXFRURL" :rows="3" ref="formSrcURLIXFR" :readonly="infoWindow" placeholder="Enter source update URL" /></b-col>
           </b-row>
           <b-row>
             <b-col :sm="12" class="form_row"><b-textarea v-model="ftSrcREGEX" :state="validateREGEX('ftSrcREGEX')" :rows="3" ref="formREGEX" :readonly="infoWindow" placeholder="Enter REGEX" /></b-col>
@@ -178,13 +178,13 @@
       <span class='text-center'>
         <div>
           <b-row>
-            <b-col :sm="4" class="form_row"><b-input v-model.trim="ftSrvName" :state="validateName('ftSrvName')" ref="formSrvName" :readonly="infoWindow" placeholder="Enter server name"  v-b-tooltip.hover title="Name" /></b-col>
-            <b-col :sm="4" class="form_row"><b-input v-model.trim="ftSrvPubIP" :state="validateIP('ftSrvPubIP')" ref="formSrvPubIP" :readonly="infoWindow" placeholder="Enter Server's Public IP or FQDN"  v-b-tooltip.hover title="Server's Public IP/FQDN" /></b-col>
-            <b-col :sm="4" class="form_row"><b-input v-model.trim="ftSrvIP" :state="validateIP('ftSrvIP')" ref="formSrvIP" :readonly="infoWindow" placeholder="Enter Server's MGMT IP or FQDN"  v-b-tooltip.hover title="Server MGMT IP/FQDN" /></b-col>
+            <b-col :sm="4" class="form_row"><b-input v-model.trim="ftSrvName" :state="validateName('ftSrvName')" :formatter="formatName" ref="formSrvName" :readonly="infoWindow" placeholder="Enter server name"  v-b-tooltip.hover title="Name" /></b-col>
+            <b-col :sm="4" class="form_row"><b-input v-model.trim="ftSrvPubIP" :state="validateIP('ftSrvPubIP')" :formatter="formatIP" ref="formSrvPubIP" :readonly="infoWindow" placeholder="Enter Server's Public IP or FQDN"  v-b-tooltip.hover title="Server's Public IP/FQDN" /></b-col>
+            <b-col :sm="4" class="form_row"><b-input v-model.trim="ftSrvIP" :state="validateIP('ftSrvIP')" :formatter="formatIP" ref="formSrvIP" :readonly="infoWindow" placeholder="Enter Server's MGMT IP or FQDN"  v-b-tooltip.hover title="Server MGMT IP/FQDN" /></b-col>
           </b-row>
           <b-row>
-            <b-col :sm="6" class="form_row"><b-input v-model.trim="ftSrvNS" :state="validateHostname('ftSrvNS')" ref="formSrvNS" :readonly="infoWindow" placeholder="Enter NS name"  v-b-tooltip.hover title="Name server name"/></b-col>
-            <b-col :sm="6" class="form_row"><b-input v-model.trim="ftSrvEmail" :state="validateEmail('ftSrvEmail')" ref="formSrvEmail" :readonly="infoWindow" placeholder="Enter admin email"  v-b-tooltip.hover title="Administrator's email"/></b-col>
+            <b-col :sm="6" class="form_row"><b-input v-model.trim="ftSrvNS" :state="validateHostname('ftSrvNS')" :formatter="formatHostname" ref="formSrvNS" :readonly="infoWindow" placeholder="Enter NS name"  v-b-tooltip.hover title="Name server name"/></b-col>
+            <b-col :sm="6" class="form_row"><b-input v-model.trim="ftSrvEmail" :state="validateEmail('ftSrvEmail')" :formatter="formatEmail" ref="formSrvEmail" :readonly="infoWindow" placeholder="Enter admin email"  v-b-tooltip.hover title="Administrator's email"/></b-col>
           </b-row>
           <b-row>
             <b-col :sm="6" class="form_row text-left">
@@ -193,7 +193,7 @@
               </b-form-group>
             </b-col>
             <b-col :sm="6" class="form_row text-left">
-              <b-textarea v-model="ftSrvMGMTIP" :state="validateIPList('ftSrvMGMTIP')" style="height: 5em;" :rows="3" ref="formSrcNotify" :readonly="infoWindow" placeholder="Enter management stations IPs" :no-resize=true  v-b-tooltip.hover title="ACL/Management stations IPs" />
+              <b-textarea v-model="ftSrvMGMTIP" :state="validateIPList('ftSrvMGMTIP')" :formatter="formatIP" style="height: 5em;" :rows="3" ref="formSrcNotify" :readonly="infoWindow" placeholder="Enter management stations IPs" :no-resize=true  v-b-tooltip.hover title="ACL/Management stations IPs" />
             </b-col>
           </b-row>
           <b-row>
@@ -210,7 +210,7 @@
           </b-row>
           <b-row>
             <b-col :sm="12" class="form_row text-left">
-              <b-input v-model.trim="ftSrvURL" :state="validateName('ftSrvURL')"  ref="formSrvURL" :readonly="infoWindow" placeholder="Enter file name"  v-b-tooltip.hover title="File Name" />
+              <b-input v-model.trim="ftSrvURL" :state="validateName('ftSrvURL')" :formatter="formatURL"  ref="formSrvURL" :readonly="infoWindow" placeholder="Enter file name"  v-b-tooltip.hover title="File Name" />
             </b-col>
           </b-row>
           <b-row>
@@ -227,7 +227,7 @@
       <span class='text-center'>
         <div>
           <b-row>
-            <b-col :sm="12" class="form_row"><b-input v-model.trim="ftRPZName" :state="validateHostname('ftRPZName')" ref="formRPZName" :readonly="infoWindow" placeholder="Enter RPZ name"  v-b-tooltip.hover title="RPZ Name" /></b-col>
+            <b-col :sm="12" class="form_row"><b-input v-model.trim="ftRPZName" :state="validateHostname('ftRPZName')" :formatter="formatName" ref="formRPZName" :readonly="infoWindow" placeholder="Enter RPZ name"  v-b-tooltip.hover title="RPZ Name" /></b-col>
           </b-row>
 
           <b-row>
@@ -259,7 +259,7 @@
               <b-form-select v-model="ftRPZAction" :options="RPZ_Act_Options" :disabled="infoWindow"  v-b-tooltip.hover title="Action" />
             </b-col>
             <b-col :sm="6" class="form_row text-left">
-              <b-textarea v-model="ftRPZNotify" :state="validateIPList('ftRPZNotify')" :rows="1" ref="formRPZNotify" :readonly="infoWindow" placeholder="Enter IPs to notify" :no-resize=true  v-b-tooltip.hover title="IPs to notify" />
+              <b-textarea v-model="ftRPZNotify" :state="validateIPList('ftRPZNotify')" :formatter="formatIPList" :rows="1" ref="formRPZNotify" :readonly="infoWindow" placeholder="Enter IPs to notify" :no-resize=true  v-b-tooltip.hover title="IPs to notify" />
             </b-col>
           </b-row>
           <b-row v-show="ftRPZAction === 'local'">
@@ -279,12 +279,12 @@
             </b-col>
           </b-row>
           <b-row>
-            <b-col :sm="2" class="form_row"><b-input v-model.trim="ftRPZSOA_Refresh" :state="validateInt('ftRPZSOA_Refresh')" ref="formRPZSOA_Refresh" :readonly="infoWindow" placeholder="Refresh" v-b-tooltip.hover title="SOA Record. Zone refresh time"  /></b-col>
-            <b-col :sm="2" class="form_row"><b-input v-model.trim="ftRPZSOA_UpdRetry" :state="validateInt('ftRPZSOA_UpdRetry')" ref="formRPZSOA_UpdRetry" :readonly="infoWindow" placeholder="Update retry" v-b-tooltip.hover title="SOA Record. Zone update retry time"  /></b-col>
-            <b-col :sm="2" class="form_row"><b-input v-model.trim="ftRPZSOA_Exp" :state="validateInt('ftRPZSOA_Exp')" ref="formRPZSOA_Exp" :readonly="infoWindow" placeholder="Expiration" v-b-tooltip.hover title="SOA Record. Zone expiration time"  /></b-col>
-            <b-col :sm="2" class="form_row"><b-input v-model.trim="ftRPZSOA_NXTTL" :state="validateInt('ftRPZSOA_NXTTL')" ref="formRPZSOA_NXTTL" :readonly="infoWindow" placeholder="NX TTL" v-b-tooltip.hover title="SOA Record. NXDomain TTL"  /></b-col>
-            <b-col :sm="2" class="form_row"><b-input v-model.trim="ftRPZAXFR" :state="validateInt('ftRPZAXFR')" ref="formRPZAXFR" :readonly="infoWindow" placeholder="Full update" v-b-tooltip.hover title="Zone full update time"  /></b-col>
-            <b-col :sm="2" class="form_row"><b-input v-model.trim="ftRPZIXFR" :state="validateInt('ftRPZIXFR')" ref="formRPZIXFR" :readonly="infoWindow" placeholder="Inc update" v-b-tooltip.hover title="Zone incrimental update time"  /></b-col>
+            <b-col :sm="2" class="form_row"><b-input v-model.trim="ftRPZSOA_Refresh" :state="validateInt('ftRPZSOA_Refresh')" :formatter="formatInt" ref="formRPZSOA_Refresh" :readonly="infoWindow" placeholder="Refresh" v-b-tooltip.hover title="SOA Record. Zone refresh time"  /></b-col>
+            <b-col :sm="2" class="form_row"><b-input v-model.trim="ftRPZSOA_UpdRetry" :state="validateInt('ftRPZSOA_UpdRetry')" :formatter="formatInt" ref="formRPZSOA_UpdRetry" :readonly="infoWindow" placeholder="Update retry" v-b-tooltip.hover title="SOA Record. Zone update retry time"  /></b-col>
+            <b-col :sm="2" class="form_row"><b-input v-model.trim="ftRPZSOA_Exp" :state="validateInt('ftRPZSOA_Exp')" :formatter="formatInt" ref="formRPZSOA_Exp" :readonly="infoWindow" placeholder="Expiration" v-b-tooltip.hover title="SOA Record. Zone expiration time"  /></b-col>
+            <b-col :sm="2" class="form_row"><b-input v-model.trim="ftRPZSOA_NXTTL" :state="validateInt('ftRPZSOA_NXTTL')" :formatter="formatInt" ref="formRPZSOA_NXTTL" :readonly="infoWindow" placeholder="NX TTL" v-b-tooltip.hover title="SOA Record. NXDomain TTL"  /></b-col>
+            <b-col :sm="2" class="form_row"><b-input v-model.trim="ftRPZAXFR" :state="validateInt('ftRPZAXFR')" :formatter="formatInt" ref="formRPZAXFR" :readonly="infoWindow" placeholder="Full update" v-b-tooltip.hover title="Zone full update time"  /></b-col>
+            <b-col :sm="2" class="form_row"><b-input v-model.trim="ftRPZIXFR" :state="validateInt('ftRPZIXFR')" :formatter="formatInt" ref="formRPZIXFR" :readonly="infoWindow" placeholder="Inc update" v-b-tooltip.hover title="Zone incrimental update time"  /></b-col>
           </b-row>
           <b-row>
             <b-col :sm="12" class="form_row text-left"><b-form-checkbox unchecked-value=0 value=1 :disabled="infoWindow"  v-model="ftRPZDisabled">Disabled</b-form-checkbox></b-col>
@@ -310,8 +310,8 @@
           </b-row>
           <b-row>
             <b-col :sm="6" class="form_row">
-              <div style="margin-bottom:10px"><b-input v-model="ftImpServName" :state="validateName('ftImpServName')" placeholder="Enter server name" /></div>
-              <div><b-input v-model="ftImpPrefix" :state="validateName('ftImpPrefix')" placeholder="Enter prefix" /></div>
+              <div style="margin-bottom:10px"><b-input v-model="ftImpServName" :state="validateName('ftImpServName')" :formatter="formatName" placeholder="Enter server name" /></div>
+              <div><b-input v-model="ftImpPrefix" :state="validateName('ftImpPrefix')" :formatter="formatName" placeholder="Enter prefix" /></div>
             </b-col>
             <b-col :sm="6" class="form_row text-left">
               <b-form-radio-group v-model="ftImpAction">
@@ -331,16 +331,16 @@
         <div>
           <b-row>
             <b-col :sm="12" class="form_row">
-              <b-input v-model.trim="ftUNameProf" :state="validateName('ftUNameProf')" placeholder="Username"  v-b-tooltip.hover title="Username" />
+              <b-input v-model.lazy="ftUNameProf" :state="validateName('ftUNameProf')" placeholder="Username"  v-b-tooltip.hover title="Username" :formatter="formatName" />
             </b-col>
             <b-col :sm="12" class="form_row">
-              <b-input v-model.trim="ftUCPwd" placeholder="Current password"  v-b-tooltip.hover title="Current password" />
+              <b-input type="password" v-model.trim="ftUCPwd" placeholder="Current password"  v-b-tooltip.hover title="Current password" />
             </b-col>
             <b-col :sm="12" class="form_row">
-              <b-input v-model.trim="ftUPwd" :state="validatePass('ftUPwd','ftUpwdConf')" placeholder="New password"  v-b-tooltip.hover title="New password" />
+              <b-input type="password" v-model.trim="ftUPwd" :state="validatePass('ftUPwd')" placeholder="New password"  v-b-tooltip.hover title="New password" />
             </b-col>
             <b-col :sm="12" class="form_row">
-              <b-input v-model.trim="ftUpwdConf" :state="validatePass('ftUPwd','ftUpwdConf')" placeholder="Confirm new password"  v-b-tooltip.hover title="Confirm new password" />
+              <b-input type="password" v-model.trim="ftUpwdConf" :state="validatePassMatch('ftUPwd','ftUpwdConf')" placeholder="Confirm new password"  v-b-tooltip.hover title="Confirm new password" />
             </b-col>
           </b-row>
         </div>

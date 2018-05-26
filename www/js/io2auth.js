@@ -9,10 +9,15 @@ new Vue({
   },
   methods: {
     validateName: function(vrbl){
-      return (this.$data[vrbl].length > 2 && /^[a-zA-Z0-9\.\-\_]+$/.test(this.$data[vrbl])) ? true : this.$data[vrbl].length == 0 ? null:false;
+      return (this.$data[vrbl].length > 5 && /^[a-zA-Z0-9\.\-\_]+$/.test(this.$data[vrbl])) ? true : this.$data[vrbl].length == 0 ? null:false;
     },
-    validatePass: function(pass1, pass2){
-      return (this.$data[pass1].length > 0 && /^.+$/.test(this.$data[pass1])) ? true : this.$data[pass1].length == 0 ? null:false;
+
+    validatePass: function(pass1){
+      return ((this.$data[pass1].length > 7 && /([0-9])/.test(this.$data[pass1]) && /([a-z])/.test(this.$data[pass1]) && /([A-Z])/.test(this.$data[pass1]) && /([!,%,&,@,#,$,^,*,?,_,~,\,,\.])/.test(this.$data[pass1])) || this.$data[pass1].length > 15) ? true : this.$data[pass1].length == 0 ? null:false;
+    },
+
+    validatePassMatch: function(pass1, pass2){
+      return this.$data[pass1] == this.$data[pass2] ? true : false;
     },
 
     createUser: function(e){

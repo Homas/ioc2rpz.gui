@@ -112,10 +112,10 @@
               <b-input v-model.trim="ftUNameProf" :state="validateName('ftUNameProf')" placeholder="Username"  v-b-tooltip.hover title="Username" />
             </b-col>
             <b-col :sm="12" class="form_row">
-              <b-input type="password" v-model.trim="ftUPwd" :state="validatePass('ftUPwd','ftUpwdConf')" placeholder="Password"  v-b-tooltip.hover title="Password" />
+              <b-input type="password" v-model.trim="ftUPwd" :state="validatePass('ftUPwd')" placeholder="Password"  v-b-tooltip.hover title="Password" />
             </b-col>
             <b-col :sm="12" class="form_row">
-              <b-input type="password" v-model.trim="ftUpwdConf" :state="validatePass('ftUPwd','ftUpwdConf')" placeholder="Confirm password"  v-b-tooltip.hover title="Confirm password" />
+              <b-input type="password" v-model.trim="ftUpwdConf" :state="validatePassMatch('ftUPwd','ftUpwdConf')" placeholder="Confirm password"  v-b-tooltip.hover title="Confirm password" />
             </b-col>
             <b-col :sm="12" class="form_row">
               <b-button @click.stop="createUser($event)" variant="outline-secondary">Create</b-button>

@@ -282,12 +282,12 @@ Vue.component('io2-table', {
         case "clone rpzs":
           this.$root.ftRPZId=action=="clone"?-1:row.item.rowid;
           this.$root.ftRPZName=action=="clone"?row.item.name+"_clone":row.item.name;
-          this.$root.ftRPZSOA_Refresh=row.item.soa_refresh;
-          this.$root.ftRPZSOA_UpdRetry=row.item.soa_update_retry;
-          this.$root.ftRPZSOA_Exp=row.item.soa_expiration;
-          this.$root.ftRPZSOA_NXTTL=row.item.soa_nx_ttl;
-          this.$root.ftRPZAXFR=row.item.axfr_update;
-          this.$root.ftRPZIXFR=row.item.ixfr_update;
+          this.$root.ftRPZSOA_Refresh=`${row.item.soa_refresh}`;
+          this.$root.ftRPZSOA_UpdRetry=`${row.item.soa_update_retry}`;
+          this.$root.ftRPZSOA_Exp=`${row.item.soa_expiration}`;
+          this.$root.ftRPZSOA_NXTTL=`${row.item.soa_nx_ttl}`;
+          this.$root.ftRPZAXFR=`${row.item.axfr_update}`;
+          this.$root.ftRPZIXFR=`${row.item.ixfr_update}`;
           this.$root.ftRPZCache=row.item.cache;
           this.$root.ftRPZWildcard=row.item.wildcard;
           this.$root.ftRPZAction=row.item.action;
@@ -461,17 +461,17 @@ new Vue({
       ftRPZSrc: [],
       ftRPZSrcAll: [],
       ftRPZNotify: "",
-      ftRPZSOA_Refresh: 0,
-      ftRPZSOA_UpdRetry: 0,
-      ftRPZSOA_Exp: 0,
-      ftRPZSOA_NXTTL: 0,
+      ftRPZSOA_Refresh: '',
+      ftRPZSOA_UpdRetry: '',
+      ftRPZSOA_Exp: '',
+      ftRPZSOA_NXTTL: '',
       ftRPZCache: 0,
       ftRPZWildcard: 0,
       ftRPZAction: "nxdomain", //nx/nxdomain, nod/nodata, pass/passthru, drop, tcp/tcp-only, loc/local records
       ftRPZActionCustom: "", 
       ftRPZIOCType: "mixed", // m/mixed, f/fqdn, i/ip
-      ftRPZAXFR: 0,
-      ftRPZIXFR: 0,
+      ftRPZAXFR: '',
+      ftRPZIXFR: '',
       ftRPZDisabled: 0, //TODO to add
 
       RPZ_Act_Options: [
@@ -531,25 +531,53 @@ new Vue({
   
   methods: {
     validateName: function(vrbl){
-      return (this.$data[vrbl].length > 2 && /^[a-zA-Z0-9\.\-\_]+$/.test(this.$data[vrbl])) ? true : this.$data[vrbl].length == 0 ? null:false;
+      return (this.$data[vrbl].length > 5 && /^[a-zA-Z0-9\.\-\_]+$/.test(this.$data[vrbl])) ? true : this.$data[vrbl].length == 0 ? null:false;
+    },
+
+    formatName: function(val,e){
+      let a = val.replace(/[^a-zA-Z0-9\.\-\_]/g,"");
+      if (e) e.currentTarget.value = a; // a bug in Vue.JS?
+      return a;
     },
     
     validateB64: function(vrbl){
       return (this.$data[vrbl].length>31 && /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(this.$data[vrbl])) ? true : this.$data[vrbl].length == 0 ? null:false;
     },
 
+    formatB64: function(val,e){
+      let a = val.replace(/[^A-Za-z0-9/=]/g,"");
+      if (e) e.currentTarget.value = a; // a bug in Vue.JS?
+      return a;
+    },
+    
     validateInt: function(vrbl){
-      //TODO FIX
       return (this.$data[vrbl].length > 0 && /^[0-9]+$/.test(this.$data[vrbl])) ? true : this.$data[vrbl].length == 0 ? null:false;
     },
 
+    formatInt: function(val,e){
+      let a = val.replace(/[^0-9]/g,"");
+      if (e) e.currentTarget.value = a; // a bug in Vue.JS?
+      return a;
+    },
+
     validateURL: function (vrbl) {
-      // file: http: https: ftp:
-      return (this.$data[vrbl].length > 0 && /^.+$/.test(this.$data[vrbl])) ? true : this.$data[vrbl].length == 0 ? null:false;
+      return (this.$data[vrbl].length > 0 && checkSourceURL(this.$data[vrbl])) ? true : this.$data[vrbl].length == 0 ? null:false;
+    },
+
+    formatURL: function(val,e){
+      let a = val.replace(/[^A-Za-z0-9/=:\?#.-_&]/g,"");
+      if (e) e.currentTarget.value = a; // a bug in Vue.JS?
+      return a;
     },
     
     validateIXFRURL: function (vrbl) {
-      return this.validateURL(vrbl) || this.$data[vrbl]=='[:AXFR:]';
+      return this.validateURL(vrbl) || this.$data[vrbl]=='[:AXFR:]' || (/^\[:AXFR:\]((\?|\&)[;&a-zA-Z0-9\d%_.~+=-]*)?(\#[-a-zA-Z0-9\d_]*)?$/.test(this.$data[vrbl]));
+    },
+
+    formatIXFRURL: function(val,e){
+      let a = val.replace(/[^A-Za-z0-9/=:\?#.-_\[\]&]/g,"");
+      if (e) e.currentTarget.value = a; // a bug in Vue.JS?
+      return a;
     },
     
     validateREGEX: function(vrbl){
@@ -558,24 +586,51 @@ new Vue({
     },
     
     validateIP: function(vrbl){
-      return (this.$data[vrbl].length > 0 && /^.+$/.test(this.$data[vrbl])) ? true : this.$data[vrbl].length == 0 ? null:false;
+      return (this.$data[vrbl].length > 0 && checkIP(this.$data[vrbl])) ? true : this.$data[vrbl].length == 0 ? null:false;
     },
  
-    validateIPList: function(vrbl){
-      //this.$data[vrbl].split(/,|\s/g)
-      return (this.$data[vrbl].length > 0 && /^.+$/.test(this.$data[vrbl])) ? true : this.$data[vrbl].length == 0 ? null:false;
+    formatIP: function(val,e){
+      let a = val.replace(/[^0-9\.:\-]/g,"");
+      if (e) e.currentTarget.value = a; // a bug in Vue.JS?
+      return a;
     },
 
-    validateHostname: function(vrbl){
-      return (this.$data[vrbl].length > 0 && /^.+$/.test(this.$data[vrbl])) ? true : this.$data[vrbl].length == 0 ? null:false;
+    validateIPList: function(vrbl){
+      return (this.$data[vrbl].length > 0 && this.$data[vrbl].trim().split(/,|\s|\;/g).every(checkIP)) ? true : this.$data[vrbl].length == 0 ? null:false;
     },
- 
-    validateEmail: function(vrbl){
-      return (this.$data[vrbl].length > 0 && /^.+$/.test(this.$data[vrbl])) ? true : this.$data[vrbl].length == 0 ? null:false;
+
+    formatIPList: function(val,e){
+      let a = val.replace(/[^0-9\.:\-,; ]/g,"");
+      if (e) e.currentTarget.value = a; // a bug in Vue.JS?
+      return a;
     },
     
-    validatePass: function(pass1, pass2){
-      return (this.$data[pass1].length > 0 && /^.+$/.test(this.$data[pass1])) ? true : this.$data[pass1].length == 0 ? null:false;
+    validateHostname: function(vrbl){
+      return (this.$data[vrbl].length > 5 && checkHostName(this.$data[vrbl])) ? true : this.$data[vrbl].length == 0 ? null:false;
+    },
+
+    formatHostname: function(val,e){
+      let a = val.replace(/[^a-zA-Z0-9\.\-\_]/g,"");
+      if (e) e.currentTarget.value = a; // a bug in Vue.JS?
+      return a;
+    },
+
+    validateEmail: function(vrbl){
+      return (this.$data[vrbl].length > 0 && /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(this.$data[vrbl].toLowerCase())) ? true : this.$data[vrbl].length == 0 ? null:false;
+    },
+
+    formatEmail: function(val,e){
+      let a = val.replace(/[^a-zA-Z0-9\.\-\_@]/g,"");
+      if (e) e.currentTarget.value = a; // a bug in Vue.JS?
+      return a;
+    },
+    
+    validatePass: function(pass1){
+      return ((this.$data[pass1].length > 7 && /([0-9])/.test(this.$data[pass1]) && /([a-z])/.test(this.$data[pass1]) && /([A-Z])/.test(this.$data[pass1]) && /([!,%,&,@,#,$,^,*,?,_,~,\,,\.])/.test(this.$data[pass1])) || this.$data[pass1].length > 15) ? true : this.$data[pass1].length == 0 ? null:false;
+    },
+
+    validatePassMatch: function(pass1, pass2){
+      return this.$data[pass1] == this.$data[pass2] ? true : false;
     },
  
     get_lists: function(table,variable) {
@@ -930,4 +985,29 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+//(^\s*((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))\s*$)|(^\s*((?=.{1,255}$)[0-9A-Za-z](?:(?:[0-9A-Za-z]|\b-){0,61}[0-9A-Za-z])?(?:\.[0-9A-Za-z](?:(?:[0-9A-Za-z]|\b-){0,61}[0-9A-Za-z])?)*\.?)\s*$)|(^\s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(%.+)?\s*$)
 
+function checkHostIP(V) {
+  return checkIPv4(V) || checkIPv6(V) || checkHostName(V);
+}
+function checkIP(IP) {
+  return checkIPv4(IP) || checkIPv6(IP);
+}
+
+function checkIPv4(IP) {
+  return /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(IP);
+}
+
+function checkIPv6(IP) {
+  return /^(([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))$/.test(IP);
+}
+
+function checkHostName(HN) {
+  return /^(?=.{1,255}$)[0-9A-Za-z](?:(?:[0-9A-Za-z]|\b-){0,61}[0-9A-Za-z])?(?:\.[0-9A-Za-z](?:(?:[0-9A-Za-z]|\b-){0,61}[0-9A-Za-z])?)*\.?$/.test(HN);
+}
+
+
+function checkSourceURL(HN) {
+  //TODO validation
+  return /^(http:\/\/|https:\/\/|ftp:\/\/|file:)/.test(HN);
+}
