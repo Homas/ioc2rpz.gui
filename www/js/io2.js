@@ -300,7 +300,7 @@ Vue.component('io2-table', {
           this.$root.ftRPZNotify=RPZNotify.trim();
           
           this.$root.get_lists('rpz_servers','ftRPZSrvsAll');
-          var list=[];
+          let list=[];
           row.item.servers.forEach(function(el) {
             list.push(el.rowid);
           });
@@ -508,6 +508,10 @@ new Vue({
       ftUCPwd: '',
       ftUPwd: '',
       ftUpwdConf: '',
+      
+      ftExRPZ: [],
+      ftExRPZAll: [],
+      ftExFormat: '',
       
 //          }
   },
@@ -976,6 +980,28 @@ new Vue({
       axios.post('/io2auth.php/logout');
       window.location.reload(false);
     },
+ 
+ 
+    //Export RPZ zones
+    exportShowModal: function(format){
+      this.$root.ftExFormat=format;
+      this.$root.get_lists('rpz_lists','ftExRPZAll');
+      this.$root.ftExRPZ=[];
+      this.$emit('bv::show::modal', 'mExpRPZ')
+    },
+    
+    exportDNSConfig: function(){
+      //ftExRPZ
+      switch(this.$root.ftExFormat){
+        case 'bind':
+          break;
+        case 'powerdns':
+          break;
+        case 'infoblox':
+          break;
+      };
+    },
+ 
         
   }
 });

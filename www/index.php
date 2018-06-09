@@ -237,7 +237,7 @@
               </b-form-group>
             </b-col>
             <b-col :sm="6" class="form_row text-left">
-              <b-form-group :style="{ height: (this.ftRPZSrvsAll.length<4 && ftRPZTKeysAll.length<4?'4':'8')+'em' }"   v-b-tooltip.hover title="TSIG Keys">
+              <b-form-group :style="{ height: (this.ftRPZSrvsAll.length<4 && ftRPZTKeysAll.length<4?'4':'8')+'em' }" class="items_list"  v-b-tooltip.hover title="TSIG Keys">
                 <b-form-checkbox-group :disabled="infoWindow" plain stacked v-model="ftRPZTKeys" :options="ftRPZTKeysAll" />
               </b-form-group>
             </b-col>
@@ -341,6 +341,22 @@
             </b-col>
             <b-col :sm="12" class="form_row">
               <b-input type="password" v-model.trim="ftUpwdConf" :state="validatePassMatch('ftUPwd','ftUpwdConf')" placeholder="Confirm new password"  v-b-tooltip.hover title="Confirm new password" />
+            </b-col>
+          </b-row>
+        </div>
+
+      </span>
+    </b-modal>
+
+ <!-- Export RPZ config -->
+    <b-modal centered title="Export configuration" id="mExpRPZ" ref="refExpRPZ" body-class="text-center pt-0 pb-0" ok-title="Export" @ok="exportDNSConfig" v-cloak>
+      <span class='text-center'>
+        <div>
+          <b-row>
+            <b-col :sm="12"  class="form_row text-left">
+              <b-form-group v-b-tooltip.hover title="Select Response Policy Zones">
+                <b-form-checkbox-group :style="{ height: (this.ftExRPZAll.length<4 && ftExRPZAll.length<4?'4':'8')+'em' }" plain stacked class="items_list" v-model="ftExRPZ" :options="ftExRPZAll" />
+              </b-form-group>
             </b-col>
           </b-row>
         </div>

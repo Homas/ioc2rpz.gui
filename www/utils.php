@@ -10,7 +10,7 @@
       </b-card>
       <b-card header="ISC Bind configuration" title="Export ISC Bind">
           <p class="card-text">Export ISC Bind configuration</p>
-          <b-button disabled v-b-tooltip.hover title="Export ISC Bind configuration" variant="outline-secondary" size="sm"><i class="fa fa-download"> Export ISC Bind</i></b-button>
+          <b-button v-b-tooltip.hover title="Export ISC Bind configuration" variant="outline-secondary" size="sm" @click.stop="exportShowModal('bind')"><i class="fa fa-download"> Export ISC Bind</i></b-button>
       </b-card>
       <b-card header="PowerDNS configuration" title="Export PowerDNS">
           <p class="card-text">Export PowerDNS configuration</p>

@@ -278,6 +278,10 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
       $response=json_encode(DB_selectArray($db,"select rowid as value, name as text from whitelists where user_id=$USERID;"));
       break;
     
+    case "GET rpz_lists":
+      $response=json_encode(DB_selectArray($db,"select rowid as value, name as text from rpzs where user_id=$USERID;"));
+      break;
+    
     case "GET servercfg": //generate ioc2rpz configuration and pass it to the client
       $cfg=genConfig($db,$USERID,intval($REQUEST['rowid']));
       header("Content-Type: text/plain");
