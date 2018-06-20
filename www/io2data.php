@@ -97,7 +97,8 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
       break;
     //modify TSIG
     case "PUT tkeys": 
-      $sql="update tkeys set name='".DB_escape($db,$REQUEST['tKeyName'])."', alg='".DB_escape($db,$REQUEST['tKeyAlg'])."', tkey='".DB_escape($db,$REQUEST['tKey'])."', mgmt=".DB_boolval($REQUEST['tKeyMGMT'])." where user_id=$USERID and rowid='${REQUEST['tKeyId']}'";
+      $sql_update="update servers set cfg_updated=1 where rowid in (select distinct server_id from rpzs_servers left join rpzs_${REQUEST['req']} on rpzs_${REQUEST['req']}.rpz_id=rpzs_servers.rpz_id where rpzs_servers.user_id=$USERID and rpzs_${REQUEST['req']}.".rtrim($REQUEST['req'],"s")."_id=".intval($REQUEST['tKeyId'])." UNION select server_id from servers_tsig where user_id=$USERID and tsig_id=".intval($REQUEST['tKeyId']).");\n";      
+      $sql="update tkeys set name='".DB_escape($db,$REQUEST['tKeyName'])."', alg='".DB_escape($db,$REQUEST['tKeyAlg'])."', tkey='".DB_escape($db,$REQUEST['tKey'])."', mgmt=".DB_boolval($REQUEST['tKeyMGMT'])." where user_id=$USERID and rowid='${REQUEST['tKeyId']}';\n$sql_update";
       if (DB_execute($db,$sql)) $response='{"status":"ok"}'; else $response='{"status":"failed", "sql":"'.$sql.'"}'; //TODO remove SQL
       break;
 
@@ -108,7 +109,9 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
       break;
     //modify whitelist
     case "PUT whitelists": 
-      $sql="update whitelists set name='".DB_escape($db,$REQUEST['tSrcName'])."', url='".DB_escape($db,$REQUEST['tSrcURL'])."', regex='".DB_escape($db,$REQUEST['tSrcREGEX'])."' where user_id=$USERID and rowid='".intval($REQUEST['tSrcId'])."'";
+      $sql_update="update servers set cfg_updated=1 where rowid in (select distinct server_id from rpzs_servers left join rpzs_${REQUEST['req']} on rpzs_${REQUEST['req']}.rpz_id=rpzs_servers.rpz_id where rpzs_servers.user_id=$USERID and rpzs_${REQUEST['req']}.".rtrim($REQUEST['req'],"s")."_id=".intval($REQUEST['tSrcId']).");\n";
+      $sql="update whitelists set name='".DB_escape($db,$REQUEST['tSrcName'])."', url='".DB_escape($db,$REQUEST['tSrcURL'])."', regex='".DB_escape($db,$REQUEST['tSrcREGEX'])."' where user_id=$USERID and rowid='".intval($REQUEST['tSrcId'])."';\n$sql_update";
+
       if (DB_execute($db,$sql)) $response='{"status":"ok"}'; else $response='{"status":"failed", "sql":"'.$sql.'"}'; //TODO remove SQL
       break;
 
@@ -119,7 +122,10 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
       break;
     //modify sources
     case "PUT sources": 
-      $sql="update sources set name='".DB_escape($db,$REQUEST['tSrcName'])."', url='".DB_escape($db,$REQUEST['tSrcURL'])."', url_ixfr='".DB_escape($db,$REQUEST['tSrcURLIXFR'])."', regex='".DB_escape($db,$REQUEST['tSrcREGEX'])."' where user_id=$USERID and rowid='".intval($REQUEST['tSrcId'])."'";
+
+      $sql_update="update servers set cfg_updated=1 where rowid in (select distinct server_id from rpzs_servers left join rpzs_${REQUEST['req']} on rpzs_${REQUEST['req']}.rpz_id=rpzs_servers.rpz_id where rpzs_servers.user_id=$USERID and rpzs_${REQUEST['req']}.".rtrim($REQUEST['req'],"s")."_id=".intval($REQUEST['tSrcId']).");\n";
+      
+      $sql="update sources set name='".DB_escape($db,$REQUEST['tSrcName'])."', url='".DB_escape($db,$REQUEST['tSrcURL'])."', url_ixfr='".DB_escape($db,$REQUEST['tSrcURLIXFR'])."', regex='".DB_escape($db,$REQUEST['tSrcREGEX'])."' where user_id=$USERID and rowid='".intval($REQUEST['tSrcId'])."';\n$sql_update";
       if (DB_execute($db,$sql)) $response='{"status":"ok"}'; else $response='{"status":"failed", "sql":"'.$sql.'"}'; //TODO remove SQL
       break;
  
@@ -141,7 +147,7 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
 #{rpz,{"dns-bh.ioc2rpz",86400,3600,2592000,7200,"true","true","nxdomain",["pub_demokey_1","at_demokey_1","priv_key_1"],"mixed",604800,86400,["dns-bh"],[],["whitelist_1"]}}.
 #      $response='[{"name":"dns-bh.ioc2rpz", "servers":["server-1"], "soa_refresh":86400, "soa_update_retry":3600, "soa_expiration":2592000, "soa_nx_ttl":7200, "cache":"true", "wildcard":"true", "action":"nxdomain", "tkeys":["pub_demokey_1","at_demokey_1","priv_key_1"], "ioc_type":"mixed", "axfr_update":604800, "ixfr_update":86400, "sources":["dns-bh","dns-bh1"], "notify":[], "whitelists":["whitelist_1"]}]';
 
-      $result=DB_select($db,"select rowid,* from rpzs where user_id=$USERID;");
+      $result=DB_select($db,"select rowid,* from rpzs where user_id=$USERID ".(!empty($REQUEST['rowid'])?" and rowid in ($ReqRowId)":"").";");
       $rarray=[];
       while ($row = DB_fetchArray($result)) {
         unset($row['user_id']);
@@ -149,10 +155,10 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
         //actioncustom nx/nod/pass/drop/tcp/loc
         if (in_array($row['action'],["nxdomain","nodata","passthru","drop","tcp-only"])) $row['actioncustom']="";else{$row['actioncustom']=$row['action'];$row['action']="local";};
 
-        $subres=DB_selectArray($db,"select tkeys.rowid,tkeys.name from rpzs_tkeys left join tkeys on tkeys.rowid=rpzs_tkeys.tkey_id where rpzs_tkeys.user_id=$USERID and rpzs_tkeys.rpz_id=${row['rowid']};");
+        $subres=DB_selectArray($db,"select tkeys.rowid,tkeys.name, tkeys.alg, tkeys.tkey from rpzs_tkeys left join tkeys on tkeys.rowid=rpzs_tkeys.tkey_id where rpzs_tkeys.user_id=$USERID and rpzs_tkeys.rpz_id=${row['rowid']};");
         $row['tkeys']=$subres;
 
-        $subres=DB_selectArray($db,"select servers.rowid,servers.name from rpzs_servers left join servers on servers.rowid=rpzs_servers.server_id where rpzs_servers.user_id=$USERID and rpzs_servers.rpz_id=${row['rowid']};");
+        $subres=DB_selectArray($db,"select servers.rowid,servers.name, pub_ip from rpzs_servers left join servers on servers.rowid=rpzs_servers.server_id where rpzs_servers.user_id=$USERID and rpzs_servers.rpz_id=${row['rowid']};");
         $row['servers']=$subres;
 
         $subres=DB_selectArray($db,"select whitelists.rowid,whitelists.name from rpzs_whitelists left join whitelists on whitelists.rowid=rpzs_whitelists.whitelist_id where rpzs_whitelists.user_id=$USERID and rpzs_whitelists.rpz_id=${row['rowid']};");
@@ -190,7 +196,7 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
           $sql.="insert into rpzs_tkeys values($rpzid,$USERID,${tkey['rowid']});\n";
         };
         foreach($servers as $tkey){
-          $sql.="insert into rpzs_servers values($rpzid,$USERID,${tkey['rowid']});\n";
+          $sql.="insert into rpzs_servers values($rpzid,$USERID,${tkey['rowid']});\n update servers set cfg_updated=1 where rowid=${tkey['rowid']};\n";
         };
         foreach($sources as $tkey){
           $sql.="insert into rpzs_sources values($rpzid,$USERID,${tkey['rowid']});\n";
@@ -218,14 +224,16 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
       $whlists_new=DB_selectArray($db,"select rowid from whitelists where user_id=$USERID and rowid in (".implode(",",filterIntArr(json_decode($REQUEST['tRPZWL']))).")");
       $whlists_old=DB_selectArray($db,"select rowid,whitelist_id from rpzs_whitelists where user_id=$USERID and rpz_id=$rpzid");
 
-      if (in_array($REQUEST['tRPZAction'],["nx","nod","pass","drop","tcp"])) $action=$REQUEST['tRPZAction'];else $action=erlChLRecords($REQUEST['tRPZActionCustom']);
+      if (in_array($REQUEST['tRPZAction'],["nxdomain","nodata","passthru","drop","tcp-only"])) $action=$REQUEST['tRPZAction'];else $action=erlChLRecords($REQUEST['tRPZActionCustom']);
 
       $sql='';
       foreach($tkeys_old as $tkey){if ($k=array_search($tkey['tkey_id'],$tkeys_new)) unset($tkeys_new[$k]); else $sql.="delete from rpzs_tkeys where rowid=${tkey['rowid']};\n";};       
       foreach($tkeys_new as $tkey){$sql.="insert into rpzs_tkeys values($rpzid,$USERID,${tkey['rowid']});\n";};
 
-      foreach($servers_old as $item){if ($k=array_search($item['server_id'],$tkeys_new)) unset($servers_new[$k]); else $sql.="delete from rpzs_servers where rowid=${item['rowid']};\n";};       
-      foreach($servers_new as $item){$sql.="insert into rpzs_servers values($rpzid,$USERID,${item['rowid']});\n";};
+      $chCfgSrv=[];
+      foreach($servers_old as $item){if ($k=array_search($item['server_id'],$tkeys_new)) unset($servers_new[$k]); else {$sql.="delete from rpzs_servers where rowid=${item['rowid']};\n";array_push($chCfgSrv,$item['rowid']);}};       
+      foreach($servers_new as $item){$sql.="insert into rpzs_servers values($rpzid,$USERID,${item['rowid']});\n";array_push($chCfgSrv,$item['rowid']);};      
+      $sql.="update servers set cfg_updated=1 where rowid in (".implode(",", $chCfgSrv).");\n";
 
       foreach($sources_old as $item){if ($k=array_search($item['source_id'],$tkeys_new)) unset($sources_new[$k]); else $sql.="delete from rpzs_sources where rowid=${item['rowid']};\n";};       
       foreach($sources_new as $item){$sql.="insert into rpzs_sources values($rpzid,$USERID,${item['rowid']});\n";};
@@ -255,7 +263,7 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
     case "DELETE rpzs":
       $sql="delete from rpzs_notify where user_id=$USERID and rpz_id in ($ReqRowId);\n";
       $sql.="delete from rpzs_tkeys where user_id=$USERID and rpz_id in ($ReqRowId);\n";
-      $sql.="delete from rpzs_servers where user_id=$USERID and rpz_id in ($ReqRowId);\n";
+      $sql.="delete from rpzs_servers where user_id=$USERID and rpz_id in ($ReqRowId);\n update servers set cfg_updated=1 where rowid in ($ReqRowId);\n";
       $sql.="delete from rpzs_whitelists where user_id=$USERID and rpz_id in ($ReqRowId);\n";
       $sql.="delete from rpzs_sources where user_id=$USERID and rpz_id in ($ReqRowId);\n";
       $sql.="delete from rpzs where user_id=$USERID and rowid in ($ReqRowId);\n";
@@ -279,7 +287,7 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
       break;
     
     case "GET rpz_lists":
-      $response=json_encode(DB_selectArray($db,"select rowid as value, name as text from rpzs where user_id=$USERID;"));
+      $response=json_encode(DB_selectArray($db,"select rowid as value, name as text from rpzs where disabled=0 and user_id=$USERID;"));
       break;
     
     case "GET servercfg": //generate ioc2rpz configuration and pass it to the client
@@ -293,7 +301,7 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
       //save ioc2rpz configuration and reconfigure service
       //support local file via local script. Here just set a relevant field in DB.
       //support S3. Upload file to S3 and send reconfugure signal
-      $sql="update servers set publish_upd=1 where user_id=$USERID and cfg_updated=1 and mgmt=1";
+      $sql="update servers set publish_upd=1, cfg_updated=0 where user_id=$USERID and cfg_updated=1 and mgmt=1 ".($REQUEST['SrvId'] == 'all'?" and disabled=0 ":" and rowid=".intval($REQUEST['SrvId']));
       if (DB_execute($db,$sql)) $response='{"status":"ok"}'; else $response='{"status":"failed", "sql":"'.$sql.'"}'; //TODO remove SQL
 
       break;

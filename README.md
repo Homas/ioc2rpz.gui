@@ -19,28 +19,37 @@ ioc2rpz.gui is available on the Docker Hub. Just look for ioc2rpz.gui
 
 
 ## TODO
-- [x] DNS server IP
-- [x] Basic authentication/Authozitaion, password management
-- [x] Basic input validation and constraints enforcement
-- [ ] Utils
-    - [ ] Import configuration (srv and rpz uniqueness, srv params)
-    - [ ] Export ISC Bind, PowerDNS, Infoblox configuration
-- [ ] Intelligent update "publishing"
-- [ ] README.md
-- [ ] SSL
-- [ ] Sessions expirations
+- [ ] Publishing.
+    - [x] Track changes for all objects & update SRV flag.
+    - [ ] Publishing button on a SRV flag.
+- [x] Utils
+    - [x] Export ISC Bind configuration
+- [x] Srv/RPZ disabled (add/edit windows + check server side)
+- [ ] Container. SSL persist config
+- [ ] Container. Sessions expirations
+- [ ] Container. Crontab
+- [ ] README.md && Video
+- [ ] ioc2rpz fix http error handeling
+- [ ] Major bugs
 
 ----- cut. an article to be an published -----
+- [ ] Servers table. Server online status.
 - [ ] Source/whitelist check availability/rechability
+- [ ] Server side. Intelligent publishing an updated server configuration
+- [ ] Local RPZ rules validation (server side & gui)
 - [ ] Monitoring/dashboards
 - [ ] Wiki: AWS How-to (ioc2rpz & ioc2rpz.gui)
 - [ ] MySQL support
 - [ ] S3 support
 - [ ] Link to the community
+- [ ] Utils
+    - [ ] Import configuration. Srv and RPZs uniqueness + add SRV params
+    - [ ] Export PowerDNS, Infoblox configuration
+    - [ ] Import/Backup ioc2rpz.gui config
 
 ## Bugs
 - [ ] Unchecked checkboxes in tables on odd lines
-
+- [ ] Sometimes changes are nit published
 
 # License
 Copyright 2017 - 2018 Vadim Pavlov ioc2rpz[at]gmail[.]com

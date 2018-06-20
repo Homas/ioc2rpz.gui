@@ -8,7 +8,7 @@ const DBCreateIfNotExists=true;
 
 const ioc2rpzConf="io2cfg";
 
-$io2ver=2018052701;
+$io2ver=2018061901;
 
 function filterIntArr($array){
   $result = [];
@@ -117,7 +117,7 @@ function genConfig($db,$USERID,$SrvId){
 
   //tkeys
   $cfg.="\n% tsig key record: name, alg, key\n";
-  $row=DB_selectArray($db,"select * from tkeys where user_id=$USERID and (rowid in (select tsig_id from servers_tsig where server_id=$SrvId) or rowid in (select tkey_id from rpzs_tkeys left join rpzs on rpzs_tkeys.rpz_id=rpzs.rowid left join rpzs_servers on rpzs_servers.rpz_id=rpzs.rowid where server_id=$SrvId));");
+  $row=DB_selectArray($db,"select * from tkeys where user_id=$USERID and (rowid in (select tsig_id from servers_tsig where server_id=$SrvId) or rowid in (select tkey_id from rpzs_tkeys left join rpzs on rpzs_tkeys.rpz_id=rpzs.rowid left join rpzs_servers on rpzs_servers.rpz_id=rpzs.rowid where server_id=$SrvId and rpzs.disabled=0));");
   foreach($row as $item){$cfg.="{key,{\"${item['name']}\",\"${item['alg']}\",\"${item['tkey']}\"}}.\n";};
   
   //whitelists
@@ -132,7 +132,7 @@ function genConfig($db,$USERID,$SrvId){
   
   //rpzs
   $cfg.="\n% rpz record: name, SOA refresh, SOA update retry, SOA expiration, SOA NXDomain TTL, Cache, Wildcards, Action, [tkeys], ioc_type, AXFR_time, IXFR_time, [sources], [notify], [whitelists]\n";
-  $row=DB_selectArray($db,"select rpzs.rowid,* from rpzs left join rpzs_servers on rpzs_servers.rpz_id=rpzs.rowid where server_id=$SrvId and rpzs.user_id=$USERID;");
+  $row=DB_selectArray($db,"select rpzs.rowid,* from rpzs left join rpzs_servers on rpzs_servers.rpz_id=rpzs.rowid where server_id=$SrvId and rpzs.user_id=$USERID and rpzs.disabled=0;");
 
   foreach($row as $item){
     $subres_tkeys=DB_selectArray($db,"select name from rpzs_tkeys left join tkeys on tkeys.rowid=rpzs_tkeys.tkey_id where rpzs_tkeys.user_id=$USERID and rpz_id=${item['rowid']}");  

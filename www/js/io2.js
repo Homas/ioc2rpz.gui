@@ -24,11 +24,12 @@ Vue.component('io2-table', {
         </b-row>
         <b-row>
           <b-col md="12">
-            <b-table :busy.sync="busy" :items="get_tables" :id="table" :ref="table" :fields="fields" :api-url="'/io2data.php/'+table" :current-page="currentPage" :per-page="perPage" :no-provider-paging=true :no-provider-sorting=true :no-provider-filtering=true :outlined=true :striped=true :small=true :filter="filter" @filtered="onFiltered" v-model="tblDispl">
+            <b-table :busy.sync="busy" :items="get_tables" :id="table" :ref="table" :fields="fields" :api-url="'/io2data.php/'+table" :current-page="currentPage" :per-page="perPage" :no-provider-paging=true :no-provider-sorting=true :no-provider-filtering=true :outlined=true :striped=true :small=true :filter="filter" @filtered="onFiltered" @refreshed="onRefreshred(table)" v-model="tblDispl">
               <slot></slot>
               <template slot="actions_e" slot-scope="row">
                 <b-button size="sm" @click.stop="mgmtRec('info', table, row, $event.target)" class="" v-b-tooltip.hover title="Information" variant="outline-secondary"><i class="fa fa-info-circle"></i></b-button>
                 <b-button size="sm" @click.stop="mgmtRec('export', table, row, $event.target)" class="" v-if="table == 'servers'" v-b-tooltip.hover title="Export Configuration" variant="outline-secondary"><i class="fa fa-download"></i></b-button>
+                <b-button size="sm" @click.stop="mgmtRec('publish', table, row, $event.target)" class="" v-if="table == 'servers'" v-b-tooltip.hover title="Publish Configuration" :variant="row.item.cfg_updated == 1?'outline-primary':'outline-secondary'"><i class="fa fa-upload"></i></b-button>
                 <b-button size="sm" @click.stop="mgmtRec('edit', table, row, $event.target)" class=""  v-b-tooltip.hover title="Edit" variant="outline-secondary"><i class="fa fa-pencil-alt"></i></b-button>
                 <b-button size="sm" @click.stop="mgmtRec('clone', table, row, $event.target)" class="" v-if="table != 'tkeys'" v-b-tooltip.hover title="Clone" variant="outline-secondary"><i class="fa fa-clone"></i></b-button>
                 <b-button size="sm" @click.stop="requestDelete(table,row)" class="" v-b-tooltip.hover title="Delete" variant="outline-secondary"><i class="fa fa-times-circle"></i></b-button>
@@ -130,6 +131,17 @@ Vue.component('io2-table', {
       this.totalRows = filteredItems.length;
       this.currentPage = 1;
     },
+
+    onRefreshred (table) {
+//      var obj=this;
+//      obj.$root.publishUpdates=false;
+//      if (table == 'servers') obj.$root.$refs.io2tbl_servers.$refs.servers.value.forEach(function(el) {
+//            if (el.cfg_updated == 1) obj.$root.publishUpdates=true;
+//        });
+    },
+    
+
+    
     //Refresh button click
     refreshTbl(table){
       this.$root.$emit('bv::refresh::table', table);
@@ -157,6 +169,7 @@ Vue.component('io2-table', {
           this.$root.genRandom('tkey');
           this.$root.ftKeyAlg='md5';
           this.$root.ftKeyMGMT=0;
+          this.$root.editRow={};
           this.$root.$emit('bv::show::modal', 'mConfEditTSIG');
         break;
         case "info tkeys":
@@ -167,6 +180,7 @@ Vue.component('io2-table', {
           this.$root.ftKey=row.item.tkey;
           this.$root.ftKeyAlg=row.item.alg;
           this.$root.ftKeyMGMT=row.item.mgmt;
+          this.$root.editRow=row.item;
           this.$root.$emit('bv::show::modal', 'mConfEditTSIG');
         break;
         case "add whitelists":
@@ -178,6 +192,7 @@ Vue.component('io2-table', {
           this.$root.ftSrcType=table;
           this.$root.ftSrcURLIXFR='';
           this.$root.ftSrcTitle=(table=="sources")?"Source":"Whitelist";
+          this.$root.editRow={};
           this.$root.$emit('bv::show::modal', 'mConfEditSources');
         break;
         case "info whitelists":
@@ -193,6 +208,7 @@ Vue.component('io2-table', {
           this.$root.ftSrcType=table;
           this.$root.ftSrcURLIXFR=(table=="sources")?row.item.url_ixfr:'';
           this.$root.ftSrcTitle=(table=="sources")?"Source":"Whitelist";
+          this.$root.editRow=row.item;
           this.$root.$emit('bv::show::modal', 'mConfEditSources');
         break;
         case "add servers":
@@ -207,7 +223,9 @@ Vue.component('io2-table', {
           this.$root.ftSrvMGMTIP='';
           this.$root.ftSrvSType=0; //0 - local, 1 - sftp/scp, 3 - aws s3
           this.$root.ftSrvURL="";
+          this.$root.ftSrvDisabled=0;
           this.$root.get_lists('tkeys_mgmt','ftSrvTKeysAll');
+          this.$root.editRow={};
           this.$root.$emit('bv::show::modal', 'mConfEditSrv');
         break;
         case "info servers":
@@ -222,6 +240,7 @@ Vue.component('io2-table', {
           this.$root.ftSrvMGMT=row.item.mgmt;
           this.$root.ftSrvSType=row.item.stype; //0 - local, 1 - sftp/scp, 3 - aws s3
           this.$root.ftSrvURL=row.item.URL;
+          this.$root.ftSrvDisabled=row.item.disabled;
           var IPs='';
           row.item.mgmt_ips.forEach(function(el) {
             IPs+=el.mgmt_ip+' ';
@@ -235,7 +254,13 @@ Vue.component('io2-table', {
           });
           this.$root.ftSrvTKeys=tkeys,
           
+          this.$root.editRow=row.item;
+          this.$root.editRow.mgmt_ips_str=this.$root.ftSrvMGMTIP;
+          this.$root.editRow.tkeys_arr=this.$root.ftSrvTKeys;
           this.$root.$emit('bv::show::modal', 'mConfEditSrv');
+        break;
+        case "publish servers":
+          this.$root.pushUpdatestoSRV(row.item.rowid);
         break;
         case "export servers":
           //alert("export "+row.item.name+" configuration");
@@ -274,7 +299,10 @@ Vue.component('io2-table', {
           this.$root.ftRPZActionCustom=""; 
           this.$root.ftRPZIOCType="m";          
           this.$root.ftRPZNotify="";
+          
+          this.$root.ftRPZDisabled=0;
 
+          this.$root.editRow={};
           this.$root.$emit('bv::show::modal', 'mConfEditRPZ');
         break;
         case "info rpzs":
@@ -293,6 +321,7 @@ Vue.component('io2-table', {
           this.$root.ftRPZAction=row.item.action;
           this.$root.ftRPZActionCustom=row.item.actioncustom?JSON.parse(row.item.actioncustom):"";  //TODO check
           this.$root.ftRPZIOCType=row.item.ioc_type;
+          this.$root.ftRPZDisabled=row.item.disabled;
           var RPZNotify='';
           row.item.notify.forEach(function(el) {
             RPZNotify+=el.notify+' ';
@@ -329,7 +358,14 @@ Vue.component('io2-table', {
           this.$root.ftRPZWL=list;
 
           
-          this.$root.$emit('bv::show::modal', 'mConfEditRPZ');
+         this.$root.editRow=row.item;
+         this.$root.editRow.notify_str=this.$root.ftRPZNotify;
+         this.$root.editRow.servers_arr=this.$root.ftRPZSrvs;
+         this.$root.editRow.tkeys_arr=this.$root.ftRPZTKeys;
+         this.$root.editRow.sources_arr=this.$root.ftRPZSrc;
+         this.$root.editRow.whitelists_arr=this.$root.ftRPZWL;
+         
+         this.$root.$emit('bv::show::modal', 'mConfEditRPZ');
         break;
         default:
           alert(action+' '+table); //+' ' + row.item.name          
@@ -366,7 +402,7 @@ new Vue({
         { key: 'email', label: 'Admin Email' },
         { key: 'mgmt', label: 'Monitoring', 'class': 'text-center' },
         { key: 'disabled', label: 'Disabled', 'class': 'text-center' },
-        { key: 'actions_e', label: 'Actions', 'class': 'text-center',  'tdClass': 'width200'}
+        { key: 'actions_e', label: 'Actions', 'class': 'text-center',  'tdClass': 'width250'}
       ],
       tkeys_fields: [
         { key: 'rowid', label: '', sortable: true },
@@ -493,6 +529,7 @@ new Vue({
 
       infoWindow: true,
       publishUpdates: false, //TODO save in cookie
+      editRow: {},
       
       mInfoMSGvis: false,
       msgInfoMSG: '',
@@ -512,6 +549,9 @@ new Vue({
       ftExRPZ: [],
       ftExRPZAll: [],
       ftExFormat: '',
+      
+      //export RPZ configs
+      rpzExportSAll: false,
       
 //          }
   },
@@ -575,7 +615,7 @@ new Vue({
     },
     
     validateIXFRURL: function (vrbl) {
-      return this.validateURL(vrbl) || this.$data[vrbl]=='[:AXFR:]' || (/^\[:AXFR:\]((\?|\&)[;&a-zA-Z0-9\d%_.~+=-]*)?(\#[-a-zA-Z0-9\d_]*)?$/.test(this.$data[vrbl]));
+      return this.$data[vrbl].length == 0 ? null: (this.validateURL(vrbl) || this.$data[vrbl]=='[:AXFR:]' || (/^\[:AXFR:\]((\?|\&)[;&a-zA-Z0-9\d%_.~+=-]*)?(\#[-a-zA-Z0-9\d_]*)?$/.test(this.$data[vrbl])));
     },
 
     formatIXFRURL: function(val,e){
@@ -664,66 +704,105 @@ new Vue({
      *TODO check if PUT/POST json is valid (escape quotes etc)
      */
     //TKeys
-    tblMgmtTKeyRecord: function (table) {
-      var obj=this;
-      this.publishUpdates=true;
-      var data={tKeyId: this.ftKeyId, tKeyName: this.ftKeyName, tKey: this.ftKey, tKeyAlg: this.ftKeyAlg, tKeyMGMT: this.ftKeyMGMT};
-      if (this.ftKeyId==-1){
-        //Add
-        axios.post('/io2data.php/'+table,data).then(function (response) {obj.mgmtTableOk(response,obj,table)}).catch(function (error){obj.mgmtTableError(error,obj,table)})
-      }else{
-        //Modify
-        axios.put('/io2data.php/'+table,data).then(function (response) {obj.mgmtTableOk(response,obj,table)}).catch(function (error){obj.mgmtTableError(error,obj,table)})
+    tblMgmtTKeyRecord: function (ev,table) {
+      if (this.validateName('ftKeyName') && this.validateB64('ftKey')){
+        var obj=this;
+        if ((this.ftKeyId!=-1 && (this.$root.ftKeyName != this.editRow.name || this.$root.ftKey!=this.editRow.tkey || this.$root.ftKeyAlg!=this.editRow.alg || this.$root.ftKeyMGMT!=this.editRow.mgmt))) this.publishUpdates=true;          
+        let data={tKeyId: this.ftKeyId, tKeyName: this.ftKeyName, tKey: this.ftKey, tKeyAlg: this.ftKeyAlg, tKeyMGMT: this.ftKeyMGMT};
+        if (this.ftKeyId==-1){
+          //Add
+          axios.post('/io2data.php/'+table,data).then(function (response) {obj.mgmtTableOk(response,obj,table)}).catch(function (error){obj.mgmtTableError(error,obj,table)})
+        }else{
+          //Modify
+          axios.put('/io2data.php/'+table,data).then(function (response) {obj.mgmtTableOk(response,obj,table)}).catch(function (error){obj.mgmtTableError(error,obj,table)})
+        };
+      } else {
+        ev.preventDefault();
+        if (!this.validateName('ftKeyName')) this.$refs.formKeyName.$el.focus()
+          else this.$refs.formKey.$el.focus();
       };
     },
     
     //Sources/Whitelists
-    tblMgmtSrcRecord: function (table) {
-      var obj=this;
-      this.publishUpdates=true;
-      var data={tSrcId: this.ftSrcId, tSrcName: this.ftSrcName, tSrcURL: this.ftSrcURL, tSrcREGEX: this.ftSrcREGEX, tSrcURLIXFR: this.ftSrcURLIXFR};
-      if (this.ftSrcId==-1){
-        //Add
-        axios.post('/io2data.php/'+table,data).then(function (response) {obj.mgmtTableOk(response,obj,table)}).catch(function (error){obj.mgmtTableError(error,obj,table)})
-      }else{
-        //Modify
-        axios.put('/io2data.php/'+table,data).then(function (response) {obj.mgmtTableOk(response,obj,table)}).catch(function (error){obj.mgmtTableError(error,obj,table)})
+    tblMgmtSrcRecord: function (ev,table) {
+      if (this.validateName('ftSrcName') && this.validateURL('ftSrcURL') && (this.validateREGEX('ftSrcREGEX')==null || this.validateREGEX('ftSrcREGEX')) && (((this.validateIXFRURL('ftSrcURLIXFR') || this.validateIXFRURL('ftSrcURLIXFR')==null) && this.ftSrcType == 'sources') || this.ftSrcType != 'sources')){
+        var obj=this;
+        if (this.ftSrcId!=-1 && (this.ftSrcName != this.editRow.name || this.ftSrcURL!=this.editRow.url || this.ftSrcREGEX!=this.editRow.regex || (this.ftSrcURLIXFR!=this.editRow.url_ixfr  && this.ftSrcType == 'sources'))) this.publishUpdates=true;
+        let data={tSrcId: this.ftSrcId, tSrcName: this.ftSrcName, tSrcURL: this.ftSrcURL, tSrcREGEX: this.ftSrcREGEX, tSrcURLIXFR: this.ftSrcURLIXFR};
+        if (this.ftSrcId==-1){
+          //Add
+          axios.post('/io2data.php/'+table,data).then(function (response) {obj.mgmtTableOk(response,obj,table)}).catch(function (error){obj.mgmtTableError(error,obj,table)})
+        }else{
+          //Modify
+          axios.put('/io2data.php/'+table,data).then(function (response) {obj.mgmtTableOk(response,obj,table)}).catch(function (error){obj.mgmtTableError(error,obj,table)})
+        };
+      } else {
+        ev.preventDefault();
+        if (!this.validateName('ftSrcName')) this.$refs.formSrcName.$el.focus();
+      	  else if (!this.validateURL('ftSrcURL') && this.validateREGEX('ftSrcURL')!=null) this.$refs.formSrcURL.$el.focus() ;
+      	  else if (!this.validateREGEX('ftSrcREGEX') && this.validateREGEX('ftSrcREGEX')!=null) this.$refs.formREGEX.$el.focus(); 
+          else this.$refs.formSrcURLIXFR.$el.focus();
       };
     },
 
     //Server
-    tblMgmtSrvRecord: function (table) {
-      var obj=this;
-      this.publishUpdates=true;
-      var data={tSrvId: this.ftSrvId, tSrvName: this.ftSrvName, tSrvIP: this.ftSrvIP, tSrvPubIP: this.ftSrvPubIP, tSrvNS: this.ftSrvNS, tSrvEmail: this.ftSrvEmail,
-                tSrvMGMT: this.ftSrvMGMT, tSrvMGMTIP: JSON.stringify(this.ftSrvMGMTIP.split(/,|\s/g).filter(String)), tSrvTKeys: JSON.stringify(this.ftSrvTKeys),
-                tSrvDisabled: this.ftSrvDisabled, tSrvSType: this.ftSrvSType, tSrvURL: this.ftSrvURL};
-      if (this.ftSrvId==-1){
-        //Add
-        axios.post('/io2data.php/'+table,data).then(function (response) {obj.mgmtTableOk(response,obj,table)}).catch(function (error){obj.mgmtTableError(error,obj,table)})
-      }else{
-        //Modify
-        axios.put('/io2data.php/'+table,data).then(function (response) {obj.mgmtTableOk(response,obj,table)}).catch(function (error){obj.mgmtTableError(error,obj,table)})
+    tblMgmtSrvRecord: function (ev,table) {
+    
+      if (this.validateName('ftSrvName') && (this.validateIP('ftSrvPubIP') || this.validateIP('ftSrvPubIP') == null) && (this.validateIP('ftSrvIP') || this.validateIP('ftSrvIP') == null) && this.validateHostname('ftSrvNS') && this.validateEmail('ftSrvEmail') && (this.validateIPList('ftSrvMGMTIP') || this.validateIP('ftSrvMGMTIP') == null)){
+        var obj=this;
+        if  (this.ftSrvName != this.editRow.name || this.ftSrvIP!=this.editRow.ip || this.ftSrvPubIP!=this.editRow.pub_ip || this.ftSrvNS!=this.editRow.ns || this.ftSrvEmail!=this.editRow.email || this.ftSrvMGMT!=this.editRow.mgmt || this.ftSrvSType!=this.editRow.stype || this.ftSrvURL!=this.editRow.URL || this.ftSrvMGMTIP!=this.editRow.mgmt_ips_str || this.ftSrvTKeys!=this.editRow.tkeys_arr) this.publishUpdates=true;
+        let data={tSrvId: this.ftSrvId, tSrvName: this.ftSrvName, tSrvIP: this.ftSrvIP, tSrvPubIP: this.ftSrvPubIP, tSrvNS: this.ftSrvNS, tSrvEmail: this.ftSrvEmail,
+                  tSrvMGMT: this.ftSrvMGMT, tSrvMGMTIP: JSON.stringify(this.ftSrvMGMTIP.split(/,|\s/g).filter(String)), tSrvTKeys: JSON.stringify(this.ftSrvTKeys),
+                  tSrvDisabled: this.ftSrvDisabled, tSrvSType: this.ftSrvSType, tSrvURL: this.ftSrvURL};
+        if (this.ftSrvId==-1){
+          //Add
+          axios.post('/io2data.php/'+table,data).then(function (response) {obj.mgmtTableOk(response,obj,table)}).catch(function (error){obj.mgmtTableError(error,obj,table)})
+        }else{
+          //Modify
+          axios.put('/io2data.php/'+table,data).then(function (response) {obj.mgmtTableOk(response,obj,table)}).catch(function (error){obj.mgmtTableError(error,obj,table)})
+        };
+      } else {
+        ev.preventDefault();
+        if (!this.validateName('ftSrvName')) this.$refs.formSrvName.$el.focus();
+      	  else if (!(this.validateIP('ftSrvPubIP') || this.validateIP('ftSrvPubIP') == null)) this.$refs.formSrvPubIP.$el.focus();
+      	  else if (!(this.validateIP('ftSrvIP') || this.validateIP('ftSrvIP') == null)) this.$refs.formSrvIP.$el.focus();
+      	  else if (!this.validateHostname('ftSrvNS')) this.$refs.formSrvNS.$el.focus();
+      	  else if (!this.validateEmail('ftSrvEmail')) this.$refs.formSrvEmail.$el.focus();
+         else this.$refs.formSrcNotify.$el.focus();
       };
+
     },
 
     
     //RPZ
-    tblMgmtRPZRecord: function (table) {
-      var obj=this;
-      this.publishUpdates=true;
-      var data={tRPZId: this.ftRPZId, tRPZName: this.ftRPZName, tRPZSOA_Refresh: this.ftRPZSOA_Refresh, tRPZSOA_UpdRetry: this.ftRPZSOA_UpdRetry,
-                tRPZSOA_Exp: this.ftRPZSOA_Exp, tRPZSOA_NXTTL: this.ftRPZSOA_NXTTL, tRPZCache: this.ftRPZCache,tRPZWildcard: this.ftRPZWildcard, 
-                tRPZNotify: JSON.stringify(this.ftRPZNotify.split(/,|\s/g).filter(String)), tRPZSrvs: JSON.stringify(this.ftRPZSrvs),
-                tRPZIOCType: this.ftRPZIOCType, tRPZAXFR: this.ftRPZAXFR, tRPZIXFR: this.ftRPZIXFR, tRPZDisabled: this.ftRPZDisabled,
-                tRPZTKeys: JSON.stringify(this.ftRPZTKeys), tRPZWL: JSON.stringify(this.ftRPZWL), tRPZSrc: JSON.stringify(this.ftRPZSrc),
-                tRPZAction: this.ftRPZAction, tRPZActionCustom: JSON.stringify(this.ftRPZActionCustom)}; //this.ftRPZActionCustom.split(/,|\s/g).filter(String)
-      if (this.ftRPZId==-1){
-        //Add RPZ
-        axios.post('/io2data.php/'+table,data).then(function (response) {obj.mgmtTableOk(response,obj,table)}).catch(function (error){obj.mgmtTableError(error,obj,table)})
-      }else{
-        //Modify RPZ
-        axios.put('/io2data.php/'+table,data).then(function (response) {obj.mgmtTableOk(response,obj,table)}).catch(function (error){obj.mgmtTableError(error,obj,table)})
+    tblMgmtRPZRecord: function (ev,table) {
+      if (this.validateHostname('ftRPZName') && (this.validateIPList('ftRPZNotify') || this.validateIPList('ftRPZNotify') == null) && ((this.validateCustomAction && this.ftRPZAction === 'local')||this.ftRPZAction != 'local') && this.validateInt('ftRPZSOA_Refresh') && this.validateInt('ftRPZSOA_UpdRetry') && this.validateInt('ftRPZSOA_Exp') && this.validateInt('ftRPZSOA_NXTTL') && this.validateInt('ftRPZAXFR') && this.validateInt('ftRPZIXFR')){
+        var obj=this;
+        if  (this.ftRPZName != this.editRow.name || this.ftRPZSOA_Refresh!=this.editRow.soa_refresh || this.ftRPZSOA_UpdRetry!=this.editRow.soa_update_retry || this.ftRPZSOA_Exp!=this.editRow.soa_expiration || this.ftRPZSOA_NXTTL!=this.editRow.soa_nx_ttl || this.ftRPZAXFR!=this.editRow.axfr_update || this.ftRPZIXFR!=this.editRow.ixfr_update || this.ftRPZCache!=this.editRow.cache || this.ftRPZWildcard!=this.editRow.wildcard || this.ftRPZAction!=this.editRow.action || this.ftRPZIOCType!=this.editRow.ioc_type || this.editRow.notify_str!=this.ftRPZNotify || this.editRow.servers_arr!=this.ftRPZSrvs || this.editRow.tkeys_arr!=this.ftRPZTKeys || this.editRow.sources_arr!=this.ftRPZSrc || this.editRow.whitelists_arr!=this.ftRPZWL ||this.ftRPZActionCustom!=this.editRow.actioncustom || this.ftRPZDisabled!=this.editRow.disabled) this.publishUpdates=true;
+        let data={tRPZId: this.ftRPZId, tRPZName: this.ftRPZName, tRPZSOA_Refresh: this.ftRPZSOA_Refresh, tRPZSOA_UpdRetry: this.ftRPZSOA_UpdRetry,
+                  tRPZSOA_Exp: this.ftRPZSOA_Exp, tRPZSOA_NXTTL: this.ftRPZSOA_NXTTL, tRPZCache: this.ftRPZCache,tRPZWildcard: this.ftRPZWildcard, 
+                  tRPZNotify: JSON.stringify(this.ftRPZNotify.split(/,|\s/g).filter(String)), tRPZSrvs: JSON.stringify(this.ftRPZSrvs),
+                  tRPZIOCType: this.ftRPZIOCType, tRPZAXFR: this.ftRPZAXFR, tRPZIXFR: this.ftRPZIXFR, tRPZDisabled: this.ftRPZDisabled,
+                  tRPZTKeys: JSON.stringify(this.ftRPZTKeys), tRPZWL: JSON.stringify(this.ftRPZWL), tRPZSrc: JSON.stringify(this.ftRPZSrc),
+                  tRPZAction: this.ftRPZAction, tRPZActionCustom: JSON.stringify(this.ftRPZActionCustom)}; //this.ftRPZActionCustom.split(/,|\s/g).filter(String)
+        if (this.ftRPZId==-1){
+          //Add RPZ
+          axios.post('/io2data.php/'+table,data).then(function (response) {obj.mgmtTableOk(response,obj,table)}).catch(function (error){obj.mgmtTableError(error,obj,table)})
+        }else{
+          //Modify RPZ
+          axios.put('/io2data.php/'+table,data).then(function (response) {obj.mgmtTableOk(response,obj,table)}).catch(function (error){obj.mgmtTableError(error,obj,table)})
+        };
+      } else {
+        ev.preventDefault();
+        if (!this.validateHostname('ftRPZName')) this.$refs.formRPZName.$el.focus();
+      	  else if (!((this.validateIPList('ftRPZNotify') || this.validateIPList('ftRPZNotify') == null))) this.$refs.formRPZNotify.$el.focus() ;
+      	  else if (!this.validateCustomAction && this.ftRPZAction === 'local') this.$refs.formRPZActionCustom.$el.focus() ;
+      	  else if (!this.validateInt('ftRPZSOA_Refresh')) this.$refs.formRPZSOA_Refresh.$el.focus() ;
+      	  else if (!this.validateInt('ftRPZSOA_UpdRetry')) this.$refs.formRPZSOA_UpdRetry.$el.focus() ;
+      	  else if (!this.validateInt('ftRPZSOA_Exp')) this.$refs.formRPZSOA_Exp.$el.focus() ;
+      	  else if (!this.validateInt('ftRPZSOA_NXTTL')) this.$refs.formRPZSOA_NXTTL.$el.focus() ;
+      	  else if (!this.validateInt('ftRPZAXFR')) this.$refs.formRPZAXFR.$el.focus() ;
+         else this.$refs.formRPZIXFR.$el.focus();
       };
     },
 
@@ -743,12 +822,14 @@ new Vue({
       })
     },
     
-    pushUpdatestoSRV: function () {
+    pushUpdatestoSRV: function (SrvId) {
       var obj=this;
-      axios.post('/io2data.php/publish_upd').then(function (response) {
+      this.publishUpdates=false;
+      axios.post(`/io2data.php/publish_upd?SrvId=${SrvId}`).then(function (response) {
         if (response.data.status == "ok"){
-          obj.publishUpdates=false;
           obj.showInfo('Configuration will be updated in a few seconds',3);
+          obj.publishUpdates=false; obj.$root.$emit('bv::refresh::table', 'servers')
+          //setTimeout(function(){}, 3 * 1000);
         }else{
           //TODO better error handeling
           alert('Publishing error');
@@ -876,6 +957,7 @@ new Vue({
         if (tkeys.data) tkeys.data.forEach(function(el){TKeysAll[el['name']]=el['rowid']});
         if (sources.data) sources.data.forEach(function(el){SrcAll[el['name']]=el['rowid']});
         if (whitelists.data) whitelists.data.forEach(function(el){WLAll[el['name']]=el['rowid']});
+
         if(Srv !=[]){
           vm.ftSrvId=-1;
           vm.ftSrvName=vm.ftImpServName;
@@ -964,7 +1046,8 @@ new Vue({
           key['sha256'] = new Uint8Array(32); 
           key['sha512'] = new Uint8Array(64); 
           window.crypto.getRandomValues(key[this.$root.ftKeyAlg]);
-          this.$root.ftKey=btoa(String.fromCharCode.apply(null, key[this.$root.ftKeyAlg]));
+//          this.$root.ftKey=btoa(String.fromCharCode.apply(null, key[this.$root.ftKeyAlg]));
+          this.$root.ftKey=btoa(key[this.$root.ftKeyAlg]);
           break;
       }
     },
@@ -990,16 +1073,71 @@ new Vue({
       this.$emit('bv::show::modal', 'mExpRPZ')
     },
     
-    exportDNSConfig: function(){
-      //ftExRPZ
+    rpzExportToggleAll: function(checked){
+      this.ftExRPZ = checked ? this.ftExRPZAll.map(function(el){return el.value}) : []
+    },
+    
+    //Generate export configuration
+    exportDNSConfig: async function(){
+      let p = axios.get('/io2data.php/rpzs?rowid='+JSON.stringify(this.$root.ftExRPZ));
+      var [rpzs] = await Promise.all([p]);
+      var keys=[];
+      var options="";
+      var zone_opt=[];zone_opt['fqdn']="";zone_opt['mixed']="";zone_opt['ip']="";
+      var keys_txt="";
+      var zones="";
+
       switch(this.$root.ftExFormat){
         case 'bind':
+          rpzs.data.forEach(function(el){
+            let servers="";
+            el['servers'].forEach(function(srv){
+              servers+=`${srv['pub_ip']} key "${el['tkeys'][0]['name']}";`
+            });
+            zones+=`
+zone "${el['name']}" {
+  type slave;
+  file "/var/cache/bind/${el['name']}";
+  masters {${servers}};
+}; 
+
+          `;
+          zone_opt[el['ioc_type']]+=`
+    zone "${el['name']}" policy `+(el['action'] == 'local'?'given':el['action'])+";";
+          keys[el['tkeys'][0]['name']]=[];
+          keys[el['tkeys'][0]['name']]['name']=el['tkeys'][0]['name'];
+          keys[el['tkeys'][0]['name']]['alg']=el['tkeys'][0]['alg'];
+          keys[el['tkeys'][0]['name']]['tkey']=el['tkeys'][0]['tkey'];
+
+          });
+          options=`
+options {
+  #This is just options for RPZs. Add other options as required
+  recursion yes;
+  response-policy {
+    ####FQDN only zones ${zone_opt['fqdn']}
+    ####Mixed zones ${zone_opt['mixed']}
+    ####IP only zones ${zone_opt['ip']}
+  } qname-wait-recurse no break-dnssec yes;
+};
+          `;
+          for(var i in keys) {
+            keys_txt+=`
+key "${keys[i]['name']}"{
+  algorithm hmac-${keys[i]['alg']}; secret "${keys[i]['tkey']}";
+};
+
+            `;
+          };
+          //  hmac-md5, hmac-sha1, hmac-sha224, hmac-sha256, hmac-sha384 and hmac-sha512 a single key per master
           break;
         case 'powerdns':
           break;
         case 'infoblox':
           break;
       };
+      downloadAsPlainText(this.$root.ftExFormat+"_sample_config.txt",options+keys_txt+zones);
+      
     },
  
         
@@ -1036,4 +1174,16 @@ function checkHostName(HN) {
 function checkSourceURL(HN) {
   //TODO validation
   return /^(http:\/\/|https:\/\/|ftp:\/\/|file:)/.test(HN);
+}
+
+//"Dirty way"
+function downloadAsPlainText(fileName,Data){
+  //btoa()
+  var dataStr = "data:text/plain;base64," + btoa(Data);
+  var downloadAnchorNode = document.createElement('a');
+  downloadAnchorNode.setAttribute("href",     dataStr);
+  downloadAnchorNode.setAttribute("download", fileName);
+  document.body.appendChild(downloadAnchorNode); // required for firefox
+  downloadAnchorNode.click();
+  downloadAnchorNode.remove();
 }

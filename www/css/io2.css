@@ -26,6 +26,7 @@ html,body {height: 100%;}
 }
 .width150{width: 155px;}
 .width200{width: 200px;}
+.width250{width: 250px;}
 
 .page-item.active > a {
     background-color: #6c757d!important;

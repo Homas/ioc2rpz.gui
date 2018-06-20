@@ -1,0 +1,9 @@
+#(c) Vadim Pavlov 2018
+#ioc2rpz GUI cron
+
+* * * * *  /usr/bin/php /opt/ioc2rpz.gui/scripts/publish_cfg.php
+* * * * *  sleep 10; /usr/bin/php /opt/ioc2rpz.gui/scripts/publish_cfg.php
+* * * * *  sleep 20; /usr/bin/php /opt/ioc2rpz.gui/scripts/publish_cfg.php
+* * * * *  sleep 30; /usr/bin/php /opt/ioc2rpz.gui/scripts/publish_cfg.php
+* * * * *  sleep 40; /usr/bin/php /opt/ioc2rpz.gui/scripts/publish_cfg.php
+* * * * *  sleep 50; /usr/bin/php /opt/ioc2rpz.gui/scripts/publish_cfg.php

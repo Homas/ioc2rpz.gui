@@ -41,7 +41,7 @@
     
         <!-- Right aligned nav items -->
         <b-navbar-nav class="ml-auto">
-          <b-nav-form><b-button variant="warning" v-show="publishUpdates" @click.stop="pushUpdatestoSRV">Publish configuration</b-button></b-nav-form>
+          <b-nav-form><b-button variant="warning" v-show="publishUpdates" @click.stop="pushUpdatestoSRV('all')">Publish configuration</b-button></b-nav-form>
           <div class="spacer"></div>
     
 <!--
@@ -122,7 +122,7 @@
     </b-modal>
     
 <!-- TKey Add/Modify -->
-    <b-modal id='mConfEditTSIG' centered title="TSIG Key" @ok="tblMgmtTKeyRecord('tkeys')" body-class="pt-0 pb-0" v-cloak>
+    <b-modal id='mConfEditTSIG' centered title="TSIG Key" @ok="tblMgmtTKeyRecord($event,'tkeys')" body-class="pt-0 pb-0" v-cloak>
       <span class='text-center'>
         <div>
           <b-row>
@@ -153,7 +153,7 @@
     </b-modal>
     
 <!-- Whitelists/Sources Add/Modify -->
-    <b-modal id='mConfEditSources' centered :title="ftSrcTitle" @ok="tblMgmtSrcRecord(ftSrcType)" body-class="pt-0 pb-0" size="lg" v-cloak>
+    <b-modal id='mConfEditSources' centered :title="ftSrcTitle" @ok="tblMgmtSrcRecord($event,ftSrcType)" body-class="pt-0 pb-0" size="lg" v-cloak>
       <span class='text-center'>
         <div>
           <b-row>
@@ -174,7 +174,7 @@
 
 <!-- Servers Add/Modify -->
 
-    <b-modal id='mConfEditSrv' ref='refmConfEditSrv' centered title="Server" @ok="tblMgmtSrvRecord('servers')" body-class="pt-0 pb-0" size="lg" v-cloak>
+    <b-modal id='mConfEditSrv' ref='refmConfEditSrv' centered title="Server" @ok="tblMgmtSrvRecord($event,'servers')" body-class="pt-0 pb-0" size="lg" v-cloak>
       <span class='text-center'>
         <div>
           <b-row>
@@ -223,7 +223,7 @@
 
 
 <!-- RPZ Add/Modify -->
-    <b-modal id='mConfEditRPZ' centered title="RPZ" @ok="tblMgmtRPZRecord('rpzs')" body-class="pt-0 pb-0" size="lg" v-cloak>
+    <b-modal id='mConfEditRPZ' centered title="RPZ" @ok="tblMgmtRPZRecord($event,'rpzs')" body-class="pt-0 pb-0" size="lg" v-cloak>
       <span class='text-center'>
         <div>
           <b-row>
@@ -355,7 +355,10 @@
           <b-row>
             <b-col :sm="12"  class="form_row text-left">
               <b-form-group v-b-tooltip.hover title="Select Response Policy Zones">
-                <b-form-checkbox-group :style="{ height: (this.ftExRPZAll.length<4 && ftExRPZAll.length<4?'4':'8')+'em' }" plain stacked class="items_list" v-model="ftExRPZ" :options="ftExRPZAll" />
+                &nbsp;<b-form-checkbox v-model="rpzExportSAll" aria-describedby="flavours" aria-controls="flavours" @change="rpzExportToggleAll">
+                  {{ rpzExportSAll ? 'Un-select All' : 'Select All' }}
+                </b-form-checkbox>
+                <b-form-checkbox-group :style="{ height: (this.ftExRPZAll.length<4 && ftExRPZAll.length<4?'5':'10')+'em' }" plain stacked class="items_list" v-model="ftExRPZ" :options="ftExRPZAll" />
               </b-form-group>
             </b-col>
           </b-row>
