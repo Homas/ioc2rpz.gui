@@ -13,6 +13,12 @@ if [ ! -f ${IO2_ROOT}/www/io2cfg/io2db.sqlite ]; then
     chown root:apache ${IO2_ROOT}/www/io2cfg
 fi
 
+####check if ssl certificates are installed
+#/etc/apache2/ssl
+#SSLCertificateFile /etc/ssl/apache2/server.pem
+#SSLCertificateKeyFile /etc/ssl/apache2/server.key
+#-rw------- 1 root root 1679 May  6 06:19 /etc/ssl/apache2/server.key
+
 
 cat >> /tmp/$SYSUSER  << EOF
 ###Push updates
@@ -26,8 +32,6 @@ cat >> /tmp/$SYSUSER  << EOF
 EOF
 cat /tmp/$SYSUSER | crontab -u $SYSUSER -
 rm -rf /tmp/$SYSUSER
-
-#sed -i -e "s^\(\$APIKey=\"\).*^\1$API_KEY\";^" -e "s^\(\$DNSFWKey=\"\).*^\1$DNSFW_KEY\";^" -e "s^\(\$ByPassPWD=\"\).*^\1$BYPASS_PWD\";^"  /www/index.php
 
 sed -i -e "s%\(DocumentRoot\).*%\1 /opt/ioc2rpz.gui/www%" -e "s%^#\(.*mod_rewrite.so\).*%\1%"  /etc/apache2/httpd.conf; \
 sed -i -e "s%\(DocumentRoot\).*%\1 /opt/ioc2rpz.gui/www%"  /etc/apache2/conf.d/ssl.conf; \

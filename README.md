@@ -27,7 +27,6 @@ ioc2rpz.gui is available on the Docker Hub. Just look for ioc2rpz.gui
 - [x] Srv/RPZ disabled (add/edit windows + check server side)
 - [ ] Container. SSL persist config
 - [ ] Container. Sessions expirations
-- [ ] Container. Crontab
 - [ ] README.md && Video
 - [ ] ioc2rpz fix http error handeling
 - [ ] Major bugs
@@ -41,6 +40,7 @@ ioc2rpz.gui is available on the Docker Hub. Just look for ioc2rpz.gui
 - [ ] Wiki: AWS How-to (ioc2rpz & ioc2rpz.gui)
 - [ ] MySQL support
 - [ ] S3 support
+- [x] Container. Crontab
 - [ ] Link to the community
 - [ ] Utils
     - [ ] Import configuration. Srv and RPZs uniqueness + add SRV params
