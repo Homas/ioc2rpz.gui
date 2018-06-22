@@ -23,7 +23,7 @@ if [ ! -f /etc/apache2/ssl/ioc2_server.pem ] && [ ! -f /etc/apache2/ssl/ioc2_ser
 fi
 
 if [ ! -f /etc/apache2/ssl/ioc2_server.key ]; then
-    cp /etc/ssl/apache2/server.pem /etc/apache2/ssl/ioc2_server.key
+    cp /etc/ssl/apache2/server.key /etc/apache2/ssl/ioc2_server.key
 fi
 sed -i -e "s%SSLCertificateFile /etc/ssl/apache2/server.pem%SSLCertificateFile /etc/apache2/ssl/ioc2_server.pem%"  /etc/apache2/conf.d/ssl.conf
 sed -i -e "s%SSLCertificateKeyFile /etc/ssl/apache2/server.key%SSLCertificateKeyFile /etc/apache2/ssl/ioc2_server.key%"  /etc/apache2/conf.d/ssl.conf
