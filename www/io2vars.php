@@ -164,7 +164,7 @@ function erlAction($str){
     case "passthru":
     case "drop":
     case "tcp-only":
-      $result='"'+$str+'"';
+      $result='"'.$str.'"';
       break;
     default:
       $lstr="";$cmm="";

@@ -19,9 +19,9 @@ foreach($serv_upd as $srv){
     case 0: #local
       $fn=localCFGPath."/".($srv['URL']?$srv['URL']:($srv['name'].".cfg"));
       file_put_contents($fn,$cfg);
-      if ($srv['ip'] and $srv['disabled'] ) {
+      if ($srv['ip'] and !$srv['disabled'] ) {
         $res=`/usr/bin/dig \@${srv['ip']} +tries=1 +time=1 ioc2rpz-reload-cfg TXT -c CHAOS`;
-        #print $res;
+        echo $res;
       };
       #TODO check the response
       #ioc2rpz-reload-cfg.	900	IN	TXT	"ioc2rpz configuration was reloaded"
