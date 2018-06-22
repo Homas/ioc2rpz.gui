@@ -575,7 +575,7 @@ new Vue({
   
   methods: {
     validateName: function(vrbl){
-      return (this.$data[vrbl].length > 5 && /^[a-zA-Z0-9\.\-\_]+$/.test(this.$data[vrbl])) ? true : this.$data[vrbl].length == 0 ? null:false;
+      return (this.$data[vrbl].length >= 3 && /^[a-zA-Z0-9\.\-\_]+$/.test(this.$data[vrbl])) ? true : this.$data[vrbl].length == 0 ? null:false;
     },
 
     formatName: function(val,e){
@@ -716,7 +716,7 @@ new Vue({
           //Modify
           axios.put('/io2data.php/'+table,data).then(function (response) {obj.mgmtTableOk(response,obj,table)}).catch(function (error){obj.mgmtTableError(error,obj,table)})
         };
-      } else {
+      } else if (ev != null) {
         ev.preventDefault();
         if (!this.validateName('ftKeyName')) this.$refs.formKeyName.$el.focus()
           else this.$refs.formKey.$el.focus();
@@ -736,7 +736,7 @@ new Vue({
           //Modify
           axios.put('/io2data.php/'+table,data).then(function (response) {obj.mgmtTableOk(response,obj,table)}).catch(function (error){obj.mgmtTableError(error,obj,table)})
         };
-      } else {
+      } else if (ev != null) {
         ev.preventDefault();
         if (!this.validateName('ftSrcName')) this.$refs.formSrcName.$el.focus();
       	  else if (!this.validateURL('ftSrcURL') && this.validateREGEX('ftSrcURL')!=null) this.$refs.formSrcURL.$el.focus() ;
@@ -761,7 +761,7 @@ new Vue({
           //Modify
           axios.put('/io2data.php/'+table,data).then(function (response) {obj.mgmtTableOk(response,obj,table)}).catch(function (error){obj.mgmtTableError(error,obj,table)})
         };
-      } else {
+      } else if (ev != null) {
         ev.preventDefault();
         if (!this.validateName('ftSrvName')) this.$refs.formSrvName.$el.focus();
       	  else if (!(this.validateIP('ftSrvPubIP') || this.validateIP('ftSrvPubIP') == null)) this.$refs.formSrvPubIP.$el.focus();
@@ -792,7 +792,7 @@ new Vue({
           //Modify RPZ
           axios.put('/io2data.php/'+table,data).then(function (response) {obj.mgmtTableOk(response,obj,table)}).catch(function (error){obj.mgmtTableError(error,obj,table)})
         };
-      } else {
+      } else if (ev != null) {
         ev.preventDefault();
         if (!this.validateHostname('ftRPZName')) this.$refs.formRPZName.$el.focus();
       	  else if (!((this.validateIPList('ftRPZNotify') || this.validateIPList('ftRPZNotify') == null))) this.$refs.formRPZNotify.$el.focus() ;
@@ -849,12 +849,13 @@ new Vue({
     },
 
     
-    ImportConfig: function () {
+    ImportConfig: function (ev) {
       var file = new FileReader();
       var vm = this;
       var SrvId;
       //onprogress, onabort, onerror, onloadstart
       file.onload = async function(e) {
+        let ev = null;
         let p1 = axios.get('/io2data.php/servers');
         let p2 = axios.get('/io2data.php/tkeys');
         let p3 = axios.get('/io2data.php/sources');
@@ -917,7 +918,7 @@ new Vue({
               vm.ftKeyAlg=m[2]; vm.ftKey=m[3]; vm.ftKeyMGMT=Srv['tkeys'].includes(m[1])?1:0; //TODO check SRV first
               TKeys[vm.ftKeyName]=vm.ftKeyName;
               TKeys[m[1]]=vm.ftKeyName;
-              await vm.tblMgmtTKeyRecord('tkeys');
+              await vm.tblMgmtTKeyRecord(ev,'tkeys');
               //await sleep(10); //SQLite too slow
             }else{
               TKeys[m[1]]=(TKeysAll[vm.ftImpPrefix+m[1]] && vm.ftImpAction!=2)?vm.ftImpPrefix+m[1]:(TKeysAll[m[1]] && vm.ftImpAction==2)?vm.ftImpPrefix+m[1]:m[1];
@@ -930,7 +931,8 @@ new Vue({
               vm.ftSrcURL=m[2]; vm.ftSrcREGEX=m[4]!==undefined?m[4]:m[3]; vm.ftSrcURLIXFR="";
               WL[vm.ftSrcName]=vm.ftSrcName;
               WL[m[1]]=vm.ftSrcName;
-              await vm.tblMgmtSrcRecord('whitelists');
+              vm.ftSrcType='whitelists';
+              await vm.tblMgmtSrcRecord(ev,'whitelists');
             }else{
               WL[m[1]]=(WLAll[vm.ftImpPrefix+m[1]] && vm.ftImpAction!=2)?vm.ftImpPrefix+m[1]:(WLAll[m[1]] && vm.ftImpAction==2)?vm.ftImpPrefix+m[1]:m[1];
             };
@@ -942,7 +944,8 @@ new Vue({
               vm.ftSrcURL=m[2]; vm.ftSrcURLIXFR=m[3]; vm.ftSrcREGEX=m[5]!==undefined?m[5]:m[4];
               Src[vm.ftSrcName]=vm.ftSrcName;
               Src[m[1]]=vm.ftSrcName;
-              await vm.tblMgmtSrcRecord('sources'); 
+              vm.ftSrcType='sources';
+              await vm.tblMgmtSrcRecord(ev,'sources'); 
             }else{
               Src[m[1]]=(SrcAll[vm.ftImpPrefix+m[1]] && vm.ftImpAction!=2)?vm.ftImpPrefix+m[1]:(SrcAll[m[1]] && vm.ftImpAction==2)?vm.ftImpPrefix+m[1]:m[1];
             };
@@ -970,7 +973,11 @@ new Vue({
           });
           vm.ftSrvSType=0;
           vm.ftSrvURL=vm.ftImpFiles[0].name
-          await vm.tblMgmtSrvRecord('servers');
+          //TODO Fix to ask values in the import form
+          vm.ftSrvPubIP="127.0.0.1";
+          vm.ftSrvIP="127.0.0.1";
+          vm.ftSrvEmail="root@ioc2rpz.com";
+          await vm.tblMgmtSrvRecord(ev,'servers');
           p1 = axios.get('/io2data.php/servers');
           [servers] = await Promise.all([p1]);
           if (servers.data) servers.data.forEach(function(el){if (vm.ftSrvName==el['name']) SrvId=el['rowid']});
@@ -1014,7 +1021,7 @@ new Vue({
               if (WL[el] && WLAll[WL[el]]) vm.ftRPZSrc.push(WLAll[WL[el]]);
             });
 
-            vm.tblMgmtRPZRecord('rpzs');
+            vm.tblMgmtRPZRecord(ev,'rpzs');
           };
         };
 
