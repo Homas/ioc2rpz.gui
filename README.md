@@ -22,15 +22,15 @@ ioc2rpz.gui is available on the Docker Hub. Just look for ioc2rpz.gui
 - [ ] Publishing.
     - [x] Track changes for all objects & update SRV flag.
     - [ ] Publishing button on a SRV flag.
-- [x] Utils
-    - [x] Export ISC Bind configuration
 - [x] Srv/RPZ disabled (add/edit windows + check server side)
-- [ ] Container. SSL persist config
+- [x] Container. SSL persist config
 - [ ] Container. Sessions expirations
 - [ ] QA with IB and Bind
 - [ ] README.md && Video && Slides
 - [ ] ioc2rpz fix http error handeling
 - [ ] Major bugs
+    - [ ] After creating an user no message and page is not reloading
+    - [ ] Push some real TSIG keys
 
 ----- cut. an article to be an published -----
 - [ ] Servers table. Server online status.
@@ -45,6 +45,7 @@ ioc2rpz.gui is available on the Docker Hub. Just look for ioc2rpz.gui
 - [ ] Link to the community
 - [ ] Utils
     - [ ] Import configuration. Srv and RPZs uniqueness + add SRV params
+    - [x] Export ISC Bind configuration
     - [ ] Export PowerDNS, Infoblox configuration
     - [ ] Import/Backup ioc2rpz.gui config
 
