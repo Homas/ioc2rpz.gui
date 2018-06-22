@@ -31,7 +31,8 @@ ioc2rpz.gui is available on the Docker Hub. Just look for ioc2rpz.gui
 - [ ] Major bugs
     - [ ] After creating an user no message and page is not reloading
     - [ ] Push some real TSIG keys
-    - [ ] Config import. Pub_IP & local management IP & Email. Server is not saved for RPZs
+    - [ ] Config import. Pub_IP & local management IP & Email & Management. Server is not saved for RPZs on laptop.
+    - [ ] Constraints enforsments on SQLite
 
 ----- cut. an article to be an published -----
 - [ ] Servers table. Server online status.

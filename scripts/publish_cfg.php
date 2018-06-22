@@ -12,15 +12,16 @@ define("localCFGPath", IO2PATH."/export-cfg"); #/opt/ioc2rpz.gui
 
 $db=DB_open();
 
-$serv_upd=DB_selectArray($db,"select rowid,user_id,name,ip,disabled,stype,URL from servers where publish_upd=1");
+$serv_upd=DB_selectArray($db,"select servers.rowid,servers.user_id, servers.name as sname,ip,disabled,stype,URL, tkeys.name as tname, alg, tkey from servers left join servers_tsig on servers.rowid=servers_tsig.server_id left join tkeys on servers_tsig.tsig_id=tkeys.rowid where publish_upd=1");
 foreach($serv_upd as $srv){
-  $cfg=genConfig($db,$srv['user_id'],$srv['rowid']);
+  $cfg=genConfig($db,$srv['user_id'],$srv['srowid']);
   switch ($srv['stype']){
     case 0: #local
-      $fn=localCFGPath."/".($srv['URL']?$srv['URL']:($srv['name'].".cfg"));
-      file_put_contents($fn,$cfg);
+      $fn=localCFGPath."/".($srv['URL']?$srv['URL']:($srv['sname'].".cfg"));
+      file_put_contents($fn,$cfg['cfg']);
       if ($srv['ip'] and !$srv['disabled'] ) {
-        $res=`/usr/bin/dig \@${srv['ip']} +tries=1 +time=1 ioc2rpz-reload-cfg TXT -c CHAOS`;
+        $cmd="/usr/bin/dig +tcp -y hmac-${srv['alg']}:${srv['tname']}:${srv['tkey']} \@${srv['ip']} +tries=1 +time=1 ioc2rpz-reload-cfg TXT -c CHAOS";
+        $res=`$cmd`;
         echo $res;
       };
       #TODO check the response
