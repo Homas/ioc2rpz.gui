@@ -27,7 +27,8 @@ ioc2rpz.gui is available on the Docker Hub. Just look for ioc2rpz.gui
 - [x] Srv/RPZ disabled (add/edit windows + check server side)
 - [ ] Container. SSL persist config
 - [ ] Container. Sessions expirations
-- [ ] README.md && Video
+- [ ] QA with IB and Bind
+- [ ] README.md && Video && Slides
 - [ ] ioc2rpz fix http error handeling
 - [ ] Major bugs
 

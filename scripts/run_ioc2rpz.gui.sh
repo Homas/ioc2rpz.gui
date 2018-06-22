@@ -13,11 +13,20 @@ if [ ! -f ${IO2_ROOT}/www/io2cfg/io2db.sqlite ]; then
     chown root:apache ${IO2_ROOT}/www/io2cfg
 fi
 
-####check if ssl certificates are installed
+####check if ssl certificates were provided
 #/etc/apache2/ssl
 #SSLCertificateFile /etc/ssl/apache2/server.pem
 #SSLCertificateKeyFile /etc/ssl/apache2/server.key
 #-rw------- 1 root root 1679 May  6 06:19 /etc/ssl/apache2/server.key
+if [ ! -f /etc/apache2/ssl/ioc2_server.pem || ! -f /etc/apache2/ssl/ioc2_server.crt ]; then
+    cp /etc/ssl/apache2/server.pem /etc/apache2/ssl/ioc2_server.pem
+fi
+
+if [ ! -f /etc/apache2/ssl/ioc2_server.key ]; then
+    cp /etc/ssl/apache2/server.pem /etc/apache2/ssl/ioc2_server.key
+fi
+sed -i -e "s%SSLCertificateFile /etc/ssl/apache2/server.pem%SSLCertificateFile /etc/apache2/ssl/ioc2_server.pem%"  /etc/apache2/conf.d/ssl.conf
+sed -i -e "s%SSLCertificateKeyFile /etc/ssl/apache2/server.key%SSLCertificateKeyFile /etc/apache2/ssl/ioc2_server.key%"  /etc/apache2/conf.d/ssl.conf
 
 
 cat >> /tmp/$SYSUSER  << EOF

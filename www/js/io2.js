@@ -1042,7 +1042,7 @@ new Vue({
           break;
         case "tkey":
           var key=[];
-          key['md5'] = new Uint8Array(64); 
+          key['md5'] = new Uint8Array(16);
           key['sha256'] = new Uint8Array(32); 
           key['sha512'] = new Uint8Array(64); 
           window.crypto.getRandomValues(key[this.$root.ftKeyAlg]);
@@ -1051,7 +1051,7 @@ new Vue({
           break;
       }
     },
-    
+
     changeTab: function(tab){
       //update table
       //history.pushState(null, null, this.$refs.tabs_menu.$children[tab].href);
