@@ -6,7 +6,7 @@ IO2_ROOT="/opt/ioc2rpz.gui"
 
 ####check if sqlite db exists io2cfg/io2db.sqlite
 if [ ! -f ${IO2_ROOT}/www/io2cfg/io2db.sqlite ]; then
-    php ${IO2_ROOT}/scripts/init_db.php
+    /usr/bin/php ${IO2_ROOT}/scripts/init_db.php 2>&1
     chmod 660 ${IO2_ROOT}/www/io2cfg/io2db.sqlite
     chown apache:root ${IO2_ROOT}/www/io2cfg/io2db.sqlite
     chmod 775 ${IO2_ROOT}/www/io2cfg
