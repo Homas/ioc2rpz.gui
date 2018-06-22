@@ -18,7 +18,7 @@ fi
 #SSLCertificateFile /etc/ssl/apache2/server.pem
 #SSLCertificateKeyFile /etc/ssl/apache2/server.key
 #-rw------- 1 root root 1679 May  6 06:19 /etc/ssl/apache2/server.key
-if [ ! -f /etc/apache2/ssl/ioc2_server.pem || ! -f /etc/apache2/ssl/ioc2_server.crt ]; then
+if [ ! -f /etc/apache2/ssl/ioc2_server.pem ] && [ ! -f /etc/apache2/ssl/ioc2_server.crt ]; then
     cp /etc/ssl/apache2/server.pem /etc/apache2/ssl/ioc2_server.pem
 fi
 
