@@ -25,12 +25,13 @@ ioc2rpz.gui is available on the Docker Hub. Just look for ioc2rpz.gui
 - [x] Container. Sessions expirations
 - [ ] QA with Bind
 - [x] ioc2rpz http & file error handeling
+- [ ] Default file configuration name
 - [ ] README.md && Video && Slides
 - [ ] Major bugs
     - [ ] After creating an user no message and page is not reloading
     - [ ] Config import. Pub_IP & local management IP & Email & Management. Server is not saved for RPZs on laptop.
     - [ ] Constraints enforsments on SQLite
-    - [ ] Import. WL were not added to RPZ
+    - [ ] CFG Import. Not all sources are imported
     - [ ] TSIG generated in JS not always validated.
 
 ----- cut. an article to be an published -----

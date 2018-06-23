@@ -635,7 +635,7 @@ new Vue({
     },
     
     validateIXFRURL: function (vrbl) {
-      return this.$data[vrbl].length == 0 ? null: (this.validateURL(vrbl) || this.$data[vrbl]=='[:AXFR:]' || (/^\[:AXFR:\]((\?|\&)[;&a-zA-Z0-9\d%_.~+=-]*)?(\#[-a-zA-Z0-9\d_]*)?$/.test(this.$data[vrbl])));
+      return this.$data[vrbl].length == 0 ? null: (this.validateURL(vrbl) || this.$data[vrbl]=='[:AXFR:]' || (/^\[:AXFR:\]((\?|\&)[;&a-zA-Z0-9\d%_.~+=-]*)?(\[:FTimestamp:\]|\[:ToTimestamp:\])?(\#[-a-zA-Z0-9\d_]*)?(\[:FTimestamp:\]|\[:ToTimestamp:\])?$/.test(this.$data[vrbl])));
     },
 
     formatIXFRURL: function(val,e){
@@ -1008,7 +1008,8 @@ new Vue({
 
         if(Rpz !=[]){
           vm.ftRPZId=-1
-          vm.ftRPZSrvs=[SrvId];
+          vm.ftRPZSrvs=[];
+          vm.ftRPZSrvs.push(SrvId);
           for (var RpzName in Rpz) {
             vm.ftRPZName=RpzName; //If exists --- add srv???
             vm.ftRPZSOA_Refresh=Rpz[RpzName]['soa_refresh'];
@@ -1027,18 +1028,21 @@ new Vue({
             vm.ftRPZIOCType=Rpz[RpzName]['ioc_type'];
             vm.ftRPZAXFR=Rpz[RpzName]['AXFR_time'];
             vm.ftRPZIXFR=Rpz[RpzName]['IXFR_time'];
-
+            
+            vm.ftRPZTKeys=[];
             if (Rpz[RpzName]['tkeys']) Rpz[RpzName]['tkeys'].forEach(function(el){
               if (TKeys[el] && TKeysAll[TKeys[el]]) vm.ftRPZTKeys.push(TKeysAll[TKeys[el]]);
             });
 
+            vm.ftRPZSrc=[];
             Rpz[RpzName]['sources'].forEach(function(el){
               if (Src[el] && SrcAll[Src[el]]) vm.ftRPZSrc.push(SrcAll[Src[el]]);
             });
 
             vm.ftRPZNotify=Rpz[RpzName]['notify'];
+            vm.ftRPZWL=[];
             if (Rpz[RpzName]['whitelists']) Rpz[RpzName]['whitelists'].forEach(function(el){
-              if (WL[el] && WLAll[WL[el]]) vm.ftRPZSrc.push(WLAll[WL[el]]);
+              if (WL[el] && WLAll[WL[el]]) vm.ftRPZWL.push(WLAll[WL[el]]);
             });
 
             vm.tblMgmtRPZRecord(ev,'rpzs');
