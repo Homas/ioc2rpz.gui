@@ -94,3 +94,7 @@ html,body {height: 100%;}
 [v-cloak] {
   display: none;
 }
+
+.hidden {
+  display: none;
+}

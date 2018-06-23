@@ -25,14 +25,17 @@ ioc2rpz.gui is available on the Docker Hub. Just look for ioc2rpz.gui
 - [x] Srv/RPZ disabled (add/edit windows + check server side)
 - [x] Container. SSL persist config
 - [x] Container. Sessions expirations
-- [ ] QA with IB and Bind
+- [\] QA with IB and Bind
+- [ ] ioc2rpz http & file error handeling
+- [ ] RPZ "Provisioning" tab on the RPZ info window
 - [ ] README.md && Video && Slides
-- [ ] ioc2rpz fix http error handeling
 - [ ] Major bugs
     - [ ] After creating an user no message and page is not reloading
-    - [ ] Push some real TSIG keys
+    - [ ] Create real TSIG keys
     - [ ] Config import. Pub_IP & local management IP & Email & Management. Server is not saved for RPZs on laptop.
     - [ ] Constraints enforsments on SQLite
+    - [ ] Import. WL were not added to RPZ
+    - [ ] TSIG generation in JS
 
 ----- cut. an article to be an published -----
 - [ ] Servers table. Server online status.

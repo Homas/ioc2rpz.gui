@@ -275,6 +275,7 @@ Vue.component('io2-table', {
           
         break;
         case "add rpzs":
+          this.$root.ftRPZProWindowInfo="";
           this.$root.ftRPZId=-1;
           this.$root.ftRPZName='';
           this.$root.ftRPZSOA_Refresh='';
@@ -303,13 +304,16 @@ Vue.component('io2-table', {
           this.$root.ftRPZDisabled=0;
 
           this.$root.editRow={};
+          this.$root.ftRPZProWindow="";
           this.$root.$emit('bv::show::modal', 'mConfEditRPZ');
         break;
         case "info rpzs":
         case "edit rpzs":
         case "clone rpzs":
+          this.$root.ftRPZProWindow=action=="info"?"":"hidden";
           this.$root.ftRPZId=action=="clone"?-1:row.item.rowid;
           this.$root.ftRPZName=action=="clone"?row.item.name+"_clone":row.item.name;
+          this.$root.ftRPZProWindowInfo="<b>RPZ Name</b>: "+row.item.name+"<br>";
           this.$root.ftRPZSOA_Refresh=`${row.item.soa_refresh}`;
           this.$root.ftRPZSOA_UpdRetry=`${row.item.soa_update_retry}`;
           this.$root.ftRPZSOA_Exp=`${row.item.soa_expiration}`;
@@ -322,7 +326,12 @@ Vue.component('io2-table', {
           this.$root.ftRPZActionCustom=row.item.actioncustom?JSON.parse(row.item.actioncustom):"";  //TODO check
           this.$root.ftRPZIOCType=row.item.ioc_type;
           this.$root.ftRPZDisabled=row.item.disabled;
+          let vm=this;
           var RPZNotify='';
+          
+          let dig_srv="";
+          let dig_tkey="";
+          
           row.item.notify.forEach(function(el) {
             RPZNotify+=el.notify+' ';
           });
@@ -332,6 +341,8 @@ Vue.component('io2-table', {
           let list=[];
           row.item.servers.forEach(function(el) {
             list.push(el.rowid);
+            vm.$root.ftRPZProWindowInfo+="<b>DNS Server"+el.name+". Public IP</b>:"+el.pub_ip+"<br>";
+            dig_srv=dig_srv==""?el.pub_ip:dig_srv;
           });
           this.$root.ftRPZSrvs=list;
           
@@ -340,9 +351,14 @@ Vue.component('io2-table', {
           list=[];
           row.item.tkeys.forEach(function(el) {
             list.push(el.rowid);
+            vm.$root.ftRPZProWindowInfo+="<b>TSIG Key</b> name "+el.name+" alg "+el.alg+" key "+el.tkey+"<br>";
+            dig_tkey=dig_tkey==""?"hmac-"+el.alg+":"+el.name+":"+el.tkey:dig_tkey;
           });
           this.$root.ftRPZTKeys=list;
 
+          vm.$root.ftRPZProWindowInfo+="<br><br><br>You may check zone availability using the following dig command:<br>";
+          vm.$root.ftRPZProWindowInfo+=`dig +tcp @${dig_srv} -y ${dig_tkey} ${row.item.name} SOA`
+          
           this.$root.get_lists('rpz_sources','ftRPZSrcAll');
           list=[];
           row.item.sources.forEach(function(el) {
@@ -524,8 +540,8 @@ new Vue({
         { value: 'ip', text: 'ip' },
       ],
       
-//  $sql="create table if not exists rpzs (user_id integer, name text, soa_refresh integer, soa_update_retry integer, soa_expiration integer, soa_nx_ttl integer, cache integer, wildcard integer, action text, ioc_type text, axfr_update integer, ixfr_update integer, foreign key(user_id) references users(rowid));".
-
+      ftRPZProWindow: "",      
+      ftRPZProWindowInfo: "",
 
       infoWindow: true,
       publishUpdates: false, //TODO save in cookie
@@ -585,7 +601,7 @@ new Vue({
     },
     
     validateB64: function(vrbl){
-      return (this.$data[vrbl].length>31 && /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(this.$data[vrbl])) ? true : this.$data[vrbl].length == 0 ? null:false;
+      return (this.$data[vrbl].length>16 && /^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=)?$/.test(this.$data[vrbl])) ? true : this.$data[vrbl].length == 0 ? null:false;
     },
 
     formatB64: function(val,e){
@@ -1048,13 +1064,18 @@ new Vue({
           this.$root.ftKeyName='tkey-'+Math.random().toString(36).substr(2, 10)+'-'+Math.random().toString(36).substr(2, 10);
           break;
         case "tkey":
-          var key=[];
-          key['md5'] = new Uint8Array(16);
-          key['sha256'] = new Uint8Array(32); 
-          key['sha512'] = new Uint8Array(64); 
-          window.crypto.getRandomValues(key[this.$root.ftKeyAlg]);
-//          this.$root.ftKey=btoa(String.fromCharCode.apply(null, key[this.$root.ftKeyAlg]));
-          this.$root.ftKey=btoa(key[this.$root.ftKeyAlg]);
+          //let key=[];
+          //key['md5'] = new Uint8Array(16);
+          //key['sha256'] = new Uint8Array(32); 
+          //key['sha512'] = new Uint8Array(64); 
+          //window.crypto.getRandomValues(key[this.$root.ftKeyAlg]);
+          //this.$root.ftKey=btoa(key[this.$root.ftKeyAlg]);
+
+          let key = new Uint8Array(this.$root.ftKeyAlg == 'md5'?16:this.$root.ftKeyAlg == 'sha256'?32:64);
+          do {
+            window.crypto.getRandomValues(key);
+            this.$root.ftKey=btoa(String.fromCharCode.apply(null, key));
+          } while (!this.validateB64('ftKey')); //TODO doesn't work ....
           break;
       }
     },

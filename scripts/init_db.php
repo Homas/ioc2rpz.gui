@@ -57,8 +57,8 @@ function initSQLiteDB($DBF){
   //$sql='insert into users values("io2admin","","","",0,0,0);';
   //$db->exec($sql);
 
-  $sql='insert into tkeys values(1,"tkey_mgmt_1","md5","TSIG",1);'.
-       'insert into tkeys values(1,"tkey_1","md5","TSIG",0);';
+  $sql='insert into tkeys values(1,"tkey_mgmt_1","md5","'.base64_encode(random_bytes(16)).'",1);'.
+       'insert into tkeys values(1,"tkey_1","md5","'.base64_encode(random_bytes(16)).'",0);';
   $db->exec($sql);
   
   $sql='insert into servers values(1,"server_1","127.0.0.1","1.0.0.1","ns1.ioc2rpz.localdomain","support.ioc2rpz.localdomain",1,0,0,"",1,0);'.

@@ -224,73 +224,82 @@
 
 <!-- RPZ Add/Modify -->
     <b-modal id='mConfEditRPZ' centered title="RPZ" @ok="tblMgmtRPZRecord($event,'rpzs')" body-class="pt-0 pb-0" size="lg" v-cloak>
-      <span class='text-center'>
-        <div>
-          <b-row>
-            <b-col :sm="12" class="form_row"><b-input v-model.trim="ftRPZName" :state="validateHostname('ftRPZName')" :formatter="formatName" ref="formRPZName" :readonly="infoWindow" placeholder="Enter RPZ name"  v-b-tooltip.hover title="RPZ Name" /></b-col>
-          </b-row>
-
-          <b-row>
-            <b-col :sm="6" class="form_row text-left">
-              <b-form-group :style="{ height: (this.ftRPZSrvsAll.length<4 && ftRPZTKeysAll.length<4?'4':'8')+'em' }" class="items_list" v-b-tooltip.hover title="Servers" >
-                <b-form-checkbox-group :disabled="infoWindow" plain stacked v-model="ftRPZSrvs" :options="ftRPZSrvsAll" />
-              </b-form-group>
-            </b-col>
-            <b-col :sm="6" class="form_row text-left">
-              <b-form-group :style="{ height: (this.ftRPZSrvsAll.length<4 && ftRPZTKeysAll.length<4?'4':'8')+'em' }" class="items_list"  v-b-tooltip.hover title="TSIG Keys">
-                <b-form-checkbox-group :disabled="infoWindow" plain stacked v-model="ftRPZTKeys" :options="ftRPZTKeysAll" />
-              </b-form-group>
-            </b-col>
-          </b-row>
-          <b-row>
-            <b-col :sm="6" class="form_row text-left">
-              <b-form-group :style="{ height: (this.ftRPZSrcAll.length<4 && ftRPZWLAll.length<4?'4':'8')+'em' }" class="items_list" v-b-tooltip.hover title="Sources">
-                <b-form-checkbox-group :disabled="infoWindow" plain stacked v-model="ftRPZSrc" :options="ftRPZSrcAll" />
-              </b-form-group>
-            </b-col>
-            <b-col :sm="6" class="form_row text-left">
-              <b-form-group :style="{ height: (this.ftRPZSrcAll.length<4 && ftRPZWLAll.length<4?'4':'8')+'em' }" class="items_list" v-b-tooltip.hover title="Whitelists">
-                <b-form-checkbox-group :disabled="infoWindow" plain stacked v-model="ftRPZWL" :options="ftRPZWLAll" />
-              </b-form-group>
-            </b-col>
-          </b-row>
-          <b-row>
-            <b-col :sm="6" class="form_row text-left">
-              <b-form-select v-model="ftRPZAction" :options="RPZ_Act_Options" :disabled="infoWindow"  v-b-tooltip.hover title="Action" />
-            </b-col>
-            <b-col :sm="6" class="form_row text-left">
-              <b-textarea v-model="ftRPZNotify" :state="validateIPList('ftRPZNotify')" :formatter="formatIPList" :rows="1" ref="formRPZNotify" :readonly="infoWindow" placeholder="Enter IPs to notify" :no-resize=true  v-b-tooltip.hover title="IPs to notify" />
-            </b-col>
-          </b-row>
-          <b-row v-show="ftRPZAction === 'local'">
-            <b-col :sm="12" class="form_row text-left">
-              <b-textarea v-model="ftRPZActionCustom" :state="validateCustomAction" :rows="3" ref="formRPZActionCustom" :readonly="infoWindow" placeholder="Enter local records" :no-resize=true  v-b-tooltip.hover title="Local records" />
-            </b-col>
-          </b-row>
-          <b-row>
-            <b-col :sm="4" class="form_row text-center">
-              <b-form-select v-model="ftRPZIOCType" :options="RPZ_IType_Options" :disabled="infoWindow" v-b-tooltip.hover title="IOCs type" />
-            </b-col>
-            <b-col :sm="4" class="form_row text-center">
-              <b-form-checkbox unchecked-value=0 value=1 :disabled="infoWindow"  v-model="ftRPZCache">Cache zone</b-form-checkbox>
-            </b-col>
-            <b-col :sm="4" class="form_row text-center">
-              <b-form-checkbox unchecked-value=0 value=1 :disabled="infoWindow"  v-model="ftRPZWildcard">Generate wildcard rules</b-form-checkbox>
-            </b-col>
-          </b-row>
-          <b-row>
-            <b-col :sm="2" class="form_row"><b-input v-model.trim="ftRPZSOA_Refresh" :state="validateInt('ftRPZSOA_Refresh')" :formatter="formatInt" ref="formRPZSOA_Refresh" :readonly="infoWindow" placeholder="Refresh" v-b-tooltip.hover title="SOA Record. Zone refresh time"  /></b-col>
-            <b-col :sm="2" class="form_row"><b-input v-model.trim="ftRPZSOA_UpdRetry" :state="validateInt('ftRPZSOA_UpdRetry')" :formatter="formatInt" ref="formRPZSOA_UpdRetry" :readonly="infoWindow" placeholder="Update retry" v-b-tooltip.hover title="SOA Record. Zone update retry time"  /></b-col>
-            <b-col :sm="2" class="form_row"><b-input v-model.trim="ftRPZSOA_Exp" :state="validateInt('ftRPZSOA_Exp')" :formatter="formatInt" ref="formRPZSOA_Exp" :readonly="infoWindow" placeholder="Expiration" v-b-tooltip.hover title="SOA Record. Zone expiration time"  /></b-col>
-            <b-col :sm="2" class="form_row"><b-input v-model.trim="ftRPZSOA_NXTTL" :state="validateInt('ftRPZSOA_NXTTL')" :formatter="formatInt" ref="formRPZSOA_NXTTL" :readonly="infoWindow" placeholder="NX TTL" v-b-tooltip.hover title="SOA Record. NXDomain TTL"  /></b-col>
-            <b-col :sm="2" class="form_row"><b-input v-model.trim="ftRPZAXFR" :state="validateInt('ftRPZAXFR')" :formatter="formatInt" ref="formRPZAXFR" :readonly="infoWindow" placeholder="Full update" v-b-tooltip.hover title="Zone full update time"  /></b-col>
-            <b-col :sm="2" class="form_row"><b-input v-model.trim="ftRPZIXFR" :state="validateInt('ftRPZIXFR')" :formatter="formatInt" ref="formRPZIXFR" :readonly="infoWindow" placeholder="Inc update" v-b-tooltip.hover title="Zone incrimental update time"  /></b-col>
-          </b-row>
-          <b-row>
-            <b-col :sm="12" class="form_row text-left"><b-form-checkbox unchecked-value=0 value=1 :disabled="infoWindow"  v-model="ftRPZDisabled">Disabled</b-form-checkbox></b-col>
-          </b-row>
-        </div>
-      </span>
+      <b-tabs :nav-class="ftRPZProWindow">
+        <b-tab title="Configuration" active>
+          <span class='text-center'>
+            <div>
+              <b-row>
+                <b-col :sm="12" class="form_row"><b-input v-model.trim="ftRPZName" :state="validateHostname('ftRPZName')" :formatter="formatName" ref="formRPZName" :readonly="infoWindow" placeholder="Enter RPZ name"  v-b-tooltip.hover title="RPZ Name" /></b-col>
+              </b-row>
+    
+              <b-row>
+                <b-col :sm="6" class="form_row text-left">
+                  <b-form-group :style="{ height: (this.ftRPZSrvsAll.length<4 && ftRPZTKeysAll.length<4?'4':'8')+'em' }" class="items_list" v-b-tooltip.hover title="Servers" >
+                    <b-form-checkbox-group :disabled="infoWindow" plain stacked v-model="ftRPZSrvs" :options="ftRPZSrvsAll" />
+                  </b-form-group>
+                </b-col>
+                <b-col :sm="6" class="form_row text-left">
+                  <b-form-group :style="{ height: (this.ftRPZSrvsAll.length<4 && ftRPZTKeysAll.length<4?'4':'8')+'em' }" class="items_list"  v-b-tooltip.hover title="TSIG Keys">
+                    <b-form-checkbox-group :disabled="infoWindow" plain stacked v-model="ftRPZTKeys" :options="ftRPZTKeysAll" />
+                  </b-form-group>
+                </b-col>
+              </b-row>
+              <b-row>
+                <b-col :sm="6" class="form_row text-left">
+                  <b-form-group :style="{ height: (this.ftRPZSrcAll.length<4 && ftRPZWLAll.length<4?'4':'8')+'em' }" class="items_list" v-b-tooltip.hover title="Sources">
+                    <b-form-checkbox-group :disabled="infoWindow" plain stacked v-model="ftRPZSrc" :options="ftRPZSrcAll" />
+                  </b-form-group>
+                </b-col>
+                <b-col :sm="6" class="form_row text-left">
+                  <b-form-group :style="{ height: (this.ftRPZSrcAll.length<4 && ftRPZWLAll.length<4?'4':'8')+'em' }" class="items_list" v-b-tooltip.hover title="Whitelists">
+                    <b-form-checkbox-group :disabled="infoWindow" plain stacked v-model="ftRPZWL" :options="ftRPZWLAll" />
+                  </b-form-group>
+                </b-col>
+              </b-row>
+              <b-row>
+                <b-col :sm="6" class="form_row text-left">
+                  <b-form-select v-model="ftRPZAction" :options="RPZ_Act_Options" :disabled="infoWindow"  v-b-tooltip.hover title="Action" />
+                </b-col>
+                <b-col :sm="6" class="form_row text-left">
+                  <b-textarea v-model="ftRPZNotify" :state="validateIPList('ftRPZNotify')" :formatter="formatIPList" :rows="1" ref="formRPZNotify" :readonly="infoWindow" placeholder="Enter IPs to notify" :no-resize=true  v-b-tooltip.hover title="IPs to notify" />
+                </b-col>
+              </b-row>
+              <b-row v-show="ftRPZAction === 'local'">
+                <b-col :sm="12" class="form_row text-left">
+                  <b-textarea v-model="ftRPZActionCustom" :state="validateCustomAction" :rows="3" ref="formRPZActionCustom" :readonly="infoWindow" placeholder="Enter local records" :no-resize=true  v-b-tooltip.hover title="Local records" />
+                </b-col>
+              </b-row>
+              <b-row>
+                <b-col :sm="4" class="form_row text-center">
+                  <b-form-select v-model="ftRPZIOCType" :options="RPZ_IType_Options" :disabled="infoWindow" v-b-tooltip.hover title="IOCs type" />
+                </b-col>
+                <b-col :sm="4" class="form_row text-center">
+                  <b-form-checkbox unchecked-value=0 value=1 :disabled="infoWindow"  v-model="ftRPZCache">Cache zone</b-form-checkbox>
+                </b-col>
+                <b-col :sm="4" class="form_row text-center">
+                  <b-form-checkbox unchecked-value=0 value=1 :disabled="infoWindow"  v-model="ftRPZWildcard">Generate wildcard rules</b-form-checkbox>
+                </b-col>
+              </b-row>
+              <b-row>
+                <b-col :sm="2" class="form_row"><b-input v-model.trim="ftRPZSOA_Refresh" :state="validateInt('ftRPZSOA_Refresh')" :formatter="formatInt" ref="formRPZSOA_Refresh" :readonly="infoWindow" placeholder="Refresh" v-b-tooltip.hover title="SOA Record. Zone refresh time"  /></b-col>
+                <b-col :sm="2" class="form_row"><b-input v-model.trim="ftRPZSOA_UpdRetry" :state="validateInt('ftRPZSOA_UpdRetry')" :formatter="formatInt" ref="formRPZSOA_UpdRetry" :readonly="infoWindow" placeholder="Update retry" v-b-tooltip.hover title="SOA Record. Zone update retry time"  /></b-col>
+                <b-col :sm="2" class="form_row"><b-input v-model.trim="ftRPZSOA_Exp" :state="validateInt('ftRPZSOA_Exp')" :formatter="formatInt" ref="formRPZSOA_Exp" :readonly="infoWindow" placeholder="Expiration" v-b-tooltip.hover title="SOA Record. Zone expiration time"  /></b-col>
+                <b-col :sm="2" class="form_row"><b-input v-model.trim="ftRPZSOA_NXTTL" :state="validateInt('ftRPZSOA_NXTTL')" :formatter="formatInt" ref="formRPZSOA_NXTTL" :readonly="infoWindow" placeholder="NX TTL" v-b-tooltip.hover title="SOA Record. NXDomain TTL"  /></b-col>
+                <b-col :sm="2" class="form_row"><b-input v-model.trim="ftRPZAXFR" :state="validateInt('ftRPZAXFR')" :formatter="formatInt" ref="formRPZAXFR" :readonly="infoWindow" placeholder="Full update" v-b-tooltip.hover title="Zone full update time"  /></b-col>
+                <b-col :sm="2" class="form_row"><b-input v-model.trim="ftRPZIXFR" :state="validateInt('ftRPZIXFR')" :formatter="formatInt" ref="formRPZIXFR" :readonly="infoWindow" placeholder="Inc update" v-b-tooltip.hover title="Zone incrimental update time"  /></b-col>
+              </b-row>
+              <b-row>
+                <b-col :sm="12" class="form_row text-left"><b-form-checkbox unchecked-value=0 value=1 :disabled="infoWindow"  v-model="ftRPZDisabled">Disabled</b-form-checkbox></b-col>
+              </b-row>
+            </div>
+          </span>
+        </b-tab> 
+        <b-tab title="Provision Info">
+          <div style="height: 430px;display:block;">
+            <span v-html="ftRPZProWindowInfo"></span>
+          </div>
+        </b-tab> 
+      </b-tabs>
     </b-modal>
 
 <!-- Message Modal -->
