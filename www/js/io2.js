@@ -315,7 +315,6 @@ Vue.component('io2-table', {
           this.$root.ftRPZProWindow=action=="info"?"":"hidden";
           this.$root.ftRPZId=action=="clone"?-1:row.item.rowid;
           this.$root.ftRPZName=action=="clone"?row.item.name+"_clone":row.item.name;
-          this.$root.ftRPZProWindowInfo="<b>RPZ Name</b>: "+row.item.name+"<br>";
           this.$root.ftRPZSOA_Refresh=`${row.item.soa_refresh}`;
           this.$root.ftRPZSOA_UpdRetry=`${row.item.soa_update_retry}`;
           this.$root.ftRPZSOA_Exp=`${row.item.soa_expiration}`;
@@ -339,11 +338,13 @@ Vue.component('io2-table', {
           });
           this.$root.ftRPZNotify=RPZNotify.trim();
           
+          this.$root.ftRPZProWindowInfo=`<div class="form_row"><b>RPZ Name</b>: <input type=text readonly id='RPZInfoName' value='${row.item.name}'/> <button v-b-tooltip.hover title="Copy" class="btn btn-outline-secondary btn-sm" onclick="copyToClipboardID('RPZInfoName')"><i class="fa fa-copy"></i></button></div>`;
+
           this.$root.get_lists('rpz_servers','ftRPZSrvsAll');
           let list=[];
           row.item.servers.forEach(function(el) {
             list.push(el.rowid);
-            vm.$root.ftRPZProWindowInfo+="<b>DNS Server"+el.name+". Public IP</b>:"+el.pub_ip+"<br>";
+            vm.$root.ftRPZProWindowInfo+=`<div class="form_row"><b>DNS Server ${el.name} Public IP</b>: <input type=text readonly id="RPZDNSIP_${el.name}" value='${el.pub_ip}'/><button v-b-tooltip.hover title="Copy" class="btn btn-outline-secondary btn-sm" onclick="copyToClipboardID('RPZDNSIP_${el.name}')"><i class="fa fa-copy"></i></button></div>`;
             dig_srv=dig_srv==""?el.pub_ip:dig_srv;
           });
           this.$root.ftRPZSrvs=list;
@@ -353,13 +354,13 @@ Vue.component('io2-table', {
           list=[];
           row.item.tkeys.forEach(function(el) {
             list.push(el.rowid);
-            vm.$root.ftRPZProWindowInfo+="<b>TSIG Key</b> name "+el.name+" alg "+el.alg+" key "+el.tkey+"<br>";
+            vm.$root.ftRPZProWindowInfo+=`<div class="form_row"><b>TSIG Key</b><input type=text readonly id='RPZTKEYN_${el.name}' value='${el.name}'/><button v-b-tooltip.hover title="Copy" class="btn btn-outline-secondary btn-sm" onclick="copyToClipboardID('RPZTKEYN_${el.name}')"><i class="fa fa-copy"></i></button><input type=text readonly id='RPZTKEYA_${el.name}' value='hmac-${el.alg}'/><button v-b-tooltip.hover title="Copy" class="btn btn-outline-secondary btn-sm" onclick="copyToClipboardID('RPZTKEYA_${el.name}')"><i class="fa fa-copy"></i></button><input size=28 type=text readonly id='RPZTKEYK_${el.name}' value='${el.tkey}'/><button v-b-tooltip.hover title="Copy" class="btn btn-outline-secondary btn-sm" onclick="copyToClipboardID('RPZTKEYK_${el.name}')"><i class="fa fa-copy"></i></button></div>`;
             dig_tkey=dig_tkey==""?"hmac-"+el.alg+":"+el.name+":"+el.tkey:dig_tkey;
           });
           this.$root.ftRPZTKeys=list;
 
-          vm.$root.ftRPZProWindowInfo+="<br><br><br>You may check zone availability using the following dig command:<br>";
-          vm.$root.ftRPZProWindowInfo+=`dig +tcp @${dig_srv} -y ${dig_tkey} ${row.item.name} SOA`
+          vm.$root.ftRPZProWindowInfo+="<br><hr>You may check zone availability using the following dig command:<br>";
+          vm.$root.ftRPZProWindowInfo+=`<textarea rows="5" style="width:100%;resize: none;" readonly>dig +tcp @${dig_srv} -y ${dig_tkey} ${row.item.name} SOA</textarea>`
           
           this.$root.get_lists('rpz_sources','ftRPZSrcAll');
           list=[];
@@ -1218,3 +1219,8 @@ function downloadAsPlainText(fileName,Data){
   downloadAnchorNode.click();
   downloadAnchorNode.remove();
 }
+
+function copyToClipboardID(id) {
+  document.getElementById(id).select();
+  document.execCommand('copy');
+};
