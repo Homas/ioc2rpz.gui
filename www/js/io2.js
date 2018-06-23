@@ -276,6 +276,7 @@ Vue.component('io2-table', {
         break;
         case "add rpzs":
           this.$root.ftRPZProWindowInfo="";
+          this.$root.RPZtabI=0;
           this.$root.ftRPZId=-1;
           this.$root.ftRPZName='';
           this.$root.ftRPZSOA_Refresh='';
@@ -310,6 +311,7 @@ Vue.component('io2-table', {
         case "info rpzs":
         case "edit rpzs":
         case "clone rpzs":
+          this.$root.RPZtabI=0;
           this.$root.ftRPZProWindow=action=="info"?"":"hidden";
           this.$root.ftRPZId=action=="clone"?-1:row.item.rowid;
           this.$root.ftRPZName=action=="clone"?row.item.name+"_clone":row.item.name;
@@ -542,6 +544,7 @@ new Vue({
       
       ftRPZProWindow: "",      
       ftRPZProWindowInfo: "",
+      RPZtabI: 0,
 
       infoWindow: true,
       publishUpdates: false, //TODO save in cookie

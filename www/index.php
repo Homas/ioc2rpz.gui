@@ -224,7 +224,7 @@
 
 <!-- RPZ Add/Modify -->
     <b-modal id='mConfEditRPZ' centered title="RPZ" @ok="tblMgmtRPZRecord($event,'rpzs')" body-class="pt-0 pb-0" size="lg" v-cloak>
-      <b-tabs :nav-class="ftRPZProWindow">
+      <b-tabs :nav-class="ftRPZProWindow" v-model="RPZtabI">
         <b-tab title="Configuration" active>
           <span class='text-center'>
             <div>
