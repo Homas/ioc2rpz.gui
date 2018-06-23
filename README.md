@@ -22,20 +22,16 @@ ioc2rpz.gui is available on the Docker Hub. Just look for ioc2rpz.gui
 - [ ] Publishing.
     - [x] Track changes for all objects & update SRV flag.
     - [ ] Publishing button on a SRV flag.
-- [x] Srv/RPZ disabled (add/edit windows + check server side)
-- [x] Container. SSL persist config
 - [x] Container. Sessions expirations
-- [\] QA with IB and Bind
-- [ ] ioc2rpz http & file error handeling
-- [ ] RPZ "Provisioning" tab on the RPZ info window
+- [ ] QA with Bind
+- [x] ioc2rpz http & file error handeling
 - [ ] README.md && Video && Slides
 - [ ] Major bugs
     - [ ] After creating an user no message and page is not reloading
-    - [ ] Create real TSIG keys
     - [ ] Config import. Pub_IP & local management IP & Email & Management. Server is not saved for RPZs on laptop.
     - [ ] Constraints enforsments on SQLite
     - [ ] Import. WL were not added to RPZ
-    - [ ] TSIG generation in JS
+    - [ ] TSIG generated in JS not always validated.
 
 ----- cut. an article to be an published -----
 - [ ] Servers table. Server online status.
@@ -46,17 +42,14 @@ ioc2rpz.gui is available on the Docker Hub. Just look for ioc2rpz.gui
 - [ ] Wiki: AWS How-to (ioc2rpz & ioc2rpz.gui)
 - [ ] MySQL support
 - [ ] S3 support
-- [x] Container. Crontab
 - [ ] Link to the community
 - [ ] Utils
     - [ ] Import configuration. Srv and RPZs uniqueness + add SRV params
-    - [x] Export ISC Bind configuration
     - [ ] Export PowerDNS, Infoblox configuration
     - [ ] Import/Backup ioc2rpz.gui config
 
 ## Bugs
 - [ ] Unchecked checkboxes in tables on odd lines
-- [ ] Sometimes changes are nit published
 
 # License
 Copyright 2017 - 2018 Vadim Pavlov ioc2rpz[at]gmail[.]com
