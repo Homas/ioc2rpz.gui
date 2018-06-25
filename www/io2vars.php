@@ -8,7 +8,7 @@ const DBCreateIfNotExists=true;
 
 const ioc2rpzConf="io2cfg";
 
-$io2ver=2018062201;
+$io2ver=2018062301;
 
 function filterIntArr($array){
   $result = [];
@@ -29,7 +29,7 @@ function DB_open()
     case "sqlite":
       $db = new SQLite3(DBFile);
       $db->busyTimeout(5000);
-      $db->exec('PRAGMA journal_mode = wal;');
+      $db->exec('PRAGMA journal_mode = wal;'); //PRAGMA foreign_keys = ON;
     break;
   }
   return $db; 
@@ -140,7 +140,7 @@ function genConfig($db,$USERID,$SrvId){
     $subres_wl=DB_selectArray($db,"select name from rpzs_whitelists left join whitelists on whitelists.rowid=rpzs_whitelists.whitelist_id where rpzs_whitelists.user_id=$USERID and rpz_id=${item['rowid']}");  
     $subres_notify=DB_selectArray($db,"select notify from rpzs_notify where user_id=$USERID and rpz_id=${item['rowid']}");  
         
-    $cfg.="{rpz,{\"${item['name']}\",${item['soa_refresh']},${item['soa_update_retry']},${item['soa_expiration']},${item['soa_nx_ttl']},\"".($item['cache']?"true":"false")."\",\"".($item['wildcard']?"true":"false")."\",".erlAction($item['action']).",[\"".implode('","',array_column($subres_tkeys,'name'))."\"],\"${item['ioc_type']}\",${item['axfr_update']},${item['ixfr_update']},[\"".implode('","',array_column($subres_srcs,'name'))."\"],[\"".implode('","',array_column($subres_notify,'notify'))."\"],[\"".implode('","',array_column($subres_wl,'name'))."\"]}}.\n";
+    $cfg.="{rpz,{\"${item['name']}\",${item['soa_refresh']},${item['soa_update_retry']},${item['soa_expiration']},${item['soa_nx_ttl']},\"".($item['cache']?"true":"false")."\",\"".($item['wildcard']?"true":"false")."\",".erlAction($item['action']).",[\"".implode('","',array_column($subres_tkeys,'name'))."\"],\"${item['ioc_type']}\",${item['axfr_update']},${item['ixfr_update']},[\"".implode('","',array_column($subres_srcs,'name'))."\"],[".(empty($subres_notify)?"":"\"".implode('","',array_column($subres_notify,'notify'))."\"")."],[".(empty($subres_wl)?"":"\"".implode('","',array_column($subres_wl,'name'))."\"")."]}}.\n";
   };
   
   $response['cfg']=$cfg;

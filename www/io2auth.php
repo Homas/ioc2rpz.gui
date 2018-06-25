@@ -55,10 +55,11 @@
     }else{
       //(name text, password text, salt text, perm integer, loginattempts integer, lastlogin integer, lastfailedlogin integer);
       $salt = mt_rand(1000, 9999);
-      $sql="insert into users values('".DB_escape($db,$REQUEST['login'])."','".md5(md5(DB_escape($db,$REQUEST['pwd'])).$salt)."','$salt',1,0,0,0)";
+      $sql="insert into users(name, password, salt, perm, loginattempts, lastlogin, lastfailedlogin) values('".DB_escape($db,$REQUEST['login'])."','".md5(md5(DB_escape($db,$REQUEST['pwd'])).$salt)."','$salt',1,0,0,0)";
       if (DB_execute($db,$sql)) $response='{"status":"createSuccess","description":"Administrator created!"}';
         else $response='{"status":"failed","description":"Unexpected error!", "sql":"'.$sql.'"}'; //TODO remove SQL
     };
+    echo $response;
     DB_close($db);
     exit;
   };

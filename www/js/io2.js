@@ -279,12 +279,12 @@ Vue.component('io2-table', {
           this.$root.RPZtabI=0;
           this.$root.ftRPZId=-1;
           this.$root.ftRPZName='';
-          this.$root.ftRPZSOA_Refresh='';
-          this.$root.ftRPZSOA_UpdRetry='';
-          this.$root.ftRPZSOA_Exp='';
-          this.$root.ftRPZSOA_NXTTL='';
-          this.$root.ftRPZAXFR='';
-          this.$root.ftRPZIXFR='';
+          this.$root.ftRPZSOA_Refresh='86400';
+          this.$root.ftRPZSOA_UpdRetry='3600';
+          this.$root.ftRPZSOA_Exp='2592000';
+          this.$root.ftRPZSOA_NXTTL='7200';
+          this.$root.ftRPZAXFR='604800';
+          this.$root.ftRPZIXFR='86400';
           this.$root.ftRPZCache=1;
           this.$root.ftRPZWildcard=1;
 
@@ -555,6 +555,8 @@ new Vue({
       msgInfoMSG: '',
       
       ftImpServName: '',
+      ftImpServPubIP: '',
+      ftImpServMGMTIP: '',
       ftImpFiles: [],
       ftImpFileDesc: '',
       ftImpPrefix: '',
@@ -972,6 +974,7 @@ new Vue({
           };
         };
 
+        await sleep(1000); //SQLite is too slow
         p1 = axios.get('/io2data.php/tkeys');
         p2 = axios.get('/io2data.php/sources');
         p3 = axios.get('/io2data.php/whitelists');
@@ -986,7 +989,7 @@ new Vue({
           vm.ftSrvName=vm.ftImpServName;
           //vm.ftSrvIP vm.ftSrvMGMT vm.ftSrvDisabled
           vm.ftSrvNS=Srv['ns'];
-          vm.ftSrvEmail=Srv['email'];
+          vm.ftSrvEmail=Srv['email'].replace('.', '@');;
           vm.ftSrvMGMTIP=Srv['mgmt'];
           if (Srv['tkeys']) Srv['tkeys'].forEach(function(el){
             if (TKeys[el] && TKeysAll[TKeys[el]]) vm.ftSrvTKeys.push(TKeysAll[TKeys[el]]);
@@ -994,13 +997,15 @@ new Vue({
           vm.ftSrvSType=0;
           vm.ftSrvURL=vm.ftImpFiles[0].name
           //TODO Fix to ask values in the import form
-          vm.ftSrvPubIP="127.0.0.1";
-          vm.ftSrvIP="127.0.0.1";
-          vm.ftSrvEmail="root@ioc2rpz.com";
+          vm.ftSrvPubIP=vm.ftImpServPubIP;
+          vm.ftSrvIP=vm.ftImpServMGMTIP;
           await vm.tblMgmtSrvRecord(ev,'servers');
-          p1 = axios.get('/io2data.php/servers');
-          [servers] = await Promise.all([p1]);
-          if (servers.data) servers.data.forEach(function(el){if (vm.ftSrvName==el['name']) SrvId=el['rowid']});
+          do {
+            await sleep(1000); //SQLite is too slow
+            p1 = axios.get('/io2data.php/servers');
+            [servers] = await Promise.all([p1]);
+            if (servers.data) servers.data.forEach(function(el){if (vm.ftSrvName==el['name']) SrvId=el['rowid']});
+          } while (SrvId == undefined)
         };
         
       //          tRPZSrvs: JSON.stringify(this.ftRPZSrvs),

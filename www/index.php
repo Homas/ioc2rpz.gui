@@ -319,8 +319,12 @@
           </b-row>
           <b-row>
             <b-col :sm="6" class="form_row">
-              <div style="margin-bottom:10px"><b-input v-model="ftImpServName" :state="validateName('ftImpServName')" :formatter="formatName" placeholder="Enter server name" /></div>
-              <div><b-input v-model="ftImpPrefix" :state="validateName('ftImpPrefix')" :formatter="formatName" placeholder="Enter prefix" /></div>
+              <div style="margin-bottom:10px"><b-input v-model="ftImpServName" :state="validateName('ftImpServName')" :formatter="formatName" placeholder="Server name" /></div>
+              <div style="display: flex">
+                <div style="margin-bottom:10px; width:50%"><b-input v-model="ftImpServPubIP" :state="validateIP('ftImpServPubIP')" :formatter="formatIP" placeholder="Public IP" /></div>
+                <div style="margin-bottom:10px; width:50%"><b-input v-model="ftImpServMGMTIP" :state="validateIP('ftImpServMGMTIP')" :formatter="formatIP" placeholder="Management IP" /></div>
+              </div>
+              <div><b-input v-model="ftImpPrefix" :state="validateName('ftImpPrefix')" :formatter="formatName" placeholder="Prefix" /></div>
             </b-col>
             <b-col :sm="6" class="form_row text-left">
               <b-form-radio-group v-model="ftImpAction">
