@@ -79,12 +79,15 @@ function initSQLiteDB($DBF){
   $sql='insert into rpzs values(1,"dns-bh.ioc2rpz",86400,3600,2592000,7200,1,1,"nxdomain","mixed",604800,86400,0);'.
        'insert into rpzs values(1,"notracking.ioc2rpz",86400,3600,2592000,7200,1,1,"nxdomain","mixed",604800,86400,0);'.
        'insert into rpzs_servers values(1,1,1);'.
+       'insert into rpzs_servers values(2,1,1);'.
        'insert into rpzs_whitelists values(1,1,1);'.
+       'insert into rpzs_whitelists values(2,1,1);'.
        'insert into rpzs_sources values(1,1,1);'.
-       'insert into rpzs_sources values(1,1,2);'.
-       'insert into rpzs_sources values(1,1,3);'.
+       'insert into rpzs_sources values(2,1,2);'.
+       'insert into rpzs_sources values(2,1,3);'.
        'insert into rpzs_notify values(1,1,"127.0.0.1");'.
-       'insert into rpzs_tkeys values(1,1,2);';
+       'insert into rpzs_tkeys values(1,1,2);'.
+       'insert into rpzs_tkeys values(2,1,2);';
   $db->exec($sql);
 
   #close DB
