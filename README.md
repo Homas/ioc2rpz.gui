@@ -24,17 +24,16 @@ ioc2rpz.gui is available on the Docker Hub. Just look for ioc2rpz.gui
     - [ ] Publishing button on a SRV flag.
 - [x] Container. Sessions expirations
 - [ ] QA with Bind
+- [x] Default SOA for new RPZ
 - [x] ioc2rpz http & file error handeling
-- [ ] Default file configuration name
+- [x] Default file configuration name
+- [ ] add sources https://github.com/notracking/hosts-blocklists
 - [ ] README.md && Video && Slides
-- [ ] Major bugs
-    - [ ] After creating an user no message and page is not reloading
-    - [ ] Config import. Pub_IP & local management IP & Email & Management. Server is not saved for RPZs on laptop.
-    - [ ] Constraints enforsments on SQLite
-    - [ ] CFG Import. Not all sources are imported
-    - [ ] TSIG generated in JS not always validated.
+- [ ] Config import. Pub_IP & local management IP & Email & Management.
 
 ----- cut. an article to be an published -----
+- [ ] Constraints enforsments on SQLite (requires redo the DB, keys etc) (if there is a named index, php doesn't see rowid.....)
+- [ ] Changing management TSIG - publish config immediately.
 - [ ] Servers table. Server online status.
 - [ ] Source/whitelist check availability/rechability
 - [ ] Server side. Intelligent publishing an updated server configuration
@@ -50,7 +49,12 @@ ioc2rpz.gui is available on the Docker Hub. Just look for ioc2rpz.gui
     - [ ] Import/Backup ioc2rpz.gui config
 
 ## Bugs
+- [ ] Export BIND check all check box is not cleared
 - [ ] Unchecked checkboxes in tables on odd lines
+- [ ] TSIG generated in JS not always validated.
+- [ ] (SQLite issue) Config import. Not all sources were added to a last RPZ. SRV was not added.
+- [ ] REGEX. "-" in  [ ] must be last. Looks like erl bug. 
+- [ ] Validate IOC in the ioc2rpz. Errors with tailing.
 
 # License
 Copyright 2017 - 2018 Vadim Pavlov ioc2rpz[at]gmail[.]com
