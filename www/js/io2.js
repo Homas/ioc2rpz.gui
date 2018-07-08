@@ -537,6 +537,7 @@ new Vue({
         { value: 'tcp-only', text: 'TCP-only' },
         { value: 'local', text: 'Local records' },
       ],
+
       RPZ_IType_Options: [
         { value: 'mixed', text: 'mixed' },
         { value: 'fqdn', text: 'fqdn' },
@@ -1111,6 +1112,7 @@ new Vue({
       this.$root.ftExFormat=format;
       this.$root.get_lists('rpz_lists','ftExRPZAll');
       this.$root.ftExRPZ=[];
+      this.$root.rpzExportSAll = false;
       this.$emit('bv::show::modal', 'mExpRPZ')
     },
     
@@ -1172,9 +1174,19 @@ key "${keys[i]['name']}"{
           };
           //  hmac-md5, hmac-sha1, hmac-sha224, hmac-sha256, hmac-sha384 and hmac-sha512 a single key per master
           break;
-        case 'powerdns':
+        case 'PowerDNS':
+//rpzMaster("192.168.56.43", "dns-bh.ioc2rpz", {defpol=Policy.Custom, defcontent="dns-bh.example.com", tsigname="tkey_1", tsigalgo="hmac-md5", tsigsecret="DkC1HNKF+XznNXBEfPUp8A=="})
+          let RPZ_PowerDNS_Options={ 'nxdomain': 'defpol=Policy.NXDOMAIN,', 'nodata': 'defpol=Policy.NODATA,', 'passthru': 'defpol=Policy.NoAction,', 'drop': 'defpol=Policy.Drop,', 'tcp-only': 'defpol=Policy.Truncate,', 'local': ''};
+
+          rpzs.data.forEach(function(el){
+            //${el['action']} el['action'] == 'local' -- do not add defpol
+            zones+=`
+rpzMaster("${el['servers'][0]['pub_ip']}", "${el['name']}", {${RPZ_PowerDNS_Options[el['action']]} tsigname="${el['tkeys'][0]['name']}", tsigalgo="hmac-${el['tkeys'][0]['alg']}", tsigsecret="${el['tkeys'][0]['tkey']}"})
+`;
+          });
+          
           break;
-        case 'infoblox':
+        case 'Infoblox':
           break;
       };
       downloadAsPlainText(this.$root.ftExFormat+"_sample_config.txt",options+keys_txt+zones);

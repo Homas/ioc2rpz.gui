@@ -23,11 +23,11 @@ ioc2rpz.gui is available on the Docker Hub. Just look for ioc2rpz.gui
     - [x] Track changes for all objects & update SRV flag.
     - [ ] Publishing button on a SRV flag.
 - [x] Container. Sessions expirations
-- [ ] QA with Bind
+- [x] QA with Bind, PowerDNS
 - [x] Default SOA for new RPZ
 - [x] ioc2rpz http & file error handeling
 - [x] Default file configuration name
-- [ ] add sources https://github.com/notracking/hosts-blocklists
+- [x] add sources https://github.com/notracking/hosts-blocklists
 - [ ] README.md && Video && Slides
 - [ ] Config import. Pub_IP & local management IP & Email & Management.
 
@@ -49,7 +49,7 @@ ioc2rpz.gui is available on the Docker Hub. Just look for ioc2rpz.gui
     - [ ] Import/Backup ioc2rpz.gui config
 
 ## Bugs
-- [ ] Export BIND check all check box is not cleared
+- [x] Export BIND check all check box is not cleared
 - [ ] Unchecked checkboxes in tables on odd lines
 - [ ] TSIG generated in JS not always validated.
 - [ ] (SQLite issue) Config import. Not all sources were added to a last RPZ. SRV was not added.

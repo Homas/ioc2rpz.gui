@@ -14,7 +14,7 @@
       </b-card>
       <b-card header="PowerDNS configuration" title="Export PowerDNS">
           <p class="card-text">Export PowerDNS configuration</p>
-          <b-button disabled v-b-tooltip.hover title="Export PowerDNS configuration" variant="outline-secondary" size="sm"><i class="fa fa-download"> Export PowerDNS</i></b-button>
+          <b-button v-b-tooltip.hover title="Export PowerDNS configuration" variant="outline-secondary" size="sm" @click.stop="exportShowModal('PowerDNS')"><i class="fa fa-download"> Export PowerDNS</i></b-button>
       </b-card>
       <b-card header="Infoblox configuration" title="Export Infoblox">
           <p class="card-text">Export Infoblox CSV configuration file</p>
