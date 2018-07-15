@@ -575,6 +575,8 @@ new Vue({
       
       //export RPZ configs
       rpzExportSAll: false,
+      rpzExportIBView: 'default',
+      rpzExportIBMember: 'infoblox.localdomain',      
       
 //          }
   },
@@ -1129,13 +1131,15 @@ new Vue({
       var zone_opt=[];zone_opt['fqdn']="";zone_opt['mixed']="";zone_opt['ip']="";
       var keys_txt="";
       var zones="";
+      let tkey_str="";
 
       switch(this.$root.ftExFormat){
         case 'bind':
           rpzs.data.forEach(function(el){
             let servers="";
             el['servers'].forEach(function(srv){
-              servers+=`${srv['pub_ip']} key "${el['tkeys'][0]['name']}";`
+              if (el['tkeys'].length==0){tkey_str="";}else{tkey_str=` key "${el['tkeys'][0]['name']}"`;};
+              servers+=`${srv['pub_ip']} ${tkey_str};`
             });
             zones+=`
 zone "${el['name']}" {
@@ -1147,11 +1151,12 @@ zone "${el['name']}" {
           `;
           zone_opt[el['ioc_type']]+=`
     zone "${el['name']}" policy `+(el['action'] == 'local'?'given':el['action'])+";";
-          keys[el['tkeys'][0]['name']]=[];
-          keys[el['tkeys'][0]['name']]['name']=el['tkeys'][0]['name'];
-          keys[el['tkeys'][0]['name']]['alg']=el['tkeys'][0]['alg'];
-          keys[el['tkeys'][0]['name']]['tkey']=el['tkeys'][0]['tkey'];
-
+          if (el['tkeys'].length>0) {
+            keys[el['tkeys'][0]['name']]=[];
+            keys[el['tkeys'][0]['name']]['name']=el['tkeys'][0]['name'];
+            keys[el['tkeys'][0]['name']]['alg']=el['tkeys'][0]['alg'];
+            keys[el['tkeys'][0]['name']]['tkey']=el['tkeys'][0]['tkey'];
+          };
           });
           options=`
 options {
@@ -1176,17 +1181,52 @@ key "${keys[i]['name']}"{
           break;
         case 'PowerDNS':
 //rpzMaster("192.168.56.43", "dns-bh.ioc2rpz", {defpol=Policy.Custom, defcontent="dns-bh.example.com", tsigname="tkey_1", tsigalgo="hmac-md5", tsigsecret="DkC1HNKF+XznNXBEfPUp8A=="})
-          let RPZ_PowerDNS_Options={ 'nxdomain': 'defpol=Policy.NXDOMAIN,', 'nodata': 'defpol=Policy.NODATA,', 'passthru': 'defpol=Policy.NoAction,', 'drop': 'defpol=Policy.Drop,', 'tcp-only': 'defpol=Policy.Truncate,', 'local': ''};
-
+          let RPZ_PowerDNS_Options={ 'nxdomain': 'defpol=Policy.NXDOMAIN', 'nodata': 'defpol=Policy.NODATA', 'passthru': 'defpol=Policy.NoAction', 'drop': 'defpol=Policy.Drop', 'tcp-only': 'defpol=Policy.Truncate', 'local': ''};
+          let pdns_opt="";
+          let cmm="";
           rpzs.data.forEach(function(el){
             //${el['action']} el['action'] == 'local' -- do not add defpol
+            if (el['tkeys'].length==0){
+              tkey_str="";
+            }else{
+              tkey_str=`tsigname="${el['tkeys'][0]['name']}", tsigalgo="hmac-${el['tkeys'][0]['alg']}", tsigsecret="${el['tkeys'][0]['tkey']}"`;
+            };
+            if (RPZ_PowerDNS_Options[el['action']]!="" && tkey_str!="") cmm=",";
+            if (RPZ_PowerDNS_Options[el['action']]!="" || tkey_str!="") pdns_opt=`, {${RPZ_PowerDNS_Options[el['action']]}${cmm} ${tkey_str}}`; else pdns_opt="";
             zones+=`
-rpzMaster("${el['servers'][0]['pub_ip']}", "${el['name']}", {${RPZ_PowerDNS_Options[el['action']]} tsigname="${el['tkeys'][0]['name']}", tsigalgo="hmac-${el['tkeys'][0]['alg']}", tsigsecret="${el['tkeys'][0]['tkey']}"})
+rpzMaster("${el['servers'][0]['pub_ip']}", "${el['name']}"${pdns_opt})
 `;
           });
           
           break;
         case 'Infoblox':
+          let zone_pri=[]; zone_pri['fqdn']=[]; zone_pri['mixed']=[]; zone_pri['ip']=[];
+          let zp=0;
+          options="header-responsepolicyzone,fqdn*,zone_format*,rpz_policy,substitute_name,view,zone_type,external_primaries,grid_secondaries,priority";
+          let RPZ_IB_Options={'nxdomain': 'Nxdomain', 'nodata': 'Nodata', 'passthru': 'Passthru', 'drop': 'Nxdomain', 'tcp-only': 'Passthru', 'local': 'Given'}; //SUBSTITUTE, DISABLED
+          let TKEY_Alg={'md5': 'HMAC-MD5','sha256': 'HMAC-SHA256','sha512': 'HMAC-SHA512'}; //sha512 is not supported by IB
+          //el['ioc_type']
+          let IBMember=this.$root.rpzExportIBMember;
+          let IBNView=this.$root.rpzExportIBView;
+
+          rpzs.data.forEach(function(el){
+            let tkey=-1;
+            el['tkeys'].some(function(el){
+              tkey++;
+              return ((el['alg']!='sha512') && (el['tkey'].indexOf('/')==-1));
+            });            
+            if (el['tkeys'].length==0){
+              tkey_str=`${el['servers'][0]['name']}/${el['servers'][0]['pub_ip']}/FALSE/FALSE/FALSE`;
+            }else{
+              tkey_str=`${el['servers'][0]['name']}/${el['servers'][0]['pub_ip']}/FALSE/FALSE/TRUE/${el['tkeys'][tkey]['name']}/${el['tkeys'][tkey]['tkey']}/${TKEY_Alg[el['tkeys'][tkey]['alg']]}`;              
+            };
+            zone_pri[el['ioc_type']].push(`
+  responsepolicyzone,${el['name']},FORWARD,${RPZ_IB_Options[el['action']]},,${IBNView},responsepolicy,${tkey_str},${IBMember}/False/False/False,`);
+          });
+          zone_pri['fqdn'].forEach(function(el){zones+=el+zp;zp++;});
+          zone_pri['mixed'].forEach(function(el){zones+=el+zp;zp++;});
+          zone_pri['ip'].forEach(function(el){zones+=el+zp;zp++;});
+//responsepolicyzone,ABC.NET,forward,given,,default,responsepolicy,name/ip/stealth/use_2x_tsig/use_tsig/tsig_name/tsig_key/tsig_key_algorithm,1001
           break;
       };
       downloadAsPlainText(this.$root.ftExFormat+"_sample_config.txt",options+keys_txt+zones);

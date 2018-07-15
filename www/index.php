@@ -375,6 +375,12 @@
               </b-form-group>
             </b-col>
           </b-row>
+
+          <b-row v-show="ftExFormat == 'Infoblox'">
+            <b-col :sm="6" class="form_row"><b-input v-model.trim="rpzExportIBMember" :state="validateHostname('rpzExportIBMember')" :formatter="formatName" ref="formMemberName" placeholder="Enter Infoblox member name"  v-b-tooltip.hover title="Infoblox member name" /></b-col>
+            <b-col :sm="6" class="form_row"><b-input v-model.trim="rpzExportIBView" :state="validateName('rpzExportIBView')" :formatter="formatName" ref="formDNSView" placeholder="Enter Network View"  v-b-tooltip.hover title="Network View" /></b-col>
+          </b-row>
+
         </div>
 
       </span>
