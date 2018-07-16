@@ -14,7 +14,7 @@ You can watch a demo of ioc2rpz technology including ioc2rpz.gui of the followin
 3. To install it manually:
 - check that all dependencies are installed
 - create /opt/ioc2rpz.gui, /opt/ioc2rpz.gui/www/io2cfg, /opt/ioc2rpz.gui/export-cfg directories;
-- download sources and copy them under "/opt/ioc2rpz.gui";
+- download sources and copy them (maintaining the directory structure) under "/opt/ioc2rpz.gui";
 - create a database by invoking "/opt/ioc2rpz.gui/scripts/init_db.php" script;
 - create a crontab which will execute "/opt/ioc2rpz.gui/scripts/publish_cfg.php" script every 10 seconds;
 - configure HTTP server.
@@ -23,6 +23,8 @@ Right now ioc2rpz.gui use only SQLite database with a database file stored in "/
 
 ioc2rpz configuration files are saved to "/opt/ioc2rpz.gui/export-cfg" folder. 
 
+The database initialisation script also creates a sample configuration. To immediatelly start using the sample configuration it you need to update public and management IP-addresses of ioc2rpz server. If you already started ioc2rpz server please restart it or send a management signal to reload configuration.
+The init script doesn't create a default user. You should create the administrator after the first start. Please do it ASAP.
 
 ### Dependencies
 PHP7, SQLite, ISC Bind tools (dig only command). The following packets are required for Alpine linux with Apache web-server:
@@ -33,8 +35,36 @@ If you use a different distribution or a web-server please find out yourself req
 
 ## Docker Container[](#docker-container)
 ioc2rpz.gui is available on the Docker Hub. Just look for ioc2rpz.gui 
+- ioc2rpz.gui automatically create a sample configuration;
+- ioc2rpz.gui use 80/tcp, 443/tcp ports. The ports should be exposed to a host system;
+- ioc2rpz.gui use the following volumes:
+    - "/opt/ioc2rpz.gui/export-cfg" to export ioc2rpz configurations. If you run ioc2rpz on the same host the folder should be shared;
+    - "/opt/ioc2rpz.gui/www/io2cfg" to store SQLite database;
+    - "/etc/apache2/ssl" to store SSL certificates.
 
+You can start ioc2rpz.gui with the following command:
+```
+sudo docker run -d --name ioc2rpz.gui --log-driver=syslog  --restart always --mount type=bind,source=/home/ioc2rpz/cfg,target=/opt/ioc2rpz.gui/export-cfg --mount type=bind,source=/home/ioc2rpz/db,target=/opt/ioc2rpz.gui/www/io2cfg --mount type=bind,source=/home/ioc2rpz/ssl,target=/etc/apache2/ssl -p80:80 -p443:443 pvmdel/ioc2rpz.gui
+```
+where /home/ioc2rpz/cfg, /home/ioc2rpz/ssl, /home/ioc2rpz/db directories on a host system.
 
+## ioc2rpz on AWS
+You can run ioc2rpz and ioc2rpz.gui on AWS. For relatively small deployments (several hundreds thousands indicators) even free tier is enough.
+The video below shows how to setup ioc2rpz and ioc2rpz.gui on AWS using ECS.
+<p align="center"><a href="http://www.youtube.com/watch?feature=player_embedded&v=C-y4p5TXt8s" target="_blank"><img src="https://github.com/Homas/ioc2rpz/blob/master/ioc2rpz_aws_setup.png"></a></p>
+
+## ioc2rpz configuration
+### Configuration overview
+### TSIG Keys
+### Servers
+### Sources
+### Whitelists
+### RPZs
+### Publishing configuration
+### Export configuration
+#### Bind
+#### PowerDNS
+#### Infoblox
 
 ## TODO
 - [ ] Publishing.
@@ -63,7 +93,7 @@ ioc2rpz.gui is available on the Docker Hub. Just look for ioc2rpz.gui
 - [ ] Link to the community
 - [ ] Utils
     - [ ] Import configuration. Srv and RPZs uniqueness + add SRV params
-    - [ ] Export PowerDNS, Infoblox configuration
+    - [x] Export PowerDNS, Infoblox configuration
     - [ ] Import/Backup ioc2rpz.gui config
 
 ## Bugs
@@ -72,6 +102,15 @@ ioc2rpz.gui is available on the Docker Hub. Just look for ioc2rpz.gui
 - [ ] (SQLite issue) Config import. Not all sources were added to a last RPZ. SRV was not added.
 - [ ] REGEX. "-" in  [ ] must be last. Looks like erl bug. 
 - [ ] Validate IOC in the ioc2rpz. Errors with tailing.
+
+## Built with
+- [VUE.js](https://vuejs.org/)
+- [bootstrap-vue](https://bootstrap-vue.js.org/)
+
+## Support on Beerpay
+Hey dude! Help me out for a couple of :beers:!
+
+[![Beerpay](https://beerpay.io/Homas/ioc2rpz/badge.svg?style=beer-square)](https://beerpay.io/Homas/ioc2rpz)  [![Beerpay](https://beerpay.io/Homas/ioc2rpz/make-wish.svg?style=flat-square)](https://beerpay.io/Homas/ioc2rpz?focus=wish)
 
 # License
 Copyright 2017 - 2018 Vadim Pavlov ioc2rpz[at]gmail[.]com
@@ -82,7 +121,3 @@ You may obtain a copy of the License at
     http://www.apache.org/licenses/LICENSE-2.0  
   
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
-
-## Built with
-- [VUE.js](https://vuejs.org/)
-- [bootstrap-vue](https://bootstrap-vue.js.org/)
