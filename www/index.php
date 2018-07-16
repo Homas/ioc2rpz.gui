@@ -180,7 +180,7 @@
           <b-row>
             <b-col :sm="4" class="form_row"><b-input v-model.trim="ftSrvName" :state="validateName('ftSrvName')" :formatter="formatName" ref="formSrvName" :readonly="infoWindow" placeholder="Enter server name"  v-b-tooltip.hover title="Name" /></b-col>
             <b-col :sm="4" class="form_row"><b-input v-model.trim="ftSrvPubIP" :state="validateIP('ftSrvPubIP')" :formatter="formatIP" ref="formSrvPubIP" :readonly="infoWindow" placeholder="Enter Server's Public IP or FQDN"  v-b-tooltip.hover title="Server's Public IP/FQDN" /></b-col>
-            <b-col :sm="4" class="form_row"><b-input v-model.trim="ftSrvIP" :state="validateIP('ftSrvIP')" :formatter="formatIP" ref="formSrvIP" :readonly="infoWindow" placeholder="Enter Server's MGMT IP or FQDN"  v-b-tooltip.hover title="Server MGMT IP/FQDN" /></b-col>
+            <b-col :sm="4" class="form_row"><b-input v-model.trim="ftSrvIP" :state="validateIP('ftSrvIP')" :formatter="formatIP" ref="formSrvIP" :readonly="infoWindow" placeholder="Enter Server's MGMT IP or FQDN"  v-b-tooltip.hover title="Server's MGMT IP/FQDN" /></b-col>
           </b-row>
           <b-row>
             <b-col :sm="6" class="form_row"><b-input v-model.trim="ftSrvNS" :state="validateHostname('ftSrvNS')" :formatter="formatHostname" ref="formSrvNS" :readonly="infoWindow" placeholder="Enter NS name"  v-b-tooltip.hover title="Name server name"/></b-col>

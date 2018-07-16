@@ -54,11 +54,49 @@ The video below shows how to setup ioc2rpz and ioc2rpz.gui on AWS using ECS.
 <p align="center"><a href="http://www.youtube.com/watch?feature=player_embedded&v=C-y4p5TXt8s" target="_blank"><img src="https://github.com/Homas/ioc2rpz/blob/master/ioc2rpz_aws_setup.png"></a></p>
 
 ## ioc2rpz configuration
-### Configuration overview
-### TSIG Keys
+
+### Configuration workflow
+To configure ioc2rpz server:
+1. Create TSIG Keys for management and zone transfer;
+2. Create a server;
+3. Add sources;
+4. (optional) Add whitelists;
+5. Create a response policy zone;
+6. Publish the ioc2rpz configuration;
+7. (optional) Export a relevant DNS server configuration
+
+### TSIG keys
+TSIG keys are used for ioc2rpz server management and RPZ transfer. It is not required to use TSIG keys for zone transfers but highly recommended.
+
+To add a new TSIG key navigate to "Configuration" --> "TSIG keys" and press the "+" button.
+The TSIG key and it's name automatically generated. You may regenerate the name and the key using the "Generate" button.
+md5, sha256, sha512 hash algorythms are supported. The "Management key" checkbox is used to destinguish keys which are used to manage ioc2rpz. These keys can not be used for RPZ transfer.
+The action menu next to each TSIG key allows you to view, edit and remove the key. 
+
 ### Servers
+Server tab is used to generate configurations and manages ioc2rpz servers. You can manage multiple ioc2rpz servers on a single ioc2rpz.gui instance.
+Currently ioc2rpz.gui fully supports only ioc2rpz running on the same host but can save configurations to local files for multiple servers. In upcomming releases it will be possible to upload configurations to remote ftp/scp/sftp servers and/or S3 bucket. 
+
+To add a server navigate to "Configuration" --> "Servers" and press the "+" button. All fields except "Management stations IPs" are required.
+"Server's Public IP/FQDN" is used only in the export DNS configurations. "Server's MGMT IP/FQDN" is used to manage ioc2rpz service. The public and management IP-addesses are not exposed into ioc2rpz configuration. 
+
+The servers action menu allows you to view, edit, clone and remove servers, export and publish server's configuration. You may forse publishing server's configuration independently of changes. A yellow "Publish configuration" button (in the top right conner next to login name) automatically displayed when a server configuration is changed, the "publish" button on the action menu is also highlighted in blue.
+
 ### Sources
+A source is a feed of malicious indicators. FQDNs, IPv4 and IPv6-addresses are supported. A source is a text file or a feed of text data. Indicators should be separated by newline/carriage return characters (/n,/r or both /r/n).  
+
+To create a source navigate to "Configuration" --> "Sources" and press the "+" button. All fields are required:
+- source name;
+- source URL for full source transfer (AXFR). URLs(http/https/ftp) and local files are supported. Prefix "file:" is used for local files. The basci HTTP authentication is supportend. You should include username/password in the URL in the following format "https://username:password@host.domain";
+- source path for incremental source transfer (IXFR). AXFR,IXFR paths support keywords to shorten URLs and provide zone update timestamps:
+  - **[:AXFR:]** - full AXFR path. Can be used only in IXFR paths;
+  - **[:FTimestamp:]** - timestamp when the source was last time updated  (e.g. 1507946281)
+  - **[:ToTimestamp:]** - current timestamp;
+- REGEX which is used to extract indicators and their expiration time. The first match is an indicator, the second match is an expiration time. Expiration time is an optional parameter. A regular expression must be included in double quotes. If the field is left empty, a default REGEX will be used (`"^([A-Za-z0-9][A-Za-z0-9\-\._]+)[^A-Za-z0-9\-\._]*.*$"`). `none` is used if no REGEX is required (the source already provides IOCs one per line w/o an expiration date).
+
 ### Whitelists
+Whitelists are used to prevent possible errors and blocking trusted domains and IP addresses. The whitelisted IOCs are removed from response policy zones. ioc2rpz does check only exact match, so it will not split or discard a network if a whitelisted IP address is included into a blocked subnet and vice versa. A whitelist is a text file or a feed of text data. Indicators should be separated by newline characters (/n,/r or both /n/r).  Whitelists must contain valid FQDNs and/or IP addresses. ioc2rpz supports unlimited count of indicators.  
+
 ### RPZs
 ### Publishing configuration
 ### Export configuration
@@ -79,7 +117,7 @@ The video below shows how to setup ioc2rpz and ioc2rpz.gui on AWS using ECS.
 - [ ] README.md && Video && Slides
 - [ ] Config import. Pub_IP & local management IP & Email & Management.
 
------ cut. an article to be an published -----
+----- cut before Def Con -----
 - [ ] Constraints enforcements on SQLite (requires redo the DB, keys etc) (if there is a named index, php doesn't see rowid.....)
 - [ ] Changing management TSIG - publish config immediately.
 - [ ] Servers table. Server online status.
