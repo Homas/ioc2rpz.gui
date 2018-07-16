@@ -275,8 +275,9 @@ Vue.component('io2-table', {
           
         break;
         case "add rpzs":
-          this.$root.ftRPZProWindowInfo="";
           this.$root.RPZtabI=0;
+          this.$root.ftRPZProWindow="hidden";
+          this.$root.ftRPZProWindowInfo="";
           this.$root.ftRPZId=-1;
           this.$root.ftRPZName='';
           this.$root.ftRPZSOA_Refresh='86400';
@@ -305,7 +306,6 @@ Vue.component('io2-table', {
           this.$root.ftRPZDisabled=0;
 
           this.$root.editRow={};
-          this.$root.ftRPZProWindow="";
           this.$root.$emit('bv::show::modal', 'mConfEditRPZ');
         break;
         case "info rpzs":
@@ -419,7 +419,7 @@ new Vue({
         { key: 'ip', label: 'MGMT IP/FQDN', sortable: true },
         { key: 'ns', label: 'Name Server' },
         { key: 'email', label: 'Admin Email' },
-        { key: 'mgmt', label: 'Monitoring', 'class': 'text-center' },
+        { key: 'mgmt', label: 'Manage', 'class': 'text-center' },
         { key: 'disabled', label: 'Disabled', 'class': 'text-center' },
         { key: 'actions_e', label: 'Actions', 'class': 'text-center',  'tdClass': 'width250'}
       ],

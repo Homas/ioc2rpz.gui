@@ -78,27 +78,44 @@ Server tab is used to generate configurations and manages ioc2rpz servers. You c
 Currently ioc2rpz.gui fully supports only ioc2rpz running on the same host but can save configurations to local files for multiple servers. In upcomming releases it will be possible to upload configurations to remote ftp/scp/sftp servers and/or S3 bucket. 
 
 To add a server navigate to "Configuration" --> "Servers" and press the "+" button. All fields except "Management stations IPs" are required.
-"Server's Public IP/FQDN" is used only in the export DNS configurations. "Server's MGMT IP/FQDN" is used to manage ioc2rpz service. The public and management IP-addesses are not exposed into ioc2rpz configuration. 
+"Server's Public IP/FQDN" is used only in the export DNS configurations. "Server's MGMT IP/FQDN" is used to manage ioc2rpz service. The public and management IP-addesses are not exposed into ioc2rpz configuration. If you select "Disabled" checkbox when you still can change the server's configuration in the GUI but it is not published.
 
-The servers action menu allows you to view, edit, clone and remove servers, export and publish server's configuration. You may forse publishing server's configuration independently of changes. A yellow "Publish configuration" button (in the top right conner next to login name) automatically displayed when a server configuration is changed, the "publish" button on the action menu is also highlighted in blue.
+The servers action menu allows you to view, edit, clone and remove servers, export and publish server's configuration. You may forse publishing server's configuration independently of any changes.
 
 ### Sources
 A source is a feed of malicious indicators. FQDNs, IPv4 and IPv6-addresses are supported. A source is a text file or a feed of text data. Indicators should be separated by newline/carriage return characters (/n,/r or both /r/n).  
 
-To create a source navigate to "Configuration" --> "Sources" and press the "+" button. All fields are required:
+To create a source navigate to "Configuration" --> "Sources" and press the "+" button. Fill the following fields and press "Ok":
 - source name;
-- source URL for full source transfer (AXFR). URLs(http/https/ftp) and local files are supported. Prefix "file:" is used for local files. The basci HTTP authentication is supportend. You should include username/password in the URL in the following format "https://username:password@host.domain";
+- source URL for full source transfer (AXFR). ioc2rpz can use http/https/ftp and local files to fetch indicators. Prefix "file:" is used for local files. Basic HTTP authentication is supported as well. You should include username/password in the URL in the following format "https://username:password@host.domain";
 - source path for incremental source transfer (IXFR). AXFR,IXFR paths support keywords to shorten URLs and provide zone update timestamps:
   - **[:AXFR:]** - full AXFR path. Can be used only in IXFR paths;
   - **[:FTimestamp:]** - timestamp when the source was last time updated  (e.g. 1507946281)
   - **[:ToTimestamp:]** - current timestamp;
-- REGEX which is used to extract indicators and their expiration time. The first match is an indicator, the second match is an expiration time. Expiration time is an optional parameter. A regular expression must be included in double quotes. If the field is left empty, a default REGEX will be used (`"^([A-Za-z0-9][A-Za-z0-9\-\._]+)[^A-Za-z0-9\-\._]*.*$"`). `none` is used if no REGEX is required (the source already provides IOCs one per line w/o an expiration date).
+- REGEX which is used to extract indicators and their expiration time. The first match is an indicator, the second match is an expiration time. Expiration time is an optional parameter. A regular expression must be included in double quotes. If the field is left empty, a default REGEX will be used (`"^([A-Za-z0-9][A-Za-z0-9\-\._]+)[^A-Za-z0-9\-\._]*.*$"`). `none` is used if no REGEX is required (the source contains IOCs one per line w/o an expiration date).
+
+The action menu allows you to view, edit, clone and remove sources.
+
 
 ### Whitelists
-Whitelists are used to prevent possible errors and blocking trusted domains and IP addresses. The whitelisted IOCs are removed from response policy zones. ioc2rpz does check only exact match, so it will not split or discard a network if a whitelisted IP address is included into a blocked subnet and vice versa. A whitelist is a text file or a feed of text data. Indicators should be separated by newline characters (/n,/r or both /n/r).  Whitelists must contain valid FQDNs and/or IP addresses. ioc2rpz supports unlimited count of indicators.  
+Whitelists are used to prevent possible errors and blocking trusted domains and IP addresses. The whitelisted IOCs are removed from response policy zones. ioc2rpz does check only exact match, so it will not split or discard a network if a whitelisted IP address is included into a blocked subnet and vice versa. A whitelist is a text file or a feed of text data. Indicators should be separated by newline characters (/n,/r or both /n/r).  Whitelists must contain valid FQDNs and/or IP addresses. 
+
+To create a source navigate to "Configuration" --> "Whitelists" and press the "+" button. Fill the following fields and press "Ok":
+- whitelist name;
+- whitelist path. URLs(http/https/ftp) and local files are supported. Prefix "file:" is used for local files. Basic HTTP authentication is supported as well. You should include username/password in the URL in the following format "https://username:password@host.domain";
+- REGEX which is used to extract indicators. A regular expression must be included in double quotes. If the field is left empty, a default REGEX will be used (`"^([A-Za-z0-9][A-Za-z0-9\-\._]+)[^A-Za-z0-9\-\._]*.*$"`). `none` is used if no REGEX is required (the whitelist contains IOCs one per line w/o an expiration date).
 
 ### RPZs
+
+To create a source navigate to "Configuration" --> "Whitelists" and press the "+" button.
+
 ### Publishing configuration
+A yellow "Publish configuration" button (in the top right conner next to login name) automatically displayed when a server configuration is changed, the "publish" button on the action menu is also highlighted in blue.
+When you request to publish data:
+- ioc2rpz configuration is saved to a file;
+- ioc2rpz.gui send a reload configuration signal to ioc2rpz.
+If ioc2rpz was started without configuration or there were changes in management keys it may be required to manually restart ioc2rpz service or manually send the reload configuration signal using a previous management key.
+
 ### Export configuration
 #### Bind
 #### PowerDNS
@@ -116,6 +133,7 @@ Whitelists are used to prevent possible errors and blocking trusted domains and 
 - [x] add sources https://github.com/notracking/hosts-blocklists
 - [ ] README.md && Video && Slides
 - [ ] Config import. Pub_IP & local management IP & Email & Management.
+- [ ] Change management keys.
 
 ----- cut before Def Con -----
 - [ ] Constraints enforcements on SQLite (requires redo the DB, keys etc) (if there is a named index, php doesn't see rowid.....)
