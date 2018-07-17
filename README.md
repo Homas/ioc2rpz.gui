@@ -19,15 +19,15 @@ You can watch a demo of ioc2rpz technology including ioc2rpz.gui of the followin
 - create a crontab which will execute "/opt/ioc2rpz.gui/scripts/publish_cfg.php" script every 10 seconds;
 - configure HTTP server.
 
-Right now ioc2rpz.gui use only SQLite database with a database file stored in "/opt/ioc2rpz.gui/www/io2cfg" folder. Make sure that set up a relevant access permitions to the directory/db-file.
+Right now ioc2rpz.gui use only SQLite database with a database file stored in "/opt/ioc2rpz.gui/www/io2cfg" folder. Make sure that set up a relevant access permissions to the directory/db-file.
 
 ioc2rpz configuration files are saved to "/opt/ioc2rpz.gui/export-cfg" folder. 
 
-The database initialisation script also creates a sample configuration. To immediatelly start using the sample configuration it you need to update public and management IP-addresses of ioc2rpz server. If you already started ioc2rpz server please restart it or send a management signal to reload configuration.
+The database initialization script also creates a sample configuration. To immediately start using the sample configuration it you need to update public and management IP-addresses of ioc2rpz server. If you already started ioc2rpz server please restart it or send a management signal to reload configuration.
 The init script doesn't create a default user. You should create the administrator after the first start. Please do it ASAP.
 
 ### Dependencies
-PHP7, SQLite, ISC Bind tools (dig only command). The following packets are required for Alpine linux with Apache web-server:
+PHP7, SQLite, ISC Bind tools (dig only command). The following packets are required for Alpine Linux with Apache web-server:
 ```
 bash openrc curl coreutils openssl apache2 libxml2-dev apache2-utils php7 php7-apache2 php7-session php7-json php7-curl apache2-ssl sqlite php7-sqlite3 php7-ctype bind-tools
 ```
@@ -70,17 +70,17 @@ TSIG keys are used for ioc2rpz server management and RPZ transfer. It is not req
 
 To add a new TSIG key navigate to "Configuration" --> "TSIG keys" and press the "+" button.
 The TSIG key and it's name automatically generated. You may regenerate the name and the key using the "Generate" button.
-md5, sha256, sha512 hash algorythms are supported. The "Management key" checkbox is used to destinguish keys which are used to manage ioc2rpz. These keys can not be used for RPZ transfer.
+md5, sha256, sha512 hash algorithms are supported. The "Management key" checkbox is used to distinguish keys which are used to manage ioc2rpz. These keys can not be used for RPZ transfer.
 The action menu next to each TSIG key allows you to view, edit and remove the key. 
 
 ### Servers
 Server tab is used to generate configurations and manages ioc2rpz servers. You can manage multiple ioc2rpz servers on a single ioc2rpz.gui instance.
-Currently ioc2rpz.gui fully supports only ioc2rpz running on the same host but can save configurations to local files for multiple servers. In upcomming releases it will be possible to upload configurations to remote ftp/scp/sftp servers and/or S3 bucket. 
+Currently ioc2rpz.gui fully supports only ioc2rpz running on the same host but can save configurations to local files for multiple servers. In upcoming releases it will be possible to upload configurations to remote ftp/scp/sftp servers and/or S3 bucket. 
 
 To add a server navigate to "Configuration" --> "Servers" and press the "+" button. All fields except "Management stations IPs" are required.
-"Server's Public IP/FQDN" is used only in the export DNS configurations. "Server's MGMT IP/FQDN" is used to manage ioc2rpz service. The public and management IP-addesses are not exposed into ioc2rpz configuration. If you select "Disabled" checkbox when you still can change the server's configuration in the GUI but it is not published.
+"Server's Public IP/FQDN" is used only in the export DNS configurations. "Server's MGMT IP/FQDN" is used to manage ioc2rpz service. The public and management IP-addresses are not exposed into ioc2rpz configuration. If you select "Disabled" checkbox when you still can change the server's configuration in the GUI but it is not published.
 
-The servers action menu allows you to view, edit, clone and remove servers, export and publish server's configuration. You may forse publishing server's configuration independently of any changes.
+The servers action menu allows you to view, edit, clone and remove servers, export and publish server's configuration. You may force publishing server's configuration independently of any changes.
 
 ### Sources
 A source is a feed of malicious indicators. FQDNs, IPv4 and IPv6-addresses are supported. A source is a text file or a feed of text data. Indicators should be separated by newline/carriage return characters (/n,/r or both /r/n).  
@@ -111,7 +111,7 @@ To configure RPZ you need:
 - name the of RPZ feed in a hostname format;
 - select a distribution server. You may select several servers;
 - select TSIG keys which will be used to authenticate zone transfer;
-- select sources and whitelists. You must select minimun one source;
+- select sources and whitelists. You must select minimum one source;
 - select zone action. If you choose "Local records" please check the record format in ioc2rpz documentation.
 - select IOCs type. It is used for optimization;
 - (optional) provide list of IP-addresses to notify when the RPZ updates;
@@ -124,24 +124,24 @@ If you disable an RPZ it will not be published to servers.
 
 The action menu allows you to view, edit, clone and remove RPZs.
 
-**It is not recomended to mix domain based and IP based sources in a single RPZ**. IP-based rules require DNS servers to resolve the queries and if any IP-based feeds precede domain based feeds:
+**It is not recommended to mix domain based and IP based sources in a single RPZ**. IP-based rules require DNS servers to resolve the queries and if any IP-based feeds precede domain based feeds:
 - first of all it is not performance effective;
-- and second it make RPZ useless in protection against DNS Tunneling, DNS Based Data Exfiltration/Infiltration and Water Torture/Phantom domain/Rundom subdomain attacks.
+- and second it make RPZ useless in protection against DNS Tunneling, DNS Based Data Exfiltration/Infiltration and Water Torture/Phantom domain/Random subdomain attacks.
 
 ### Publishing configuration
-A yellow "Publish configuration" button (in the top right conner next to login name) automatically displayed when a server configuration is changed, the "publish" button on the action menu is also highlighted in blue.
+A yellow "Publish configuration" button (in the top right corner next to login name) automatically displayed when a server configuration is changed, the "publish" button on the action menu is also highlighted in blue.
 When you request to publish data:
 - ioc2rpz configuration is saved to a file;
 - ioc2rpz.gui send a reload configuration signal to ioc2rpz.
 If ioc2rpz was started without configuration or there were changes in management keys it may be required to manually restart ioc2rpz service or manually send the reload configuration signal using a previous management key.
 
 ### Export configuration
-You may export configuration in the following formats: ISC Bind, PowerDNS, Infoblox. The exported configuration should be embeded into the existing configuration.
+You may export configuration in the following formats: ISC Bind, PowerDNS, Infoblox. The exported configuration should be embedded into the existing configuration.
 To export a configuration navigate to "Configuration" --> "Utils" and click on a relevant button. After that select RPZ feeds which should be included into the configuration. Please check following sections about additional information how to set up a DNS server.
 The export tool will export all tsig keys in the ISC Bind format but for a zone will use only a single TSIG key. For PowerDNS and Infoblox it will use a first available and usable key.
 
 #### ISC Bind
-The configuration consist of 3 parts: options, tsig keys, RPZ zones. The tsig keys, RPZ zones can be instered "as is" into the ISC Bind's configuration.
+The configuration consist of 3 parts: options, tsig keys, RPZ zones. The tsig keys, RPZ zones can be inserted "as is" into the ISC Bind's configuration.
 You need to merge provided options settings with options configured on your DNS server.
 
 #### PowerDNS
@@ -150,7 +150,7 @@ If you never used RPZs or lua configuration first you will need to add "lua-conf
 
 #### Infoblox
 Infoblox doesn't support HMAC-SHA512 and it is not possible to import a key which contain slash "/".  The export tool will try to find out a supported key. If there are no supported keys available it will use the first key. The import in this case for this record will fail.
-The Infoblox configuration is provided in Infoblox CSV import format. To import a downlaoded file navigate to "Data Management" --> "DNS" --> "Response Policy Zones" and click "CSV Import". After tat check the RPZs order. RPZs which contain domain based rules must preceed RPZs with mixed records and IP-based only.
+The Infoblox configuration is provided in Infoblox CSV import format. To import a downloaded file navigate to "Data Management" --> "DNS" --> "Response Policy Zones" and click "CSV Import". After tat check the RPZs order. RPZs which contain domain based rules must precede RPZs with mixed records and IP-based only.
 
 ## TODO
 - [ ] Publishing.
