@@ -106,8 +106,27 @@ To create a source navigate to "Configuration" --> "Whitelists" and press the "+
 - REGEX which is used to extract indicators. A regular expression must be included in double quotes. If the field is left empty, a default REGEX will be used (`"^([A-Za-z0-9][A-Za-z0-9\-\._]+)[^A-Za-z0-9\-\._]*.*$"`). `none` is used if no REGEX is required (the whitelist contains IOCs one per line w/o an expiration date).
 
 ### RPZs
+Response policy zones are managed under "Configuration" --> "RPZs" menu. To add an RPZ press "+".
+To configure RPZ you need:
+- name the of RPZ feed in a hostname format;
+- select a distribution server. You may select several servers;
+- select TSIG keys which will be used to authenticate zone transfer;
+- select sources and whitelists. You must select minimun one source;
+- select zone action. If you choose "Local records" please check the record format in ioc2rpz documentation.
+- select IOCs type. It is used for optimization;
+- (optional) provide list of IP-addresses to notify when the RPZ updates;
+- check "Cache zone" if the RPZ should be cached. Otherwise the zone will be generate on the fly by a request;
+- check "Generate wildcard rules" if it is required to generate rules to block subdomains for hostnames/domains indicators;
+- provide values for SOA record;
+- provide full and incremental RPZ update times.
 
-To create a source navigate to "Configuration" --> "Whitelists" and press the "+" button.
+If you disable an RPZ it will not be published to servers.
+
+The action menu allows you to view, edit, clone and remove RPZs.
+
+**It is not recomended to mix domain based and IP based sources in a single RPZ**. IP-based rules require DNS servers to resolve the queries and if any IP-based feeds precede domain based feeds:
+- first of all it is not performance effective;
+- and second it make RPZ useless in protection against DNS Tunneling, DNS Based Data Exfiltration/Infiltration and Water Torture/Phantom domain/Rundom subdomain attacks.
 
 ### Publishing configuration
 A yellow "Publish configuration" button (in the top right conner next to login name) automatically displayed when a server configuration is changed, the "publish" button on the action menu is also highlighted in blue.
@@ -117,9 +136,21 @@ When you request to publish data:
 If ioc2rpz was started without configuration or there were changes in management keys it may be required to manually restart ioc2rpz service or manually send the reload configuration signal using a previous management key.
 
 ### Export configuration
-#### Bind
+You may export configuration in the following formats: ISC Bind, PowerDNS, Infoblox. The exported configuration should be embeded into the existing configuration.
+To export a configuration navigate to "Configuration" --> "Utils" and click on a relevant button. After that select RPZ feeds which should be included into the configuration. Please check following sections about additional information how to set up a DNS server.
+The export tool will export all tsig keys in the ISC Bind format but for a zone will use only a single TSIG key. For PowerDNS and Infoblox it will use a first available and usable key.
+
+#### ISC Bind
+The configuration consist of 3 parts: options, tsig keys, RPZ zones. The tsig keys, RPZ zones can be instered "as is" into the ISC Bind's configuration.
+You need to merge provided options settings with options configured on your DNS server.
+
 #### PowerDNS
+RPZ zone configuration is located in a separate lua-file. If you already use RPZs or used any lua based settings just add the exported RPZs into your lua configuration file.
+If you never used RPZs or lua configuration first you will need to add "lua-config-file" parameter in the configuration and after that use the downloaded configuration file.
+
 #### Infoblox
+Infoblox doesn't support HMAC-SHA512 and it is not possible to import a key which contain slash "/".  The export tool will try to find out a supported key. If there are no supported keys available it will use the first key. The import in this case for this record will fail.
+The Infoblox configuration is provided in Infoblox CSV import format. To import a downlaoded file navigate to "Data Management" --> "DNS" --> "Response Policy Zones" and click "CSV Import". After tat check the RPZs order. RPZs which contain domain based rules must preceed RPZs with mixed records and IP-based only.
 
 ## TODO
 - [ ] Publishing.

@@ -292,7 +292,7 @@ Vue.component('io2-table', {
           this.$root.get_lists('rpz_servers','ftRPZSrvsAll');
           this.$root.ftRPZSrvs=[];
           this.$root.get_lists('rpz_tkeys','ftRPZTKeysAll');
-          this.$root.ftRPZSrc=[];
+          this.$root.ftRPZTKeys=[];
           this.$root.get_lists('rpz_sources','ftRPZSrcAll');
           this.$root.ftRPZSrc=[];
           this.$root.get_lists('rpz_whitelists','ftRPZWLAll');
