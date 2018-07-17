@@ -124,7 +124,9 @@ If you disable an RPZ it will not be published to servers.
 
 The action menu allows you to view, edit, clone and remove RPZs.
 
-**It is not recommended to mix domain based and IP based sources in a single RPZ**. IP-based rules require DNS servers to resolve the queries and if any IP-based feeds precede domain based feeds:
+**It is not recommended to mix domain based and IP based sources in a single RPZ**.
+
+IP-based rules require DNS servers to resolve the queries and if any IP-based feeds precede domain based feeds:
 - first of all it is not performance effective;
 - and second it make RPZ useless in protection against DNS Tunneling, DNS Based Data Exfiltration/Infiltration and Water Torture/Phantom domain/Random subdomain attacks.
 
