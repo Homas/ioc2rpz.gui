@@ -51,7 +51,6 @@ echo -e "<Directory /opt/ioc2rpz.gui/www/>\nOptions FollowSymLinks\nAllowOverrid
 ###
 ###Comment out the following lines if you are going to use the script to set up ioc2rpz.gui and use w/o a container 
 ###
-###start cron
+###start cron & apache2
 crond
-###start apache2
 /usr/sbin/httpd -D FOREGROUND -f /etc/apache2/httpd.conf
