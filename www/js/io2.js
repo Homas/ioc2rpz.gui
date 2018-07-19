@@ -7,6 +7,7 @@ Vue.component('io2-table', {
           <b-col md="4" class="my-1">
             <b-button v-b-tooltip.hover title="Add" @click.stop="mgmtRec('add', table, '', $event.target)" variant="outline-secondary" size="sm"><i class="fa fa-plus"></i></b-button>
             <b-button v-b-tooltip.hover title="Refresh" variant="outline-secondary" size="sm" @click.stop="refreshTbl(table)"><i class="fa fa-sync"></i></b-button>
+            <b-button size="sm" @click.stop="importRec('import', table, '', $event.target)" class="" v-if="table == 'sources'" v-b-tooltip.hover title="Import" variant="outline-secondary"><i class="fa fa-download"></i></b-button>
             <b-button size="sm" @click.stop="requestDeleteMult(table)" class="" v-b-tooltip.hover title="Delete selected" variant="outline-secondary"><i class="fa fa-times-circle"></i></b-button>
           </b-col>
           <b-col md="4" class="my-1">
@@ -404,7 +405,12 @@ Vue.component('io2-table', {
         this.$root.modalMSG='<b>Do you want to delete '+this.checkedItems.length+' record'+(this.checkedItems.length==1?'':'s')+'?</b>';
         this.$root.$emit('bv::show::modal', 'mConfDel');
       }
-    }
+    },
+    
+    importRec: function (action, table, row, target) {
+      this.$root.ftImportRec='';
+      this.$root.$emit('bv::show::modal', 'mImportRec');
+    },
     
   }
 });
@@ -577,6 +583,8 @@ new Vue({
       rpzExportSAll: false,
       rpzExportIBView: 'default',
       rpzExportIBMember: 'infoblox.localdomain',      
+      
+      ftImportRec: '',
       
 //          }
   },
@@ -877,188 +885,13 @@ new Vue({
     ImportConfig: function (ev) {
       var file = new FileReader();
       var vm = this;
-      var SrvId;
       //onprogress, onabort, onerror, onloadstart
-      file.onload = async function(e) {
-        let ev = null;
-        let p1 = axios.get('/io2data.php/servers');
-        let p2 = axios.get('/io2data.php/tkeys');
-        let p3 = axios.get('/io2data.php/sources');
-        let p4 = axios.get('/io2data.php/whitelists');
-        let p5 = axios.get('/io2data.php/rpzs');
-        var [servers, tkeys, sources, whitelists, rpzs] = await Promise.all([p1, p2, p3, p4, p5]);
-        var TKeysAll=[], SrvAll=[], WLAll=[], SrcAll=[], RpzAll=[];
-        var TKeys=[], Srv=[], WL=[], Src=[], Rpz=[];
-        if (servers.data) servers.data.forEach(function(el){SrvAll[el['name']]=el['rowid']});
-        if (tkeys.data) tkeys.data.forEach(function(el){TKeysAll[el['name']]=el['rowid']});
-        if (sources.data) sources.data.forEach(function(el){SrcAll[el['name']]=el['rowid']});
-        if (whitelists.data) whitelists.data.forEach(function(el){WLAll[el['name']]=el['rowid']});
-        if (rpzs.data) rpzs.data.forEach(function(el){RpzAll[el['name']]=el['rowid']});
-        
-        for(let line of e.target.result.split(/\r|\n/)){
-          //this.ftImpServName: '',
-          //this.ftImpPrefix: '',
-          //this.ftImpAction: 0,
-          // {rpz,{
-          var l=line.trim();
-          if (m = l.match(/^{srv,{"([^"]+)","([^"]+)",\[([^\]]*)\],\[([^\]]*)\]}}\.(\t* *| *\t*%.*)$/) ){
-            Srv['ns']=m[1];Srv['email']=m[2];Srv['tkeys']=[];
-            m[3].split(/,|\s|"/g).filter(String).forEach(function(el){Srv['tkeys'].push(el);});
-            Srv['mgmt']=m[4].replace(/"/g,'');//.split(/,|\s|"/g).filter(String);
-          };
-//{rpz,{"dga.ioc2rpz",21600,3600,2592000,7200,"true","true","nxdomain",["pub_demokey_1","at_demokey_1","priv_key_1"],"fqdn",172800,86400,["dga"],[],["whitelist_1"]}}.
-//rpz record: name, SOA refresh, SOA update retry, SOA expiration, SOA NXDomain TTL, Cache, Wildcards, Action, [tkeys], ioc_type, AXFR_time, IXFR_time, [sources], [notify], [whitelists]
-          if (m = l.match(/^{rpz,{"([^"]+)",([0-9]+),([0-9]+),([0-9]+),([0-9]+),"([^"]+)","([^"]+)","?([^"]+|\[[^\]]*\])"?,\[([^\]]*)\],"([^"]+)",([0-9]+),([0-9]+),\[([^\]]*)\],\[([^\]]*)\],\[([^\]]*)\]}}\.(\t* *| *\t*%.*)$/) ){
-            Rpz[m[1]]=[];
-            Rpz[m[1]]['tkeys']=[];
-            if (m[9]) m[9].split(/,|\s|"/g).filter(String).forEach(function(el){Rpz[m[1]]['tkeys'].push(el);});
-
-            Rpz[m[1]]['sources']=[];
-            m[13].split(/,|\s|"/g).filter(String).forEach(function(el){Rpz[m[1]]['sources'].push(el);});
-
-            Rpz[m[1]]['notify']=m[14].replace(/"/g,'');
-
-            Rpz[m[1]]['whitelists']=[];
-            if (m[15]) m[15].split(/,|\s|"/g).filter(String).forEach(function(el){Rpz[m[1]]['whitelists'].push(el);});
-          
-            Rpz[m[1]]['name']=m[1];
-            Rpz[m[1]]['soa_refresh']=m[2];
-            Rpz[m[1]]['soa_update']=m[3];
-            Rpz[m[1]]['soa_exp']=m[4];
-            Rpz[m[1]]['soa_nxttl']=m[5];
-            Rpz[m[1]]['cache']=m[6]=="true"?1:0;
-            Rpz[m[1]]['wildcards']=m[7]=="true"?1:0;
-
-            Rpz[m[1]]['action']=m[8]; //
-            
-            Rpz[m[1]]['ioc_type']=m[10];
-            Rpz[m[1]]['AXFR_time']=m[11];
-            Rpz[m[1]]['IXFR_time']=m[12];
-          };
-          if (m = l.match(/^{key,{"([^"]+)","([^"]+)","([^"]+)"}}\.(\t* *| *\t*%.*)$/)){
-            if (vm.ftImpAction==1 || (vm.ftImpAction==2 && (!TKeysAll[m[1]] || (!TKeysAll[vm.ftImpPrefix+m[1]] && vm.ftImpPrefix)))|| (vm.ftImpAction==0 && (!TKeysAll[vm.ftImpPrefix+m[1]]))) {
-              vm.ftKeyId=(TKeysAll[vm.ftImpPrefix+m[1]] && vm.ftImpAction==1)?TKeysAll[vm.ftImpPrefix+m[1]]:-1;
-              vm.ftKeyName=vm.ftImpAction!=2?vm.ftImpPrefix+m[1]:(TKeysAll[m[1]] && vm.ftImpAction==2)?vm.ftImpPrefix+m[1]:m[1];
-
-              vm.ftKeyAlg=m[2]; vm.ftKey=m[3]; vm.ftKeyMGMT=Srv['tkeys'].includes(m[1])?1:0; //TODO check SRV first
-              TKeys[vm.ftKeyName]=vm.ftKeyName;
-              TKeys[m[1]]=vm.ftKeyName;
-              await vm.tblMgmtTKeyRecord(ev,'tkeys');
-              //await sleep(10); //SQLite too slow
-            }else{
-              TKeys[m[1]]=(TKeysAll[vm.ftImpPrefix+m[1]] && vm.ftImpAction!=2)?vm.ftImpPrefix+m[1]:(TKeysAll[m[1]] && vm.ftImpAction==2)?vm.ftImpPrefix+m[1]:m[1];
-            };
-          };
-          if (m = l.match(/^{whitelist,{"([^"]+)","([^"]+)",(none|"(.*)")}}\.(\t* *| *\t*%.*)$/)){
-            if (vm.ftImpAction==1 || (vm.ftImpAction==2 && (!WLAll[m[1]] || (!WLAll[vm.ftImpPrefix+m[1]] && vm.ftImpPrefix)))|| (vm.ftImpAction==0 && (!WLAll[vm.ftImpPrefix+m[1]]))) {
-              vm.ftSrcId=(WLAll[vm.ftImpPrefix+m[1]] && vm.ftImpAction==1)?WLAll[vm.ftImpPrefix+m[1]]:-1;
-              vm.ftSrcName=vm.ftImpAction!=2?vm.ftImpPrefix+m[1]:(WLAll[m[1]] && vm.ftImpAction==2)?vm.ftImpPrefix+m[1]:m[1];
-              vm.ftSrcURL=m[2]; vm.ftSrcREGEX=m[4]!==undefined?m[4]:m[3]; vm.ftSrcURLIXFR="";
-              WL[vm.ftSrcName]=vm.ftSrcName;
-              WL[m[1]]=vm.ftSrcName;
-              vm.ftSrcType='whitelists';
-              await vm.tblMgmtSrcRecord(ev,'whitelists');
-            }else{
-              WL[m[1]]=(WLAll[vm.ftImpPrefix+m[1]] && vm.ftImpAction!=2)?vm.ftImpPrefix+m[1]:(WLAll[m[1]] && vm.ftImpAction==2)?vm.ftImpPrefix+m[1]:m[1];
-            };
-          };
-          if (m = l.match(/^{source,{"([^"]+)","([^"]+)","([^"]*)",(none|"(.*)")}}\.(\t* *| *\t*%.*)$/)){
-            if (vm.ftImpAction==1 || (vm.ftImpAction==2 && (!SrcAll[m[1]] || (!SrcAll[vm.ftImpPrefix+m[1]] && vm.ftImpPrefix)))|| (vm.ftImpAction==0 && (!SrcAll[vm.ftImpPrefix+m[1]]))) {
-              vm.ftSrcId=(SrcAll[vm.ftImpPrefix+m[1]] && vm.ftImpAction==1)?SrcAll[vm.ftImpPrefix+m[1]]:-1;
-              vm.ftSrcName=vm.ftImpAction!=2?vm.ftImpPrefix+m[1]:(SrcAll[m[1]] && vm.ftImpAction==2)?vm.ftImpPrefix+m[1]:m[1];
-              vm.ftSrcURL=m[2]; vm.ftSrcURLIXFR=m[3]; vm.ftSrcREGEX=m[5]!==undefined?m[5]:m[4];
-              Src[vm.ftSrcName]=vm.ftSrcName;
-              Src[m[1]]=vm.ftSrcName;
-              vm.ftSrcType='sources';
-              await vm.tblMgmtSrcRecord(ev,'sources'); 
-            }else{
-              Src[m[1]]=(SrcAll[vm.ftImpPrefix+m[1]] && vm.ftImpAction!=2)?vm.ftImpPrefix+m[1]:(SrcAll[m[1]] && vm.ftImpAction==2)?vm.ftImpPrefix+m[1]:m[1];
-            };
-          };
-        };
-
-        await sleep(1000); //SQLite is too slow
-        p1 = axios.get('/io2data.php/tkeys');
-        p2 = axios.get('/io2data.php/sources');
-        p3 = axios.get('/io2data.php/whitelists');
-        [tkeys, sources, whitelists] = await Promise.all([p1, p2, p3]);
-        var TKeysAll=[], WLAll=[], SrcAll=[];
-        if (tkeys.data) tkeys.data.forEach(function(el){TKeysAll[el['name']]=el['rowid']});
-        if (sources.data) sources.data.forEach(function(el){SrcAll[el['name']]=el['rowid']});
-        if (whitelists.data) whitelists.data.forEach(function(el){WLAll[el['name']]=el['rowid']});
-
-        if(Srv !=[]){
-          vm.ftSrvId=-1;
-          vm.ftSrvName=vm.ftImpServName;
-          //vm.ftSrvIP vm.ftSrvMGMT vm.ftSrvDisabled
-          vm.ftSrvNS=Srv['ns'];
-          vm.ftSrvEmail=Srv['email'].replace('.', '@');;
-          vm.ftSrvMGMTIP=Srv['mgmt'];
-          if (Srv['tkeys']) Srv['tkeys'].forEach(function(el){
-            if (TKeys[el] && TKeysAll[TKeys[el]]) vm.ftSrvTKeys.push(TKeysAll[TKeys[el]]);
-          });
-          vm.ftSrvSType=0;
-          vm.ftSrvURL=vm.ftImpFiles[0].name
-          //TODO Fix to ask values in the import form
-          vm.ftSrvPubIP=vm.ftImpServPubIP;
-          vm.ftSrvIP=vm.ftImpServMGMTIP;
-          await vm.tblMgmtSrvRecord(ev,'servers');
-          do {
-            await sleep(1000); //SQLite is too slow
-            p1 = axios.get('/io2data.php/servers');
-            [servers] = await Promise.all([p1]);
-            if (servers.data) servers.data.forEach(function(el){if (vm.ftSrvName==el['name']) SrvId=el['rowid']});
-          } while (SrvId == undefined)
-        };
-        
-      //          tRPZSrvs: JSON.stringify(this.ftRPZSrvs),
-      //          tRPZDisabled: this.ftRPZDisabled,
-
-        if(Rpz !=[]){
-          vm.ftRPZId=-1
-          vm.ftRPZSrvs=[];
-          vm.ftRPZSrvs.push(SrvId);
-          for (var RpzName in Rpz) {
-            vm.ftRPZName=RpzName; //If exists --- add srv???
-            vm.ftRPZSOA_Refresh=Rpz[RpzName]['soa_refresh'];
-            vm.ftRPZSOA_UpdRetry=Rpz[RpzName]['soa_update'];
-            vm.ftRPZSOA_Exp=Rpz[RpzName]['soa_exp'];
-            vm.ftRPZSOA_NXTTL=Rpz[RpzName]['soa_nxttl'];
-            vm.ftRPZCache=Rpz[RpzName]['cache'];
-            vm.ftRPZWildcard=Rpz[RpzName]['wildcards'];
-
-            if (["nxdomain","nodata","passthru","drop","tcp-only"].includes(Rpz[RpzName]['action'])){
-              vm.ftRPZAction=Rpz[RpzName]['action']; vm.ftRPZActionCustom="";
-            }else{
-              vm.ftRPZAction="local"; vm.ftRPZActionCustom=Rpz[RpzName]['action'];
-            };
-            
-            vm.ftRPZIOCType=Rpz[RpzName]['ioc_type'];
-            vm.ftRPZAXFR=Rpz[RpzName]['AXFR_time'];
-            vm.ftRPZIXFR=Rpz[RpzName]['IXFR_time'];
-            
-            vm.ftRPZTKeys=[];
-            if (Rpz[RpzName]['tkeys']) Rpz[RpzName]['tkeys'].forEach(function(el){
-              if (TKeys[el] && TKeysAll[TKeys[el]]) vm.ftRPZTKeys.push(TKeysAll[TKeys[el]]);
-            });
-
-            vm.ftRPZSrc=[];
-            Rpz[RpzName]['sources'].forEach(function(el){
-              if (Src[el] && SrcAll[Src[el]]) vm.ftRPZSrc.push(SrcAll[Src[el]]);
-            });
-
-            vm.ftRPZNotify=Rpz[RpzName]['notify'];
-            vm.ftRPZWL=[];
-            if (Rpz[RpzName]['whitelists']) Rpz[RpzName]['whitelists'].forEach(function(el){
-              if (WL[el] && WLAll[WL[el]]) vm.ftRPZWL.push(WLAll[WL[el]]);
-            });
-
-            vm.tblMgmtRPZRecord(ev,'rpzs');
-          };
-        };
-
-      }
+      file.onload = function(e) {ImportIOC2RPZ(vm,e.target.result);};
       file.readAsText(vm.ftImpFiles[0]);      
+    },
+
+    ImportConfigLine: function (ev) {
+      ImportIOC2RPZ(this,this.ftImportRec);
     },
     
     checkImpFile: function (e) {
@@ -1285,3 +1118,185 @@ function copyToClipboardID(id) {
   document.getElementById(id).select();
   document.execCommand('copy');
 };
+
+
+async function ImportIOC2RPZ(vm,txt){//e.target.result
+        var SrvId;
+        let ev = null;
+        let p1 = axios.get('/io2data.php/servers');
+        let p2 = axios.get('/io2data.php/tkeys');
+        let p3 = axios.get('/io2data.php/sources');
+        let p4 = axios.get('/io2data.php/whitelists');
+        let p5 = axios.get('/io2data.php/rpzs');
+        var [servers, tkeys, sources, whitelists, rpzs] = await Promise.all([p1, p2, p3, p4, p5]);
+        var TKeysAll=[], SrvAll=[], WLAll=[], SrcAll=[], RpzAll=[];
+        var TKeys=[], Srv=[], WL=[], Src=[], Rpz=[];
+        if (servers.data) servers.data.forEach(function(el){SrvAll[el['name']]=el['rowid']});
+        if (tkeys.data) tkeys.data.forEach(function(el){TKeysAll[el['name']]=el['rowid']});
+        if (sources.data) sources.data.forEach(function(el){SrcAll[el['name']]=el['rowid']});
+        if (whitelists.data) whitelists.data.forEach(function(el){WLAll[el['name']]=el['rowid']});
+        if (rpzs.data) rpzs.data.forEach(function(el){RpzAll[el['name']]=el['rowid']});
+        
+        for(let line of txt.split(/\r|\n/)){
+          //this.ftImpServName: '',
+          //this.ftImpPrefix: '',
+          //this.ftImpAction: 0,
+          // {rpz,{
+          var l=line.trim();
+          if (m = l.match(/^{srv,{"([^"]+)","([^"]+)",\[([^\]]*)\],\[([^\]]*)\]}}\.(\t* *| *\t*%.*)$/) ){
+            Srv['ns']=m[1];Srv['email']=m[2];Srv['tkeys']=[];
+            m[3].split(/,|\s|"/g).filter(String).forEach(function(el){Srv['tkeys'].push(el);});
+            Srv['mgmt']=m[4].replace(/"/g,'');//.split(/,|\s|"/g).filter(String);
+          };
+//{rpz,{"dga.ioc2rpz",21600,3600,2592000,7200,"true","true","nxdomain",["pub_demokey_1","at_demokey_1","priv_key_1"],"fqdn",172800,86400,["dga"],[],["whitelist_1"]}}.
+//rpz record: name, SOA refresh, SOA update retry, SOA expiration, SOA NXDomain TTL, Cache, Wildcards, Action, [tkeys], ioc_type, AXFR_time, IXFR_time, [sources], [notify], [whitelists]
+          if (m = l.match(/^{rpz,{"([^"]+)",([0-9]+),([0-9]+),([0-9]+),([0-9]+),"([^"]+)","([^"]+)","?([^"]+|\[[^\]]*\])"?,\[([^\]]*)\],"([^"]+)",([0-9]+),([0-9]+),\[([^\]]*)\],\[([^\]]*)\],\[([^\]]*)\]}}\.(\t* *| *\t*%.*)$/) ){
+            Rpz[m[1]]=[];
+            Rpz[m[1]]['tkeys']=[];
+            if (m[9]) m[9].split(/,|\s|"/g).filter(String).forEach(function(el){Rpz[m[1]]['tkeys'].push(el);});
+
+            Rpz[m[1]]['sources']=[];
+            m[13].split(/,|\s|"/g).filter(String).forEach(function(el){Rpz[m[1]]['sources'].push(el);});
+
+            Rpz[m[1]]['notify']=m[14].replace(/"/g,'');
+
+            Rpz[m[1]]['whitelists']=[];
+            if (m[15]) m[15].split(/,|\s|"/g).filter(String).forEach(function(el){Rpz[m[1]]['whitelists'].push(el);});
+          
+            Rpz[m[1]]['name']=m[1];
+            Rpz[m[1]]['soa_refresh']=m[2];
+            Rpz[m[1]]['soa_update']=m[3];
+            Rpz[m[1]]['soa_exp']=m[4];
+            Rpz[m[1]]['soa_nxttl']=m[5];
+            Rpz[m[1]]['cache']=m[6]=="true"?1:0;
+            Rpz[m[1]]['wildcards']=m[7]=="true"?1:0;
+
+            Rpz[m[1]]['action']=m[8]; //
+            
+            Rpz[m[1]]['ioc_type']=m[10];
+            Rpz[m[1]]['AXFR_time']=m[11];
+            Rpz[m[1]]['IXFR_time']=m[12];
+          };
+          if (m = l.match(/^{key,{"([^"]+)","([^"]+)","([^"]+)"}}\.(\t* *| *\t*%.*)$/)){
+            if (vm.ftImpAction==1 || (vm.ftImpAction==2 && (!TKeysAll[m[1]] || (!TKeysAll[vm.ftImpPrefix+m[1]] && vm.ftImpPrefix)))|| (vm.ftImpAction==0 && (!TKeysAll[vm.ftImpPrefix+m[1]]))) {
+              vm.ftKeyId=(TKeysAll[vm.ftImpPrefix+m[1]] && vm.ftImpAction==1)?TKeysAll[vm.ftImpPrefix+m[1]]:-1;
+              vm.ftKeyName=vm.ftImpAction!=2?vm.ftImpPrefix+m[1]:(TKeysAll[m[1]] && vm.ftImpAction==2)?vm.ftImpPrefix+m[1]:m[1];
+
+              vm.ftKeyAlg=m[2]; vm.ftKey=m[3]; vm.ftKeyMGMT=Srv['tkeys'].includes(m[1])?1:0; //TODO check SRV first
+              TKeys[vm.ftKeyName]=vm.ftKeyName;
+              TKeys[m[1]]=vm.ftKeyName;
+              await vm.tblMgmtTKeyRecord(ev,'tkeys');
+              //await sleep(10); //SQLite too slow
+            }else{
+              TKeys[m[1]]=(TKeysAll[vm.ftImpPrefix+m[1]] && vm.ftImpAction!=2)?vm.ftImpPrefix+m[1]:(TKeysAll[m[1]] && vm.ftImpAction==2)?vm.ftImpPrefix+m[1]:m[1];
+            };
+          };
+          if (m = l.match(/^{whitelist,{"([^"]+)","([^"]+)",(none|"(.*)")}}\.(\t* *| *\t*%.*)$/)){
+            if (vm.ftImpAction==1 || (vm.ftImpAction==2 && (!WLAll[m[1]] || (!WLAll[vm.ftImpPrefix+m[1]] && vm.ftImpPrefix)))|| (vm.ftImpAction==0 && (!WLAll[vm.ftImpPrefix+m[1]]))) {
+              vm.ftSrcId=(WLAll[vm.ftImpPrefix+m[1]] && vm.ftImpAction==1)?WLAll[vm.ftImpPrefix+m[1]]:-1;
+              vm.ftSrcName=vm.ftImpAction!=2?vm.ftImpPrefix+m[1]:(WLAll[m[1]] && vm.ftImpAction==2)?vm.ftImpPrefix+m[1]:m[1];
+              vm.ftSrcURL=m[2]; vm.ftSrcREGEX=m[4]!==undefined?m[4]:m[3]; vm.ftSrcURLIXFR="";
+              WL[vm.ftSrcName]=vm.ftSrcName;
+              WL[m[1]]=vm.ftSrcName;
+              vm.ftSrcType='whitelists';
+              await vm.tblMgmtSrcRecord(ev,'whitelists');
+            }else{
+              WL[m[1]]=(WLAll[vm.ftImpPrefix+m[1]] && vm.ftImpAction!=2)?vm.ftImpPrefix+m[1]:(WLAll[m[1]] && vm.ftImpAction==2)?vm.ftImpPrefix+m[1]:m[1];
+            };
+          };
+          if (m = l.match(/^{source,{"([^"]+)","([^"]+)","([^"]*)",(none|"(.*)")}}\.(\t* *| *\t*%.*)$/)){
+            if (vm.ftImpAction==1 || (vm.ftImpAction==2 && (!SrcAll[m[1]] || (!SrcAll[vm.ftImpPrefix+m[1]] && vm.ftImpPrefix)))|| (vm.ftImpAction==0 && (!SrcAll[vm.ftImpPrefix+m[1]]))) {
+              vm.ftSrcId=(SrcAll[vm.ftImpPrefix+m[1]] && vm.ftImpAction==1)?SrcAll[vm.ftImpPrefix+m[1]]:-1;
+              vm.ftSrcName=vm.ftImpAction!=2?vm.ftImpPrefix+m[1]:(SrcAll[m[1]] && vm.ftImpAction==2)?vm.ftImpPrefix+m[1]:m[1];
+              vm.ftSrcURL=m[2]; vm.ftSrcURLIXFR=m[3]; vm.ftSrcREGEX=m[5]!==undefined?m[5]:m[4];
+              Src[vm.ftSrcName]=vm.ftSrcName;
+              Src[m[1]]=vm.ftSrcName;
+              vm.ftSrcType='sources';
+              await vm.tblMgmtSrcRecord(ev,'sources'); 
+            }else{
+              Src[m[1]]=(SrcAll[vm.ftImpPrefix+m[1]] && vm.ftImpAction!=2)?vm.ftImpPrefix+m[1]:(SrcAll[m[1]] && vm.ftImpAction==2)?vm.ftImpPrefix+m[1]:m[1];
+            };
+          };
+        };
+
+        await sleep(1000); //SQLite is too slow
+        p1 = axios.get('/io2data.php/tkeys');
+        p2 = axios.get('/io2data.php/sources');
+        p3 = axios.get('/io2data.php/whitelists');
+        [tkeys, sources, whitelists] = await Promise.all([p1, p2, p3]);
+        var TKeysAll=[], WLAll=[], SrcAll=[];
+        if (tkeys.data) tkeys.data.forEach(function(el){TKeysAll[el['name']]=el['rowid']});
+        if (sources.data) sources.data.forEach(function(el){SrcAll[el['name']]=el['rowid']});
+        if (whitelists.data) whitelists.data.forEach(function(el){WLAll[el['name']]=el['rowid']});
+
+        if(Srv.length > 0){
+          vm.ftSrvId=-1;
+          vm.ftSrvName=vm.ftImpServName;
+          //vm.ftSrvIP vm.ftSrvMGMT vm.ftSrvDisabled
+          vm.ftSrvNS=Srv['ns'];
+          vm.ftSrvEmail=Srv['email'].replace('.', '@');;
+          vm.ftSrvMGMTIP=Srv['mgmt'];
+          if (Srv['tkeys']) Srv['tkeys'].forEach(function(el){
+            if (TKeys[el] && TKeysAll[TKeys[el]]) vm.ftSrvTKeys.push(TKeysAll[TKeys[el]]);
+          });
+          vm.ftSrvSType=0;
+          vm.ftSrvURL=vm.ftImpFiles[0].name
+          //TODO Fix to ask values in the import form
+          vm.ftSrvPubIP=vm.ftImpServPubIP;
+          vm.ftSrvIP=vm.ftImpServMGMTIP;
+          await vm.tblMgmtSrvRecord(ev,'servers');
+          do {
+            await sleep(1000); //SQLite is too slow
+            p1 = axios.get('/io2data.php/servers');
+            [servers] = await Promise.all([p1]);
+            if (servers.data) servers.data.forEach(function(el){if (vm.ftSrvName==el['name']) SrvId=el['rowid']});
+          } while (SrvId == undefined)
+        };
+        
+      //          tRPZSrvs: JSON.stringify(this.ftRPZSrvs),
+      //          tRPZDisabled: this.ftRPZDisabled,
+
+        if(Rpz.length > 0){
+          vm.ftRPZId=-1
+          vm.ftRPZSrvs=[];
+          vm.ftRPZSrvs.push(SrvId);
+          for (var RpzName in Rpz) {
+            vm.ftRPZName=RpzName; //If exists --- add srv???
+            vm.ftRPZSOA_Refresh=Rpz[RpzName]['soa_refresh'];
+            vm.ftRPZSOA_UpdRetry=Rpz[RpzName]['soa_update'];
+            vm.ftRPZSOA_Exp=Rpz[RpzName]['soa_exp'];
+            vm.ftRPZSOA_NXTTL=Rpz[RpzName]['soa_nxttl'];
+            vm.ftRPZCache=Rpz[RpzName]['cache'];
+            vm.ftRPZWildcard=Rpz[RpzName]['wildcards'];
+
+            if (["nxdomain","nodata","passthru","drop","tcp-only"].includes(Rpz[RpzName]['action'])){
+              vm.ftRPZAction=Rpz[RpzName]['action']; vm.ftRPZActionCustom="";
+            }else{
+              vm.ftRPZAction="local"; vm.ftRPZActionCustom=Rpz[RpzName]['action'];
+            };
+            
+            vm.ftRPZIOCType=Rpz[RpzName]['ioc_type'];
+            vm.ftRPZAXFR=Rpz[RpzName]['AXFR_time'];
+            vm.ftRPZIXFR=Rpz[RpzName]['IXFR_time'];
+            
+            vm.ftRPZTKeys=[];
+            if (Rpz[RpzName]['tkeys']) Rpz[RpzName]['tkeys'].forEach(function(el){
+              if (TKeys[el] && TKeysAll[TKeys[el]]) vm.ftRPZTKeys.push(TKeysAll[TKeys[el]]);
+            });
+
+            vm.ftRPZSrc=[];
+            Rpz[RpzName]['sources'].forEach(function(el){
+              if (Src[el] && SrcAll[Src[el]]) vm.ftRPZSrc.push(SrcAll[Src[el]]);
+            });
+
+            vm.ftRPZNotify=Rpz[RpzName]['notify'];
+            vm.ftRPZWL=[];
+            if (Rpz[RpzName]['whitelists']) Rpz[RpzName]['whitelists'].forEach(function(el){
+              if (WL[el] && WLAll[WL[el]]) vm.ftRPZWL.push(WLAll[WL[el]]);
+            });
+
+            vm.tblMgmtRPZRecord(ev,'rpzs');
+          };
+        };  
+};
+

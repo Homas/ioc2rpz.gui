@@ -337,6 +337,18 @@
         </div>
       </span>
     </b-modal> 
+
+<!-- import ioc2rpz configuration record -->
+    <b-modal id='mImportRec' centered title="Import configuration" @ok="ImportConfigLine($event)" body-class="pt-0 pb-0" size="lg" v-cloak>
+      <span class='text-center'>
+        <div>
+          <b-row>
+            <b-col :sm="12" class="form_row"><b-textarea v-model="ftImportRec" :rows="5" ref="formImportRec" placeholder="Enter configuration lines" /></b-col>
+          </b-row>
+        </div>
+      </span>
+    </b-modal>
+
  
  <!-- User's profile Modal -->
     <b-modal centered title="Profile" id="mUProfile" ref="refUProfile" body-class="text-center pt-0 pb-0" size="sm" v-cloak>
