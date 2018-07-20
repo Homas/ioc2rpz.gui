@@ -36,7 +36,7 @@
         <b-navbar-nav>
           <b-nav-item href="#/dash/">Dashboard</b-nav-item>
           <b-nav-item href="#/cfg/" active>Configuration</b-nav-item>
-          <b-nav-item href="#" disabled>Community</b-nav-item>
+          <b-nav-item href="http://ioc2rpz.com" target="_blank">Community</b-nav-item>
         </b-navbar-nav>
     
         <!-- Right aligned nav items -->
@@ -80,9 +80,10 @@
   <div id="ConfApp" class="h-100 d-flex flex-column" v-cloak>
     <b-container fluid  class="h-100 d-flex flex-column">
         <b-tabs ref="tabs_menu" pills vertical nav-wrapper-class="menu-bkgr h-100 col-md-2" class="h-100 corners" content-class="curl_angels" :value="cfgTab" @input="changeTab">
-          <b-tab title="Overview" href='#/cfg/overview'>
+        <!--  <b-tab title="Overview" href='#/cfg/overview'>
             Overview
           </b-tab>
+        -->
           <b-tab table="servers" title="Servers" href="#/cfg/servers">
             <io2-table table="servers" ref="io2tbl_servers" :fields="servers_fields" /> 
           </b-tab>
