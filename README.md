@@ -186,6 +186,8 @@ The Infoblox configuration is provided in Infoblox CSV import format. To import 
     - [ ] Import/Backup ioc2rpz.gui config
 
 ## Bugs
+- [ ] Force publish config for a server
+- [ ] Publishing deleted RPZ, sources
 - [ ] Unchecked checkboxes in tables on odd lines
 - [ ] TSIG generated in JS are not always valid.
 - [ ] (SQLite issue) Config import. Not all sources were added to a last RPZ. SRV was not added.

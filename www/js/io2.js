@@ -299,9 +299,9 @@ Vue.component('io2-table', {
           this.$root.get_lists('rpz_whitelists','ftRPZWLAll');
           this.$root.ftRPZWL=[];
           
-          this.$root.ftRPZAction="nx";
+          this.$root.ftRPZAction="nxdomain";
           this.$root.ftRPZActionCustom=""; 
-          this.$root.ftRPZIOCType="m";          
+          this.$root.ftRPZIOCType="mixed";          
           this.$root.ftRPZNotify="";
           
           this.$root.ftRPZDisabled=0;
