@@ -1099,7 +1099,7 @@ function checkHostName(HN) {
 
 function checkSourceURL(HN) {
   //TODO validation
-  return /^(http:\/\/|https:\/\/|ftp:\/\/|file:)/.test(HN);
+  return /^(http:\/\/|https:\/\/|ftp:\/\/|file:|shell:)/.test(HN);
 }
 
 //"Dirty way"
