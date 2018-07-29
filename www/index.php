@@ -418,13 +418,15 @@
     -->
     <script src="/js/vue.js"></script>
     <!-- BootstrapVue -->
-    <script src="/js/polyfill.min.js"></script>
 <!--
     <script src="//unpkg.com/babel-polyfill@latest/dist/polyfill.min.js"></script>
     <script src="//unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.js"></script>
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
--->
+    <script src="/js/polyfill.min.js"></script>
     <script src="/js/bootstrap-vue.js"></script>
+-->
+    <script src="//unpkg.com/babel-polyfill@latest/dist/polyfill.min.js"></script>
+    <script src="//unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.js"></script>
     <!-- Axios -->
     <script src="/js/axios.min.js"></script>
     <!-- JS -->
