@@ -20,9 +20,9 @@
     <link type="text/css" rel="stylesheet" href="/css/bootstrap-vue.css"/>
     <!-- font awesome -->
     <!-- https://fontawesome.com/icons?d=gallery&m=free
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.9/css/all.css" integrity="sha384-5SOiIsAziJl6AWe0HWRKTXlfcSHKmYV4RBF18PPJ173Kzn7jzMyFuTtk8JA7QQG1" crossorigin="anonymous">
-    -->
     <link rel="stylesheet" href="/css/all.min.css">
+    -->
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.9/css/all.css" integrity="sha384-5SOiIsAziJl6AWe0HWRKTXlfcSHKmYV4RBF18PPJ173Kzn7jzMyFuTtk8JA7QQG1" crossorigin="anonymous">
     <!-- ioc2rpz CSS -->
     <link type="text/css" rel="stylesheet" href="/css/io2.css?<?=$io2ver?>"/>
   </head>
@@ -422,11 +422,9 @@
     <script src="//unpkg.com/babel-polyfill@latest/dist/polyfill.min.js"></script>
     <script src="//unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.js"></script>
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+-->
     <script src="/js/polyfill.min.js"></script>
     <script src="/js/bootstrap-vue.js"></script>
--->
-    <script src="//unpkg.com/babel-polyfill@latest/dist/polyfill.min.js"></script>
-    <script src="//unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.js"></script>
     <!-- Axios -->
     <script src="/js/axios.min.js"></script>
     <!-- JS -->
