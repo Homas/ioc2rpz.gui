@@ -1,0 +1,22 @@
+# TODO
+- [ ] Publishing.
+    - [ ] Publishing button on a SRV flag.
+- [ ] Container. Session expirations
+- [ ] Config import. Pub_IP & local management IP & Email & Management.
+- [ ] Change management keys.
+- [ ] Letsencrypt.org
+
+----- cut before Def Con -----
+- [ ] Constraints enforcements on SQLite (requires redo the DB, keys etc) (if there is a named index, php doesn't see rowid.....)
+- [ ] Changing management TSIG - publish config immediately.
+- [ ] Servers table. Server online status.
+- [ ] Source/whitelist check availability/rechability
+- [ ] Server side. Intelligent publishing an updated server configuration
+- [ ] Local RPZ rules validation (server side & gui)
+- [ ] Monitoring/dashboards
+- [ ] MySQL or PostgreSQL support
+- [ ] S3 support
+- [x] Link to the community
+- [ ] Utils
+    - [ ] Import configuration. Srv and RPZs uniqueness + add SRV params
+    - [ ] Import/Backup ioc2rpz.gui config

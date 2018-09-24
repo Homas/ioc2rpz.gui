@@ -30,7 +30,7 @@ Vue.component('io2-table', {
               <template slot="actions_e" slot-scope="row">
                 <b-button size="sm" @click.stop="mgmtRec('info', table, row, $event.target)" class="" v-b-tooltip.hover title="Information" variant="outline-secondary"><i class="fa fa-info-circle"></i></b-button>
                 <b-button size="sm" @click.stop="mgmtRec('export', table, row, $event.target)" class="" v-if="table == 'servers'" v-b-tooltip.hover title="Export Configuration" variant="outline-secondary"><i class="fa fa-download"></i></b-button>
-                <b-button size="sm" @click.stop="mgmtRec('publish', table, row, $event.target)" class="" v-if="table == 'servers'" v-b-tooltip.hover title="Publish Configuration" :variant="row.item.cfg_updated == 1?'outline-primary':'outline-secondary'"><i class="fa fa-upload"></i></b-button>
+                <b-button size="sm" @click.stop="mgmtRec('publish', table, row, $event.target)" class="" v-if="table == 'servers'" v-b-tooltip.hover title="Force Publish Configuration" :variant="row.item.cfg_updated == 1?'outline-primary':'outline-secondary'"><i class="fa fa-upload"></i></b-button>
                 <b-button size="sm" @click.stop="mgmtRec('edit', table, row, $event.target)" class=""  v-b-tooltip.hover title="Edit" variant="outline-secondary"><i class="fa fa-pencil-alt"></i></b-button>
                 <b-button size="sm" @click.stop="mgmtRec('clone', table, row, $event.target)" class="" v-if="table != 'tkeys'" v-b-tooltip.hover title="Clone" variant="outline-secondary"><i class="fa fa-clone"></i></b-button>
                 <b-button size="sm" @click.stop="requestDelete(table,row)" class="" v-b-tooltip.hover title="Delete" variant="outline-secondary"><i class="fa fa-times-circle"></i></b-button>

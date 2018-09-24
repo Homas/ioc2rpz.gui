@@ -161,32 +161,8 @@ If you never used RPZs or lua configuration first of all you will need to add "l
 Infoblox doesn't support HMAC-SHA512 and it is not possible to import a key which contain slash "/".  The export tool will try to find out a supported key. If there are no supported keys available it will use the first key. The CSV import for such records will fail.
 The Infoblox configuration is provided in Infoblox CSV import format. To import a downloaded file navigate to "Data Management" --> "DNS" --> "Response Policy Zones" and click "CSV Import". After that check the RPZs order. RPZs which contain domain based rules should precede RPZs with mixed rules and IP-rules only.
 
-## TODO
-- [ ] Publishing.
-    - [x] Track changes for all objects & update SRV flag.
-    - [ ] Publishing button on a SRV flag.
-- [ ] Container. Session expirations
-- [ ] Config import. Pub_IP & local management IP & Email & Management.
-- [ ] Change management keys.
-- [ ] Use local JS libs
-
------ cut before Def Con -----
-- [ ] Constraints enforcements on SQLite (requires redo the DB, keys etc) (if there is a named index, php doesn't see rowid.....)
-- [ ] Changing management TSIG - publish config immediately.
-- [ ] Servers table. Server online status.
-- [ ] Source/whitelist check availability/rechability
-- [ ] Server side. Intelligent publishing an updated server configuration
-- [ ] Local RPZ rules validation (server side & gui)
-- [ ] Monitoring/dashboards
-- [ ] MySQL or PostgreSQL support
-- [ ] S3 support
-- [ ] Link to the community
-- [ ] Utils
-    - [ ] Import configuration. Srv and RPZs uniqueness + add SRV params
-    - [ ] Import/Backup ioc2rpz.gui config
-
-## Bugs
-- [ ] Force publish config for a server
+## Known Bugs
+- [x] Force publish config for a server
 - [ ] Publishing deleted RPZ, sources
 - [ ] Unchecked checkboxes in tables on odd lines
 - [ ] TSIG generated in JS are not always valid.
@@ -197,6 +173,7 @@ The Infoblox configuration is provided in Infoblox CSV import format. To import 
 ## Built with
 - [VUE.js](https://vuejs.org/)
 - [bootstrap-vue](https://bootstrap-vue.js.org/)
+- [Axios](https://github.com/axios/axios)
 
 ## Support on Beerpay
 Hey dude! Help me out for a couple of :beers:!
