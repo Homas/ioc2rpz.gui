@@ -20,7 +20,7 @@ foreach($serv_upd as $srv){
       $fn=localCFGPath."/".($srv['URL']?$srv['URL']:($srv['sname'].".cfg"));
       file_put_contents($fn,$cfg['cfg']);
       if ($srv['ip'] and !$srv['disabled'] ) {
-        $cmd="/usr/bin/dig +tcp -y hmac-${srv['alg']}:${srv['tname']}:${srv['tkey']} \@${srv['ip']} +tries=1 +time=1 ioc2rpz-reload-cfg TXT -c CHAOS";
+        $cmd="$dig -y hmac-${srv['alg']}:${srv['tname']}:${srv['tkey']} \@${srv['ip']} +tries=1 +time=1 ioc2rpz-reload-cfg TXT -c CHAOS";
         $res=`$cmd`;
         echo $res;
       };

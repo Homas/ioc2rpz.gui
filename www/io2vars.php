@@ -8,7 +8,10 @@ const DBCreateIfNotExists=true;
 
 const ioc2rpzConf="io2cfg";
 
-$io2ver=2018071601;
+#const dig="/usr/bin/dig +tcp"
+const dig="/usr/bin/kdig +tls"
+
+$io2ver=2019022801;
 
 function filterIntArr($array){
   $result = [];
