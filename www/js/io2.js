@@ -224,6 +224,9 @@ Vue.component('io2-table', {
           this.$root.ftSrvMGMTIP='';
           this.$root.ftSrvSType=0; //0 - local, 1 - sftp/scp, 3 - aws s3
           this.$root.ftSrvURL="";
+          this.$root.ftCertFile="";
+          this.$root.ftKeyFile="";
+          this.$root.ftCACertFile="";
           this.$root.ftSrvDisabled=0;
           this.$root.get_lists('tkeys_mgmt','ftSrvTKeysAll');
           this.$root.editRow={};
@@ -241,6 +244,9 @@ Vue.component('io2-table', {
           this.$root.ftSrvMGMT=row.item.mgmt;
           this.$root.ftSrvSType=row.item.stype; //0 - local, 1 - sftp/scp, 3 - aws s3
           this.$root.ftSrvURL=row.item.URL;
+          this.$root.ftCertFile=row.item.certfile;
+          this.$root.ftKeyFile=row.item.keyfile;
+          this.$root.ftCACertFile=row.item.certfile;
           this.$root.ftSrvDisabled=row.item.disabled;
           var IPs='';
           row.item.mgmt_ips.forEach(function(el) {
@@ -1247,6 +1253,9 @@ async function ImportIOC2RPZ(vm,txt){//e.target.result
           });
           vm.ftSrvSType=0;
           vm.ftSrvURL=vm.ftImpFiles[0].name
+          vm.ftCertFile=Srv['certfile'];
+          vm.ftKeyFile=Srv['keyfile'];
+          vm.ftCACertFile=Srv['cacertfile'];
           //TODO Fix to ask values in the import form
           vm.ftSrvPubIP=vm.ftImpServPubIP;
           vm.ftSrvIP=vm.ftImpServMGMTIP;

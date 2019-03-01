@@ -11,7 +11,7 @@ const ioc2rpzConf="io2cfg";
 #const dig="/usr/bin/dig +tcp"
 const dig="/usr/bin/kdig +tls"
 
-$io2ver=2019022801;
+$io2ver=2019030101;
 
 function filterIntArr($array){
   $result = [];
