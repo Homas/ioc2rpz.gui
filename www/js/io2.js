@@ -502,13 +502,16 @@ new Vue({
       ftSrvIP: '',
       ftSrvNS: '',
       ftSrvEmail: '',
-      ftSrvMGMT: 0,
+      ftSrvMGMT: 0, //TODO 0 - disabled, 1 - tcp, 2 -tls
       ftSrvMGMTIP: '',
       ftSrvTKeys: [],
       ftSrvTKeysAll: [],
       ftSrvDisabled: 0, //TODO to add
       ftSrvSType: 0, //0 - local, 1 - sftp/scp, 3 - aws s3
       ftSrvURL: "",
+      ftCertFile: "",
+      ftKeyFile: "",
+      ftCACertFile: "",
 
       //RPZs
       ftRPZId: 0,
@@ -783,10 +786,10 @@ new Vue({
     
       if (this.validateName('ftSrvName') && (this.validateIP('ftSrvPubIP') || this.validateIP('ftSrvPubIP') == null) && (this.validateIP('ftSrvIP') || this.validateIP('ftSrvIP') == null) && this.validateHostname('ftSrvNS') && this.validateEmail('ftSrvEmail') && (this.validateIPList('ftSrvMGMTIP') || this.validateIP('ftSrvMGMTIP') == null)){
         var obj=this;
-        if  (this.ftSrvName != this.editRow.name || this.ftSrvIP!=this.editRow.ip || this.ftSrvPubIP!=this.editRow.pub_ip || this.ftSrvNS!=this.editRow.ns || this.ftSrvEmail!=this.editRow.email || this.ftSrvMGMT!=this.editRow.mgmt || this.ftSrvSType!=this.editRow.stype || this.ftSrvURL!=this.editRow.URL || this.ftSrvMGMTIP!=this.editRow.mgmt_ips_str || this.ftSrvTKeys!=this.editRow.tkeys_arr) this.publishUpdates=true;
+        if  (this.ftSrvName != this.editRow.name || this.ftSrvIP!=this.editRow.ip || this.ftSrvPubIP!=this.editRow.pub_ip || this.ftSrvNS!=this.editRow.ns || this.ftSrvEmail!=this.editRow.email || this.ftSrvMGMT!=this.editRow.mgmt || this.ftSrvSType!=this.editRow.stype || this.ftSrvURL!=this.editRow.URL || this.ftSrvMGMTIP!=this.editRow.mgmt_ips_str || this.ftSrvTKeys!=this.editRow.tkeys_arr|| this.ftCertFile!=this.editRow.certfile|| this.ftKeyFile!=this.editRow.keyfile|| this.ftCACertFile!=this.editRow.cacertfile) this.publishUpdates=true;
         let data={tSrvId: this.ftSrvId, tSrvName: this.ftSrvName, tSrvIP: this.ftSrvIP, tSrvPubIP: this.ftSrvPubIP, tSrvNS: this.ftSrvNS, tSrvEmail: this.ftSrvEmail,
                   tSrvMGMT: this.ftSrvMGMT, tSrvMGMTIP: JSON.stringify(this.ftSrvMGMTIP.split(/,|\s/g).filter(String)), tSrvTKeys: JSON.stringify(this.ftSrvTKeys),
-                  tSrvDisabled: this.ftSrvDisabled, tSrvSType: this.ftSrvSType, tSrvURL: this.ftSrvURL};
+                  tSrvDisabled: this.ftSrvDisabled, tSrvSType: this.ftSrvSType, tSrvURL: this.ftSrvURL, tCertFile: this.ftCertFile, tKeyFile: this.ftKeyFile, tCACertFile: this.ftCACertFile};
         if (this.ftSrvId==-1){
           //Add
           axios.post('/io2data.php/'+table,data).then(function (response) {obj.mgmtTableOk(response,obj,table)}).catch(function (error){obj.mgmtTableError(error,obj,table)})
@@ -801,6 +804,9 @@ new Vue({
       	  else if (!(this.validateIP('ftSrvIP') || this.validateIP('ftSrvIP') == null)) this.$refs.formSrvIP.$el.focus();
       	  else if (!this.validateHostname('ftSrvNS')) this.$refs.formSrvNS.$el.focus();
       	  else if (!this.validateEmail('ftSrvEmail')) this.$refs.formSrvEmail.$el.focus();
+      	  else if (!this.validateURL('ftCertFile')) this.$refs.formCertFile.$el.focus();
+      	  else if (!this.validateURL('ftKeyFile')) this.$refs.formKeyFile.$el.focus();
+      	  else if (!this.validateURL('ftCACertFile')) this.$refs.formCACertFile.$el.focus();
          else this.$refs.formSrcNotify.$el.focus();
       };
 

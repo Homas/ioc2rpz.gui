@@ -201,6 +201,13 @@
               <b-textarea v-model="ftSrvMGMTIP" :state="validateIPList('ftSrvMGMTIP')" :formatter="formatIP" style="height: 5em;" :rows="3" ref="formSrcNotify" :readonly="infoWindow" placeholder="Enter management stations IPs" :no-resize=true  v-b-tooltip.hover title="ACL/Management stations IPs" />
             </b-col>
           </b-row>
+
+          <b-row>
+            <b-col :sm="4" class="form_row"><b-input v-model.trim="tCertFile" :state="validateURL('tCertFile')" :formatter="formatURL" ref="formCertFile" :readonly="infoWindow" placeholder="Enter certificate file path"  v-b-tooltip.hover title="Certificate file" /></b-col>
+            <b-col :sm="4" class="form_row"><b-input v-model.trim="tKeyFile" :state="validateURL('tKeyFile')" :formatter="formatURL" ref="formKeyFile" :readonly="infoWindow" placeholder="Enter private key file path"  v-b-tooltip.hover title="Private key file path" /></b-col>
+            <b-col :sm="4" class="form_row"><b-input v-model.trim="tCACertFile" :state="validateURL('tCACertFile')" :formatter="formatURL" ref="formCACertFile" :readonly="infoWindow" placeholder="Enter CA certificate file path"  v-b-tooltip.hover title="CA certificate file path" /></b-col>
+          </b-row>
+
           <b-row>
             <b-col :sm="12" class="form_row text-left"><b-form-checkbox unchecked-value=0 value=1 :disabled="infoWindow"  v-model="ftSrvMGMT">Manage server</b-form-checkbox></b-col>
           </b-row>
