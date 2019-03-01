@@ -118,6 +118,11 @@ function genConfig($db,$USERID,$SrvId){
   $subres1=DB_selectArray($db,"select mgmt_ip from mgmt_ips where mgmt_ips.user_id=$USERID and mgmt_ips.server_id=$SrvId;");
   $cfg.="{srv,{\"${row['ns']}\",\"".str_replace("@",".",$row['email'])."\",[\"".implode('","',array_column($subres,'name'))."\"],[\"".implode('","',array_column($subres1,'mgmt_ip'))."\"]}}.\n";
 
+  if ($row['certfile']!="" and $row['keyfile']!="") {
+    $cfg.="\n% cert record: certfile, keyfile, cacertfile\n";
+    $cfg.="{srv,{\"${row['certfile']}\",\"${row['keyfile']}\",\"${row['cacertfile']}\"}";
+  };
+  
   //tkeys
   $cfg.="\n% tsig key record: name, alg, key\n";
   $row=DB_selectArray($db,"select * from tkeys where user_id=$USERID and (rowid in (select tsig_id from servers_tsig where server_id=$SrvId) or rowid in (select tkey_id from rpzs_tkeys left join rpzs on rpzs_tkeys.rpz_id=rpzs.rowid left join rpzs_servers on rpzs_servers.rpz_id=rpzs.rowid where server_id=$SrvId and rpzs.disabled=0));");

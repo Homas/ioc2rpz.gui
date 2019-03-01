@@ -18,6 +18,7 @@ function initSQLiteDB($DBF){
   #ALTER TABLE servers ADD column certfile text;
   #ALTER TABLE servers ADD column keyfile text;
   #ALTER TABLE servers ADD column cacertfile text;
+  #update servers set certfile="", keyfile="", cacertfile="";
   
   //TODO create unique index name+userid
   //TODO move to a separate file
