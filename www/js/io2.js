@@ -649,12 +649,23 @@ new Vue({
     validateURL: function (vrbl) {
       return (this.$data[vrbl].length > 0 && checkSourceURL(this.$data[vrbl])) ? true : this.$data[vrbl].length == 0 ? null:false;
     },
-
+ 
+    
     formatURL: function(val,e){
       let a = val.replace(/[^A-Za-z0-9/=:\?#.-_&]/g,"");
       if (e) e.currentTarget.value = a; // a bug in Vue.JS?
       return a;
     },
+
+    validateLocFile: function (vrbl) {
+      return (this.$data[vrbl].length > 0) ? true : this.$data[vrbl].length == 0 ? null:false;
+    },
+
+    formatLocFile: function(val,e){
+      let a = val.replace(/[^A-Za-z0-9/=:\?#.-_&]/g,"");
+      if (e) e.currentTarget.value = a; // a bug in Vue.JS?
+      return a;
+    },    
     
     validateIXFRURL: function (vrbl) {
       return this.$data[vrbl].length == 0 ? null: (this.validateURL(vrbl) || this.$data[vrbl]=='[:AXFR:]' || (/^\[:AXFR:\]((\?|\&)[;&a-zA-Z0-9\d%_.~+=-]*)?(\[:FTimestamp:\]|\[:ToTimestamp:\])?(\#[-a-zA-Z0-9\d_]*)?(\[:FTimestamp:\]|\[:ToTimestamp:\])?$/.test(this.$data[vrbl])));
@@ -810,9 +821,9 @@ new Vue({
       	  else if (!(this.validateIP('ftSrvIP') || this.validateIP('ftSrvIP') == null)) this.$refs.formSrvIP.$el.focus();
       	  else if (!this.validateHostname('ftSrvNS')) this.$refs.formSrvNS.$el.focus();
       	  else if (!this.validateEmail('ftSrvEmail')) this.$refs.formSrvEmail.$el.focus();
-      	  else if (!this.validateURL('ftCertFile')) this.$refs.formCertFile.$el.focus();
-      	  else if (!this.validateURL('ftKeyFile')) this.$refs.formKeyFile.$el.focus();
-      	  else if (!this.validateURL('ftCACertFile')) this.$refs.formCACertFile.$el.focus();
+      	  else if (!this.validateLocFile('ftCertFile')) this.$refs.formCertFile.$el.focus();
+      	  else if (!this.validateLocFile('ftKeyFile')) this.$refs.formKeyFile.$el.focus();
+      	  else if (!this.validateLocFile('ftCACertFile')) this.$refs.formCACertFile.$el.focus();
          else this.$refs.formSrcNotify.$el.focus();
       };
 

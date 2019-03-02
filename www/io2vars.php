@@ -120,7 +120,7 @@ function genConfig($db,$USERID,$SrvId){
 
   if ($row['certfile']!="" and $row['keyfile']!="") {
     $cfg.="\n% cert record: certfile, keyfile, cacertfile\n";
-    $cfg.="{srv,{\"${row['certfile']}\",\"${row['keyfile']}\",\"${row['cacertfile']}\"}.\n";
+    $cfg.="{cert,{\"${row['certfile']}\",\"${row['keyfile']}\",\"${row['cacertfile']}\"}}.\n";
   };
   
   //tkeys

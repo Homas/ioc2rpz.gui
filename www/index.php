@@ -203,9 +203,9 @@
           </b-row>
 
           <b-row>
-            <b-col :sm="4" class="form_row"><b-input v-model.trim="tCertFile" :state="validateURL('ftCertFile')" :formatter="formatURL" ref="formCertFile" :readonly="infoWindow" placeholder="Enter certificate file path"  v-b-tooltip.hover title="Certificate file" /></b-col>
-            <b-col :sm="4" class="form_row"><b-input v-model.trim="tKeyFile" :state="validateURL('ftKeyFile')" :formatter="formatURL" ref="formKeyFile" :readonly="infoWindow" placeholder="Enter private key file path"  v-b-tooltip.hover title="Private key file path" /></b-col>
-            <b-col :sm="4" class="form_row"><b-input v-model.trim="tCACertFile" :state="validateURL('ftCACertFile')" :formatter="formatURL" ref="formCACertFile" :readonly="infoWindow" placeholder="Enter CA certificate file path"  v-b-tooltip.hover title="CA certificate file path" /></b-col>
+            <b-col :sm="4" class="form_row"><b-input v-model.trim="ftCertFile" :state="validateLocFile('ftCertFile')" :formatter="formatLocFile" ref="formCertFile" :readonly="infoWindow" placeholder="Enter certificate file path"  v-b-tooltip.hover title="Certificate file" /></b-col>
+            <b-col :sm="4" class="form_row"><b-input v-model.trim="ftKeyFile" :state="validateLocFile('ftKeyFile')" :formatter="formatLocFile" ref="formKeyFile" :readonly="infoWindow" placeholder="Enter private key file path"  v-b-tooltip.hover title="Private key file path" /></b-col>
+            <b-col :sm="4" class="form_row"><b-input v-model.trim="ftCACertFile" :state="validateLocFile('ftCACertFile')" :formatter="formatLocFile" ref="formCACertFile" :readonly="infoWindow" placeholder="Enter CA certificate file path"  v-b-tooltip.hover title="CA certificate file path" /></b-col>
           </b-row>
 
           <b-row>
