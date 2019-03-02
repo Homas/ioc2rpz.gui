@@ -8,8 +8,8 @@ const DBCreateIfNotExists=true;
 
 const ioc2rpzConf="io2cfg";
 
-#const dig="/usr/bin/dig +tcp";
-const dig="/usr/bin/kdig +tls";
+const dig="/usr/bin/dig +tcp";
+#const dig="/usr/bin/kdig +tls";
 
 $io2ver=2019030101;
 
@@ -120,7 +120,7 @@ function genConfig($db,$USERID,$SrvId){
 
   if ($row['certfile']!="" and $row['keyfile']!="") {
     $cfg.="\n% cert record: certfile, keyfile, cacertfile\n";
-    $cfg.="{srv,{\"${row['certfile']}\",\"${row['keyfile']}\",\"${row['cacertfile']}\"}";
+    $cfg.="{srv,{\"${row['certfile']}\",\"${row['keyfile']}\",\"${row['cacertfile']}\"}.\n";
   };
   
   //tkeys
