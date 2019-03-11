@@ -24,10 +24,11 @@ foreach($serv_upd as $srv){
           $cmd=dig." -y hmac-${srv['alg']}:${srv['tname']}:${srv['tkey']} \@${srv['ip']} +tries=1 +time=1 ioc2rpz-reload-cfg TXT -c CHAOS";
           $res=`$cmd`;
         }else{
-          $curl = curl_init("https://${srv['ip']}/api/v1.0/mgmt/reload_cfg"); #Should be FQDN in settings
+          $curl = curl_init("https://${srv['ip']}:8443/api/v1.0/mgmt/reload_cfg"); #Should be FQDN in settings
           curl_setopt($curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
           curl_setopt($curl, CURLOPT_USERPWD, "${srv['tname']}:${srv['tkey']}");
           curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, io2mgmt_verifyssl);
+          curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, io2mgmt_verifyssl);
           curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
           $res = curl_exec($curl);
           curl_close($curl);          
