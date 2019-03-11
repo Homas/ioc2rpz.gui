@@ -11,6 +11,9 @@ const ioc2rpzConf="io2cfg";
 const dig="/usr/bin/dig +tcp";
 #const dig="/usr/bin/kdig +tls";
 
+const io2mgmt="rest"; #ioc2rpz management interface: rest or dns
+const io2mgmt_verifyssl=false; #Verify SSL. If there is a self signed certificate - set to false.
+
 $io2ver=2019030101;
 
 function filterIntArr($array){

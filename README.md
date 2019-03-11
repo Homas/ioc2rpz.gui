@@ -162,7 +162,6 @@ Infoblox doesn't support HMAC-SHA512 and it is not possible to import a key whic
 The Infoblox configuration is provided in Infoblox CSV import format. To import a downloaded file navigate to "Data Management" --> "DNS" --> "Response Policy Zones" and click "CSV Import". After that check the RPZs order. RPZs which contain domain based rules should precede RPZs with mixed rules and IP-rules only.
 
 ## Known Bugs
-- [x] Force publish config for a server
 - [ ] Publishing deleted RPZ, sources
 - [ ] Unchecked checkboxes in tables on odd lines
 - [ ] TSIG generated in JS are not always valid.

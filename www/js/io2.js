@@ -246,7 +246,7 @@ Vue.component('io2-table', {
           this.$root.ftSrvURL=row.item.URL;
           this.$root.ftCertFile=row.item.certfile;
           this.$root.ftKeyFile=row.item.keyfile;
-          this.$root.ftCACertFile=row.item.certfile;
+          this.$root.ftCACertFile=row.item.cacertfile;
           this.$root.ftSrvDisabled=row.item.disabled;
           var IPs='';
           row.item.mgmt_ips.forEach(function(el) {
