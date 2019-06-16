@@ -153,6 +153,13 @@
               <b-form-checkbox unchecked-value=0 value=1 :disabled="infoWindow"  v-model="ftKeyMGMT">Management key</b-form-checkbox>
             </b-col>
           </b-row>
+          <b-row>
+						<b-col :sm="12" class="form_row text-left">
+							<b-form-group :style="{ height: (this.ftTKeysAllGroups.length<4 && ftTKeysAllGroups.length<4?'4':'8')+'em' }" class="items_list"  v-b-tooltip.hover title="TSIG Keys Groups">
+								<b-form-checkbox-group :disabled="infoWindow" plain stacked v-model="ftTKeysGroups" :options="ftTKeysAllGroups" />
+							</b-form-group>
+						</b-col>
+					</b-row>
         </div>
       </span>
     </b-modal>
@@ -223,6 +230,11 @@
           <b-row>
             <b-col :sm="12" class="form_row text-left">
               <b-input v-model.trim="ftSrvURL" :state="validateName('ftSrvURL')" :formatter="formatURL"  ref="formSrvURL" :readonly="infoWindow" placeholder="Enter file name"  v-b-tooltip.hover title="File Name" />
+            </b-col>
+          </b-row>
+          <b-row>
+            <b-col :sm="12" class="form_row text-left">
+              <b-textarea :rows="3" v-model.trim="ftCustomConfig" ref="formCustomConfig" :readonly="infoWindow" placeholder="Enter custom configuration"  v-b-tooltip.hover title="Custom configuration" />
             </b-col>
           </b-row>
           <b-row>
@@ -414,7 +426,7 @@
 <!-- End Modals -->
   </div>
   </div>
-  <div class="copyright"><p>Copyright © 2018 Vadim Pavlov</p></div>
+  <div class="copyright"><p>Copyright © 2019 Vadim Pavlov</p></div>
 <?php
 ?>
     <script>

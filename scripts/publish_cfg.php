@@ -12,7 +12,7 @@ define("localCFGPath", IO2PATH."/export-cfg"); #/opt/ioc2rpz.gui
 
 $db=DB_open();
 
-$serv_upd=DB_selectArray($db,"select servers.rowid,servers.user_id, servers.name as sname,ip,disabled,stype,URL, tkeys.name as tname, alg, tkey from servers left join servers_tsig on servers.rowid=servers_tsig.server_id left join tkeys on servers_tsig.tsig_id=tkeys.rowid where publish_upd=1");
+$serv_upd=DB_selectArray($db,"select servers.rowid,servers.user_id, servers.name as sname,ip,disabled,stype,URL, tkeys.name as tname, alg, tkey, servers.custom_config from servers left join servers_tsig on servers.rowid=servers_tsig.server_id left join tkeys on servers_tsig.tsig_id=tkeys.rowid where publish_upd=1");
 foreach($serv_upd as $srv){
   $cfg=genConfig($db,$srv['user_id'],$srv['rowid']);
   switch ($srv['stype']){

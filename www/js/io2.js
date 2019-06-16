@@ -171,6 +171,8 @@ Vue.component('io2-table', {
           this.$root.ftKeyAlg='md5';
           this.$root.ftKeyMGMT=0;
           this.$root.editRow={};
+          this.$root.get_lists('tkeys_groups_list','ftTKeysAllGroups');
+          this.$root.ftTKeysGroups=[];
           this.$root.$emit('bv::show::modal', 'mConfEditTSIG');
         break;
         case "info tkeys":
@@ -182,6 +184,12 @@ Vue.component('io2-table', {
           this.$root.ftKeyAlg=row.item.alg;
           this.$root.ftKeyMGMT=row.item.mgmt;
           this.$root.editRow=row.item;
+          this.$root.get_lists('tkeys_groups_list','ftTKeysAllGroups');
+          var tkey_groups=[];
+          row.item.tkey_groups.forEach(function(el) {
+            tkey_groups.push(el.rowid);
+          });
+          this.$root.ftTKeysGroups=tkey_groups,
           this.$root.$emit('bv::show::modal', 'mConfEditTSIG');
         break;
         case "add whitelists":
@@ -227,6 +235,7 @@ Vue.component('io2-table', {
           this.$root.ftCertFile="";
           this.$root.ftKeyFile="";
           this.$root.ftCACertFile="";
+          this.$root.ftCustomConfig="";
           this.$root.ftSrvDisabled=0;
           this.$root.get_lists('tkeys_mgmt','ftSrvTKeysAll');
           this.$root.editRow={};
@@ -247,6 +256,7 @@ Vue.component('io2-table', {
           this.$root.ftCertFile=row.item.certfile;
           this.$root.ftKeyFile=row.item.keyfile;
           this.$root.ftCACertFile=row.item.cacertfile;
+          this.$root.ftCustomConfig=row.item.custom_config;
           this.$root.ftSrvDisabled=row.item.disabled;
           var IPs='';
           row.item.mgmt_ips.forEach(function(el) {
@@ -491,6 +501,8 @@ new Vue({
       ftKeyMGMT: 0,
       ftKeyAlg: "md5",
       tkeys_Alg: ["md5","sha256","sha512"],
+      ftTKeysGroups: [],
+      ftTKeysAllGroups: [],
 
       //whitelists n sources
       ftSrcId: 0,
@@ -518,6 +530,7 @@ new Vue({
       ftCertFile: "",
       ftKeyFile: "",
       ftCACertFile: "",
+      ftCustomConfig: "",
 
       //RPZs
       ftRPZId: 0,
@@ -760,8 +773,8 @@ new Vue({
     tblMgmtTKeyRecord: function (ev,table) {
       if (this.validateName('ftKeyName') && this.validateB64('ftKey')){
         var obj=this;
-        if ((this.ftKeyId!=-1 && (this.$root.ftKeyName != this.editRow.name || this.$root.ftKey!=this.editRow.tkey || this.$root.ftKeyAlg!=this.editRow.alg || this.$root.ftKeyMGMT!=this.editRow.mgmt))) this.publishUpdates=true;          
-        let data={tKeyId: this.ftKeyId, tKeyName: this.ftKeyName, tKey: this.ftKey, tKeyAlg: this.ftKeyAlg, tKeyMGMT: this.ftKeyMGMT};
+        if ((this.ftKeyId!=-1 && (this.$root.ftKeyName != this.editRow.name || this.$root.ftKey!=this.editRow.tkey || this.$root.ftKeyAlg!=this.editRow.alg || this.$root.ftKeyMGMT!=this.editRow.mgmt || this.$root.ftTKeysGroups!=this.editRow.tkey_groups))) this.publishUpdates=true;          
+        let data={tKeyId: this.ftKeyId, tKeyName: this.ftKeyName, tKey: this.ftKey, tKeyAlg: this.ftKeyAlg, tKeyMGMT: this.ftKeyMGMT, tTKeysGroups: JSON.stringify(this.ftTKeysGroups)};
         if (this.ftKeyId==-1){
           //Add
           axios.post('/io2data.php/'+table,data).then(function (response) {obj.mgmtTableOk(response,obj,table)}).catch(function (error){obj.mgmtTableError(error,obj,table)})
@@ -803,10 +816,10 @@ new Vue({
     
       if (this.validateName('ftSrvName') && (this.validateIP('ftSrvPubIP') || this.validateIP('ftSrvPubIP') == null) && (this.validateIP('ftSrvIP') || this.validateIP('ftSrvIP') == null) && this.validateHostname('ftSrvNS') && this.validateEmail('ftSrvEmail') && (this.validateIPList('ftSrvMGMTIP') || this.validateIP('ftSrvMGMTIP') == null)){
         var obj=this;
-        if  (this.ftSrvName != this.editRow.name || this.ftSrvIP!=this.editRow.ip || this.ftSrvPubIP!=this.editRow.pub_ip || this.ftSrvNS!=this.editRow.ns || this.ftSrvEmail!=this.editRow.email || this.ftSrvMGMT!=this.editRow.mgmt || this.ftSrvSType!=this.editRow.stype || this.ftSrvURL!=this.editRow.URL || this.ftSrvMGMTIP!=this.editRow.mgmt_ips_str || this.ftSrvTKeys!=this.editRow.tkeys_arr|| this.ftCertFile!=this.editRow.certfile|| this.ftKeyFile!=this.editRow.keyfile|| this.ftCACertFile!=this.editRow.cacertfile) this.publishUpdates=true;
+        if  (this.ftSrvName != this.editRow.name || this.ftSrvIP!=this.editRow.ip || this.ftSrvPubIP!=this.editRow.pub_ip || this.ftSrvNS!=this.editRow.ns || this.ftSrvEmail!=this.editRow.email || this.ftSrvMGMT!=this.editRow.mgmt || this.ftSrvSType!=this.editRow.stype || this.ftSrvURL!=this.editRow.URL || this.ftSrvMGMTIP!=this.editRow.mgmt_ips_str || this.ftSrvTKeys!=this.editRow.tkeys_arr|| this.ftCertFile!=this.editRow.certfile|| this.ftKeyFile!=this.editRow.keyfile|| this.ftCACertFile!=this.editRow.cacertfile|| this.ftCustomConfig!=this.editRow.custom_config) this.publishUpdates=true;
         let data={tSrvId: this.ftSrvId, tSrvName: this.ftSrvName, tSrvIP: this.ftSrvIP, tSrvPubIP: this.ftSrvPubIP, tSrvNS: this.ftSrvNS, tSrvEmail: this.ftSrvEmail,
                   tSrvMGMT: this.ftSrvMGMT, tSrvMGMTIP: JSON.stringify(this.ftSrvMGMTIP.split(/,|\s/g).filter(String)), tSrvTKeys: JSON.stringify(this.ftSrvTKeys),
-                  tSrvDisabled: this.ftSrvDisabled, tSrvSType: this.ftSrvSType, tSrvURL: this.ftSrvURL, tCertFile: this.ftCertFile, tKeyFile: this.ftKeyFile, tCACertFile: this.ftCACertFile};
+                  tSrvDisabled: this.ftSrvDisabled, tSrvSType: this.ftSrvSType, tSrvURL: this.ftSrvURL, tCertFile: this.ftCertFile, tKeyFile: this.ftKeyFile, tCACertFile: this.ftCACertFile, tCustomConfig: this.ftCustomConfig};
         if (this.ftSrvId==-1){
           //Add
           axios.post('/io2data.php/'+table,data).then(function (response) {obj.mgmtTableOk(response,obj,table)}).catch(function (error){obj.mgmtTableError(error,obj,table)})
@@ -1267,6 +1280,7 @@ async function ImportIOC2RPZ(vm,txt){//e.target.result
           vm.ftCertFile=Srv['certfile'];
           vm.ftKeyFile=Srv['keyfile'];
           vm.ftCACertFile=Srv['cacertfile'];
+          vm.ftCustomConfig=Srv['custom_config'];
           //TODO Fix to ask values in the import form
           vm.ftSrvPubIP=vm.ftImpServPubIP;
           vm.ftSrvIP=vm.ftImpServMGMTIP;

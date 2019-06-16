@@ -19,7 +19,8 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
       $result=DB_select($db,"select rowid,* from servers where user_id=$USERID;");
       while ($row = DB_fetchArray($result)) {
         unset($row['user_id']);
-        $subres=DB_selectArray($db,"select tkeys.rowid,tkeys.name from servers_tsig left join tkeys on tkeys.rowid=servers_tsig.tsig_id where servers_tsig.user_id=$USERID and servers_tsig.server_id=${row['rowid']};");
+#        $subres=DB_selectArray($db,"select tkeys.rowid,tkeys.name from servers_tsig left join tkeys on tkeys.rowid=servers_tsig.tsig_id where servers_tsig.user_id=$USERID and servers_tsig.server_id=${row['rowid']};");
+        $subres=DB_selectArray($db,"select tkeys.rowid,tkeys.name from servers_tsig left join tkeys on tkeys.rowid=servers_tsig.tsig_id where servers_tsig.user_id=$USERID and servers_tsig.server_id=${row['rowid']} union select \"gr_\"||tkeys_groups.rowid, tkeys_groups.group_name||\" (group)\" as name from servers_tsig_groups left join tkeys_groups on tkeys_groups.rowid=servers_tsig_groups.tsig_group_id where servers_tsig_groups.user_id=$USERID and servers_tsig_groups.server_id=${row['rowid']};");
         $row['tkeys']=$subres;
         $subres=DB_selectArray($db,"select mgmt_ips.rowid,mgmt_ips.mgmt_ip from mgmt_ips where mgmt_ips.user_id=$USERID and mgmt_ips.server_id=${row['rowid']};");
         $row['mgmt_ips']=$subres;
@@ -30,14 +31,18 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
       
     case "POST servers":
       $tkeys=DB_selectArray($db,"select rowid from tkeys where user_id=$USERID and rowid in (".implode(",",filterIntArr(json_decode($REQUEST['tSrvTKeys']))).")");
+      $tkeys_groups=DB_selectArray($db,"select rowid from tkeys_groups where user_id=$USERID and rowid in (".implode(",",getGroupsId(json_decode($REQUEST['tSrvTKeys']))).")");
       $sql="insert into servers values($USERID,'".DB_escape($db,$REQUEST['tSrvName'])."','".DB_escape($db,$REQUEST['tSrvIP'])."','".DB_escape($db,$REQUEST['tSrvPubIP']).
-      "','".DB_escape($db,$REQUEST['tSrvNS'])."','".DB_escape($db,$REQUEST['tSrvEmail'])."',".DB_escape($db,$REQUEST['tSrvMGMT']).",".DB_boolval($REQUEST['tSrvDisabled']).",".intval($REQUEST['tSrvSType']).",'".DB_escape($db,$REQUEST['tSrvURL'])."',".DB_boolval($REQUEST['tSrvMGMT']).",0,'".DB_escape($db,$REQUEST['tCertFile'])."','".DB_escape($db,$REQUEST['tKeyFile'])."','".DB_escape($db,$REQUEST['tCACertFile'])."')"; #certfile, keyfile, cacertfile
+      "','".DB_escape($db,$REQUEST['tSrvNS'])."','".DB_escape($db,$REQUEST['tSrvEmail'])."',".DB_escape($db,$REQUEST['tSrvMGMT']).",".DB_boolval($REQUEST['tSrvDisabled']).",".intval($REQUEST['tSrvSType']).",'".DB_escape($db,$REQUEST['tSrvURL'])."',".DB_boolval($REQUEST['tSrvMGMT']).",0,'".DB_escape($db,$REQUEST['tCertFile'])."','".DB_escape($db,$REQUEST['tKeyFile'])."','".DB_escape($db,$REQUEST['tCACertFile'])."','".DB_escape($db,$REQUEST['tCustomConfig'])."')"; #certfile, keyfile, cacertfile, custom_config
       if (DB_execute($db,$sql)) {
         //safest way to get id?
         $srvid=DB_selectArray($db,"select max(rowid) as rowid from servers where user_id=$USERID and name='".DB_escape($db,$REQUEST['tSrvName'])."'")[0]['rowid'];
         $sql='';
         foreach($tkeys as $tkey){
           $sql.="insert into servers_tsig values($srvid,$USERID,${tkey['rowid']});\n";
+        };       
+        foreach($tkeys_groups as $tkey_group){
+          $sql.="insert into servers_tsig_groups values($srvid,$USERID,${tkey_group['rowid']});\n";
         };       
         foreach(json_decode($REQUEST['tSrvMGMTIP']) as $ip){
           //TODO add uniq only
@@ -53,6 +58,8 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
       $srvid=intval($REQUEST['tSrvId']);
       $tkeys_new=DB_selectArray($db,"select rowid from tkeys where user_id=$USERID and rowid in (".implode(",",filterIntArr(json_decode($REQUEST['tSrvTKeys']))).")");
       $tkeys_old=DB_selectArray($db,"select rowid,tsig_id from servers_tsig where user_id=$USERID and server_id=$srvid");
+      $tkeys_groups_new=DB_selectArray($db,"select rowid from tkeys_groups where user_id=$USERID and rowid in (".implode(",",getGroupsId(json_decode($REQUEST['tSrvTKeys']))).")");
+      $tkeys_groups_old=DB_selectArray($db,"select rowid,tsig_group_id from servers_tsig_groups where user_id=$USERID and server_id=$srvid");
       $sql='';
       foreach($tkeys_old as $tkey){
         if ($k=array_search($tkey['tsig_id'],$tkeys_new)) unset($tkeys_new[$k]); else $sql.="delete from servers_tsig where rowid=${tkey['rowid']};\n";
@@ -61,6 +68,14 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
       foreach($tkeys_new as $tkey){
         $sql.="insert into servers_tsig values($srvid,$USERID,${tkey['rowid']});\n";
       };
+
+      foreach($tkeys_groups_old as $tkey_group){
+        if ($k=array_search($tkey_group['tsig_group_id'],$tkeys_groups_new)) unset($tkeys_groups_new[$k]); else $sql.="delete from servers_tsig_groups where rowid=${tkey_group['rowid']};\n";
+      };       
+			foreach($tkeys_groups_new as $tkey_group){
+				$sql.="insert into servers_tsig_groups values($srvid,$USERID,${tkey_group['rowid']});\n";
+			};       
+
       $mgmtip_new=array_unique(json_decode($REQUEST['tSrvMGMTIP']));
       $mgmtip_old=DB_selectArray($db,"select rowid, mgmt_ip from mgmt_ips where user_id=$USERID and server_id=$srvid");
       foreach($mgmtip_old as $ip){
@@ -70,7 +85,7 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
         $sql.="insert into mgmt_ips values($srvid,$USERID,'".DB_escape($db,$ip)."');\n";
       };
       $sql.="update servers set name='".DB_escape($db,$REQUEST['tSrvName'])."', ip='".DB_escape($db,$REQUEST['tSrvIP'])."', pub_ip='".DB_escape($db,$REQUEST['tSrvPubIP']).
-      "', ns='".DB_escape($db,$REQUEST['tSrvNS'])."', email='".DB_escape($db,$REQUEST['tSrvEmail'])."', mgmt=".DB_boolval($REQUEST['tSrvMGMT']).", disabled=".DB_boolval($REQUEST['tSrvDisabled'])." ,stype=".intval($REQUEST['tSrvSType']).", URL='".DB_escape($db,$REQUEST['tSrvURL'])."', cfg_updated=".DB_boolval(1).", certfile='".DB_escape($db,$REQUEST['tCertFile'])."', keyfile='".DB_escape($db,$REQUEST['tKeyFile'])."', cacertfile='".DB_escape($db,$REQUEST['tCACertFile'])."' where user_id=$USERID and rowid=$srvid";
+      "', ns='".DB_escape($db,$REQUEST['tSrvNS'])."', email='".DB_escape($db,$REQUEST['tSrvEmail'])."', mgmt=".DB_boolval($REQUEST['tSrvMGMT']).", disabled=".DB_boolval($REQUEST['tSrvDisabled'])." ,stype=".intval($REQUEST['tSrvSType']).", URL='".DB_escape($db,$REQUEST['tSrvURL'])."', cfg_updated=".DB_boolval(1).", certfile='".DB_escape($db,$REQUEST['tCertFile'])."', keyfile='".DB_escape($db,$REQUEST['tKeyFile'])."', cacertfile='".DB_escape($db,$REQUEST['tCACertFile'])."', custom_config='".DB_escape($db,$REQUEST['tCustomConfig'])."' where user_id=$USERID and rowid=$srvid";
       
       if (DB_execute($db,$sql)) $response='{"status":"ok"}'; else $response='{"status":"failed", "sql":"'.$sql.'"}'; //TODO remove SQL
       break;
@@ -78,7 +93,7 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
     //Select rows from tables
     case "GET sources":
     case "GET whitelists":
-    case "GET tkeys":
+    case "GET tkeys_groups":
       $rarray=[];
       $result=DB_select($db,"select rowid,* from ${REQUEST['req']} where user_id=$USERID;");
       while ($row = DB_fetchArray($result)) {
@@ -87,19 +102,50 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
       };
       $response=json_encode($rarray);
       break;
-    case "GET tkeys_mgmt":
-      $response=json_encode(DB_selectArray($db,"select rowid as value, name as text from tkeys where user_id=$USERID and mgmt=1;"));
+
+    case "GET tkeys":
+      $rarray=[];
+      $result=DB_select($db,"select rowid,* from ${REQUEST['req']} where user_id=$USERID;");
+      while ($row = DB_fetchArray($result)) {
+        unset($row['user_id']);
+        $subres=DB_selectArray($db,"select tkeys_groups.rowid, tkeys_groups.group_name from tkeys_tsig_groups left join tkeys_groups on tkeys_groups.rowid=tkeys_tsig_groups.tsig_group_id where tkeys_tsig_groups.user_id=$USERID and tkeys_tsig_groups.tsig_id=${row['rowid']};");
+        $row['tkey_groups']=$subres;
+        $rarray[]=$row;
+      };
+      $response=json_encode($rarray);
       break;
+		
+    case "GET tkeys_groups_list":
+      $response=json_encode(DB_selectArray($db,"select rowid as value, group_name as text from tkeys_groups where user_id=$USERID;"));
+      break;
+    case "GET tkeys_mgmt":
+#      $response=json_encode(DB_selectArray($db,"select rowid as value, name as text from tkeys where user_id=$USERID and mgmt=1;"));
+      $response=json_encode(DB_selectArray($db,"select value,text from (select rowid as value, name as text, \"2\" as tbl from tkeys where user_id=$USERID and mgmt=1 union select \"gr_\"||rowid as value, group_name||\" (group)\" as text, \"1\" as tbl from tkeys_groups where user_id=$USERID ) order by tbl, text;"));
+      break;
+
     //add TSIG
     case "POST tkeys":
-      $sql="insert into tkeys values($USERID,'".DB_escape($db,$REQUEST['tKeyName'])."','".DB_escape($db,$REQUEST['tKeyAlg'])."','".DB_escape($db,$REQUEST['tKey'])."',".DB_boolval($REQUEST['tKeyMGMT']).")";
+      $tkeys_groups=DB_selectArray($db,"select rowid from tkeys_groups where user_id=$USERID and rowid in (".implode(",",filterIntArr(json_decode($REQUEST['tTKeysGroups']))).")");
+      $sql="insert into tkeys values($USERID,'".DB_escape($db,$REQUEST['tKeyName'])."','".DB_escape($db,$REQUEST['tKeyAlg'])."','".DB_escape($db,$REQUEST['tKey'])."',".DB_boolval($REQUEST['tKeyMGMT']).");";
+			foreach($tkeys_groups as $tkey_group){$sql.="insert into tkeys_tsig_groups values($srvid,$USERID,${tkey_group['rowid']});\n";};       
       if (DB_execute($db,$sql)) $response='{"status":"ok"}'; else $response='{"status":"failed", "sql":"'.$sql.'"}'; //TODO remove SQL
+			//TODO add tsig_groups
       break;
     //modify TSIG
     case "PUT tkeys": 
       $sql_update="update servers set cfg_updated=1 where rowid in (select distinct server_id from rpzs_servers left join rpzs_${REQUEST['req']} on rpzs_${REQUEST['req']}.rpz_id=rpzs_servers.rpz_id where rpzs_servers.user_id=$USERID and rpzs_${REQUEST['req']}.".rtrim($REQUEST['req'],"s")."_id=".intval($REQUEST['tKeyId'])." UNION select server_id from servers_tsig where user_id=$USERID and tsig_id=".intval($REQUEST['tKeyId']).");\n";      
       $sql="update tkeys set name='".DB_escape($db,$REQUEST['tKeyName'])."', alg='".DB_escape($db,$REQUEST['tKeyAlg'])."', tkey='".DB_escape($db,$REQUEST['tKey'])."', mgmt=".DB_boolval($REQUEST['tKeyMGMT'])." where user_id=$USERID and rowid='${REQUEST['tKeyId']}';\n$sql_update";
+      $tkeys_groups_new=DB_selectArray($db,"select rowid from tkeys_groups where user_id=$USERID and rowid in (".implode(",",filterIntArr(json_decode($REQUEST['tTKeysGroups']))).")");
+      $tkeys_groups_old=DB_selectArray($db,"select rowid,tsig_group_id from tkeys_tsig_groups where user_id=$USERID and tsig_id=".intval($REQUEST['tKeyId']));
+      foreach($tkeys_groups_old as $tkey_group){
+        if ($k=array_search($tkey_group['tsig_group_id'],$tkeys_groups_new)) unset($tkeys_groups_new[$k]); else $sql.="delete from tkeys_tsig_groups where rowid=${tkey_group['rowid']};\n";
+      };       
+			foreach($tkeys_groups_new as $tkey_group){
+				$sql.="insert into tkeys_tsig_groups values(".intval($REQUEST['tKeyId']).",$USERID,${tkey_group['rowid']});\n";
+			};       
+
       if (DB_execute($db,$sql)) $response='{"status":"ok"}'; else $response='{"status":"failed", "sql":"'.$sql.'"}'; //TODO remove SQL
+			//TODO add tsig_groups
       break;
 
     //add whitelist
@@ -133,6 +179,7 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
     case "DELETE sources":
     case "DELETE whitelists":
     case "DELETE tkeys":
+    case "DELETE tkeys_groups":
       $sql="delete from ${REQUEST['req']} where user_id=$USERID and rowid in ($ReqRowId)";
       if (DB_execute($db,$sql)) $response='{"status":"ok"}'; else $response='{"status":"failed", "sql":"'.$sql.'"}'; //TODO remove SQL
       break;
@@ -155,9 +202,15 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
         //actioncustom nx/nod/pass/drop/tcp/loc
         if (in_array($row['action'],["nxdomain","nodata","passthru","drop","tcp-only"])) $row['actioncustom']="";else{$row['actioncustom']=$row['action'];$row['action']="local";};
 
-        $subres=DB_selectArray($db,"select tkeys.rowid,tkeys.name, tkeys.alg, tkeys.tkey from rpzs_tkeys left join tkeys on tkeys.rowid=rpzs_tkeys.tkey_id where tkeys.mgmt=0 and rpzs_tkeys.user_id=$USERID and rpzs_tkeys.rpz_id=${row['rowid']};");
-        $row['tkeys']=$subres;
+#        $subres=DB_selectArray($db,"select tkeys.rowid,tkeys.name, tkeys.alg, tkeys.tkey from rpzs_tkeys left join tkeys on tkeys.rowid=rpzs_tkeys.tkey_id where tkeys.mgmt=0 and rpzs_tkeys.user_id=$USERID and rpzs_tkeys.rpz_id=${row['rowid']};");
+#        $row['tkeys']=$subres;
 
+        $subres=DB_selectArray($db,"select tkeys.rowid,tkeys.name, tkeys.alg, tkeys.tkey from rpzs_tkeys left join tkeys on tkeys.rowid=rpzs_tkeys.tkey_id where tkeys.mgmt=0 and rpzs_tkeys.user_id=$USERID and rpzs_tkeys.rpz_id=${row['rowid']} union select \"gr_\"||tkeys_groups.rowid, tkeys_groups.group_name||\" (group)\" as name, \"\" as alg, \"\" as tkey from rpzs_tkeys_groups left join tkeys_groups on tkeys_groups.rowid=rpzs_tkeys_groups.tkey_group_id where rpzs_tkeys_groups.user_id=$USERID and rpzs_tkeys_groups.rpz_id=${row['rowid']};");
+        $row['tkeys']=$subres;
+								
+        $subres=DB_selectArray($db,"select tkeys_groups.rowid,tkeys_groups.group_name from rpzs_tkeys_groups left join tkeys_groups on tkeys_groups.rowid=rpzs_tkeys_groups.tkey_group_id where rpzs_tkeys_groups.user_id=$USERID and rpzs_tkeys_groups.rpz_id=${row['rowid']};");
+        $row['tkeys_groups']=$subres;
+				
         $subres=DB_selectArray($db,"select servers.rowid,servers.name, pub_ip from rpzs_servers left join servers on servers.rowid=rpzs_servers.server_id where rpzs_servers.user_id=$USERID and rpzs_servers.rpz_id=${row['rowid']};");
         $row['servers']=$subres;
 
@@ -178,6 +231,7 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
       //actioncustom nx/nod/pass/drop/tcp/loc
       
       $tkeys=DB_selectArray($db,"select rowid from tkeys where user_id=$USERID and rowid in (".implode(",",filterIntArr(json_decode($REQUEST['tRPZTKeys']))).")");
+      $tkeys_groups=DB_selectArray($db,"select rowid from tkeys_groups where user_id=$USERID and rowid in (".implode(",",getGroupsId(json_decode($REQUEST['tRPZTKeys']))).")");
       $servers=DB_selectArray($db,"select rowid from servers where user_id=$USERID and rowid in (".implode(",",filterIntArr(json_decode($REQUEST['tRPZSrvs']))).")");
       $sources=DB_selectArray($db,"select rowid from sources where user_id=$USERID and rowid in (".implode(",",filterIntArr(json_decode($REQUEST['tRPZSrc']))).")");
       $whlists=DB_selectArray($db,"select rowid from whitelists where user_id=$USERID and rowid in (".implode(",",filterIntArr(json_decode($REQUEST['tRPZWL']))).")");
@@ -195,6 +249,9 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
         foreach($tkeys as $tkey){
           $sql.="insert into rpzs_tkeys values($rpzid,$USERID,${tkey['rowid']});\n";
         };
+        foreach($tkeys_groups as $tkey_group){
+          $sql.="insert into rpzs_tkeys_groups values($srvid,$USERID,${tkey_group['rowid']});\n";
+        };       
         foreach($servers as $tkey){
           $sql.="insert into rpzs_servers values($rpzid,$USERID,${tkey['rowid']});\n update servers set cfg_updated=1 where rowid=${tkey['rowid']};\n";
         };
@@ -217,6 +274,8 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
       $rpzid=intval($REQUEST['tRPZId']);
       $tkeys_new=DB_selectArray($db,"select rowid from tkeys where user_id=$USERID and rowid in (".implode(",",filterIntArr(json_decode($REQUEST['tRPZTKeys']))).")");
       $tkeys_old=DB_selectArray($db,"select rowid,tkey_id from rpzs_tkeys where user_id=$USERID and rpz_id=$rpzid");
+      $tkeys_groups_new=DB_selectArray($db,"select rowid from tkeys_groups where user_id=$USERID and rowid in (".implode(",",getGroupsId(json_decode($REQUEST['tRPZTKeys']))).")");
+      $tkeys_groups_old=DB_selectArray($db,"select rowid,tkey_group_id from rpzs_tkeys_groups where user_id=$USERID and rpz_id=$rpzid");
       $servers_new=DB_selectArray($db,"select rowid from servers where user_id=$USERID and rowid in (".implode(",",filterIntArr(json_decode($REQUEST['tRPZSrvs']))).")");
       $servers_old=DB_selectArray($db,"select rowid,server_id from rpzs_servers where user_id=$USERID and rpz_id=$rpzid");
       $sources_new=DB_selectArray($db,"select rowid from sources where user_id=$USERID and rowid in (".implode(",",filterIntArr(json_decode($REQUEST['tRPZSrc']))).")");
@@ -229,6 +288,9 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
       $sql='';
       foreach($tkeys_old as $tkey){if ($k=array_search($tkey['tkey_id'],$tkeys_new)) unset($tkeys_new[$k]); else $sql.="delete from rpzs_tkeys where rowid=${tkey['rowid']};\n";};       
       foreach($tkeys_new as $tkey){$sql.="insert into rpzs_tkeys values($rpzid,$USERID,${tkey['rowid']});\n";};
+
+      foreach($tkeys_groups_old as $tkeys_group){if ($k=array_search($tkeys_group['tkey_group_id'],$tkeys_new)) unset($tkeys_groups_new[$k]); else $sql.="delete from rpzs_tkeys_groups where rowid=${tkeys_group['rowid']};\n";};       
+      foreach($tkeys_groups_new as $tkeys_group){$sql.="insert into rpzs_tkeys_groups values($rpzid,$USERID,${tkeys_group['rowid']});\n";};
 
       $chCfgSrv=[];
       foreach($servers_old as $item){if ($k=array_search($item['server_id'],$tkeys_new)) unset($servers_new[$k]); else {$sql.="delete from rpzs_servers where rowid=${item['rowid']};\n";array_push($chCfgSrv,$item['rowid']);}};       
@@ -263,6 +325,7 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
     case "DELETE rpzs":
       $sql="delete from rpzs_notify where user_id=$USERID and rpz_id in ($ReqRowId);\n";
       $sql.="delete from rpzs_tkeys where user_id=$USERID and rpz_id in ($ReqRowId);\n";
+      $sql.="delete from rpzs_tkeys_groups where user_id=$USERID and rpz_id in ($ReqRowId);\n";
       $sql.="delete from rpzs_servers where user_id=$USERID and rpz_id in ($ReqRowId);\n update servers set cfg_updated=1 where rowid in ($ReqRowId);\n";
       $sql.="delete from rpzs_whitelists where user_id=$USERID and rpz_id in ($ReqRowId);\n";
       $sql.="delete from rpzs_sources where user_id=$USERID and rpz_id in ($ReqRowId);\n";
@@ -275,7 +338,12 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
       break;
 
     case "GET rpz_tkeys":
-      $response=json_encode(DB_selectArray($db,"select rowid as value, name as text from tkeys where user_id=$USERID and mgmt!=1;"));
+#      $response=json_encode(DB_selectArray($db,"select rowid as value, name as text from tkeys where user_id=$USERID and mgmt!=1"));
+      $response=json_encode(DB_selectArray($db,"select value,text from (select rowid as value, name as text, \"2\" as tbl from tkeys where user_id=$USERID and mgmt!=1 union select \"gr_\"||rowid as value, group_name||\" (group)\" as text, \"1\" as tbl from tkeys_groups where user_id=$USERID ) order by tbl, text;"));
+      break;
+
+    case "GET rpz_tkeys_groups":
+      $response=json_encode(DB_selectArray($db,"select rowid as value, group_name as text from tkeys_groups where user_id=$USERID;"));
       break;
 
     case "GET rpz_sources":

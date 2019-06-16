@@ -13,7 +13,16 @@ function initSQLiteDB($DBF){
   ###
   ###create tables
   ###
-
+	#2019-06-15
+	/*
+	ALTER TABLE servers ADD column custom_config text;
+	create table if not exists tkeys_groups (user_id integer, group_name text, foreign key(user_id) references users(rowid));
+	insert into tkeys_groups values(1,"mgmt"),(1,"public");
+	create table if not exists tkeys_tsig_groups (tsig_id integer, user_id integer, tsig_group_id integer, foreign key(tsig_group_id) references tkeys_groups(rowid), foreign key(user_id) references users(rowid), foreign key(tsig_id) references tkeys(rowid));
+	create table if not exists servers_tsig_groups (server_id integer, user_id integer, tsig_group_id integer, foreign key(tsig_group_id) references tkeys_groups(rowid), foreign key(user_id) references users(rowid), foreign key(server_id) references servers(rowid));
+	create table if not exists rpzs_tkeys_groups (rpz_id integer, user_id integer, tkey_group_id integer, foreign key(rpz_id) references rpzs(rowid), foreign key(user_id) references users(rowid), foreign key(tkey_group_id) references tkeys_groups(rowid));		
+	*/
+	
   #2019-03-01
   #ALTER TABLE servers ADD column certfile text;
   #ALTER TABLE servers ADD column keyfile text;
@@ -33,11 +42,17 @@ function initSQLiteDB($DBF){
   #create tkeys table
   $sql="create table if not exists tkeys (user_id integer, name text, alg text, tkey text, mgmt integer, foreign key(user_id) references users(rowid));";
   $db->exec($sql);
+
+  #create tkeys_groups table
+  $sql="create table if not exists tkeys_groups (user_id integer, group_name text, foreign key(user_id) references users(rowid));".
+			 "create table if not exists tkeys_tsig_groups (tsig_id integer, user_id integer, tsig_group_id integer, foreign key(tsig_group_id) references tkeys_groups(rowid), foreign key(user_id) references users(rowid), foreign key(tsig_id) references tkeys(rowid));\n";
+  $db->exec($sql);
   
   #create servers table, tkeys and mgmt_ips
   //stype 0 - local, 1  - sftp/scp, 2 - AWS S3
-  $sql="create table if not exists servers (user_id integer, name text, ip text, pub_ip text uniq, ns text, email text, mgmt integer, disabled integer, stype integer, URL text, cfg_updated integer, publish_upd integer, certfile text, keyfile text, cacertfile text,  foreign key(user_id) references users(rowid));".
+  $sql="create table if not exists servers (user_id integer, name text, ip text, pub_ip text uniq, ns text, email text, mgmt integer, disabled integer, stype integer, URL text, cfg_updated integer, publish_upd integer, certfile text, keyfile text, cacertfile text, custom_config text,  foreign key(user_id) references users(rowid));".
        "create table if not exists servers_tsig (server_id integer, user_id integer, tsig_id integer, foreign key(tsig_id) references tkeys(rowid), foreign key(user_id) references users(rowid), foreign key(server_id) references servers(rowid));\n".
+			 "create table if not exists servers_tsig_groups (server_id integer, user_id integer, tsig_group_id integer, foreign key(tsig_group_id) references tkeys_groups(rowid), foreign key(user_id) references users(rowid), foreign key(server_id) references servers(rowid));\n".
        "create table if not exists mgmt_ips (server_id integer, user_id integer, mgmt_ip text, foreign key(user_id) references users(rowid), foreign key(server_id) references servers(rowid));";
   $db->exec($sql);
   
@@ -53,7 +68,8 @@ function initSQLiteDB($DBF){
   $sql="create table if not exists rpzs (user_id integer, name text, soa_refresh integer, soa_update_retry integer, soa_expiration integer, soa_nx_ttl integer, cache integer, wildcard integer, action text, ioc_type text, axfr_update integer, ixfr_update integer, disabled integer, foreign key(user_id) references users(rowid));".
        "create table if not exists rpzs_servers (rpz_id integer, user_id integer, server_id integer, foreign key(rpz_id) references rpzs(rowid), foreign key(user_id) references users(rowid), foreign key(server_id) references servers(rowid));".
        "create table if not exists rpzs_tkeys (rpz_id integer, user_id integer, tkey_id integer, foreign key(rpz_id) references rpzs(rowid), foreign key(user_id) references users(rowid), foreign key(tkey_id) references tkeys(rowid));".
-       "create table if not exists rpzs_whitelists (rpz_id integer, user_id integer, whitelist_id integer, foreign key(rpz_id) references rpzs(rowid), foreign key(user_id) references users(rowid), foreign key(whitelist_id) references whitelists(rowid));".
+       "create table if not exists rpzs_tkeys_groups (rpz_id integer, user_id integer, tkey_group_id integer, foreign key(rpz_id) references rpzs(rowid), foreign key(user_id) references users(rowid), foreign key(tkey_group_id) references tkeys_groups(rowid));".
+			 "create table if not exists rpzs_whitelists (rpz_id integer, user_id integer, whitelist_id integer, foreign key(rpz_id) references rpzs(rowid), foreign key(user_id) references users(rowid), foreign key(whitelist_id) references whitelists(rowid));".
        "create table if not exists rpzs_sources (rpz_id integer, user_id integer, source_id integer, foreign key(rpz_id) references rpzs(rowid), foreign key(user_id) references users(rowid), foreign key(source_id) references sources(rowid));".
        "create table if not exists rpzs_notify (rpz_id integer, user_id integer, notify text, foreign key(rpz_id) references rpzs(rowid), foreign key(user_id) references users(rowid));"; // index on notify
   $db->exec($sql);
@@ -62,10 +78,13 @@ function initSQLiteDB($DBF){
   //$sql='insert into users values("io2admin","","","",0,0,0);';
   //$db->exec($sql);
 
+  $sql='insert into tkeys_groups values(1,"mgmt"),(1,"public");';
+  $db->exec($sql);
+  
   $sql='insert into tkeys values(1,"tkey_mgmt_1","md5","'.base64_encode(random_bytes(16)).'",1);'.
        'insert into tkeys values(1,"tkey_1","md5","'.base64_encode(random_bytes(16)).'",0);';
   $db->exec($sql);
-  
+
   $sql='insert into servers values(1,"server_1","127.0.0.1","1.0.0.1","ns1.ioc2rpz.localdomain","support@ioc2rpz.localdomain",1,0,0,"ioc2rpz.conf",1,0);'.
        'insert into servers_tsig values(1,1,1);'.
        'insert into mgmt_ips values(1,1,"127.0.0.1");';
