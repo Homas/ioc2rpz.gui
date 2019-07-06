@@ -32,12 +32,12 @@ RUN sed -i -e "s/\(.*ServerTokens\).*/\1 Prod/"  /etc/apache2/httpd.conf
 #Update index.php and io2comm_auth.php with local CSS/JS
 
 #Local CSS/JS
-ADD https://unpkg.com/bootstrap/dist/css/bootstrap.min.css /opt/ioc2rpz.comm/www/css
-ADD https://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.min.css /opt/ioc2rpz.comm/www/css
-ADD https://cdn.jsdelivr.net/npm/vue@2.5.22/dist/vue.min.js /opt/ioc2rpz.comm/www/js
-ADD https://unpkg.com/babel-polyfill@latest/dist/polyfill.min.js /opt/ioc2rpz.comm/www/js
-ADD https://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.min.js /opt/ioc2rpz.comm/www/js
-ADD https://unpkg.com/axios/dist/axios.min.js /opt/ioc2rpz.comm/www/js
+ADD https://unpkg.com/bootstrap/dist/css/bootstrap.min.css /opt/ioc2rpz.gui/www/css
+ADD https://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.min.css /opt/ioc2rpz.gui/www/css
+ADD https://cdn.jsdelivr.net/npm/vue@2.5.22/dist/vue.min.js /opt/ioc2rpz.gui/www/js
+ADD https://unpkg.com/babel-polyfill@latest/dist/polyfill.min.js /opt/ioc2rpz.gui/www/js
+ADD https://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.min.js /opt/ioc2rpz.gui/www/js
+ADD https://unpkg.com/axios/dist/axios.min.js /opt/ioc2rpz.gui/www/js
 ADD https://use.fontawesome.com/releases/v5.9.0/fontawesome-free-5.9.0-web.zip /tmp
 
 COPY www/* /opt/ioc2rpz.gui/www/
