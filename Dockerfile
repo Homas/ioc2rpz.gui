@@ -47,6 +47,11 @@ COPY www/webfonts/* /opt/ioc2rpz.gui/www/webfonts/
 #COPY www/img/* /opt/ioc2rpz.gui/www/img/
 COPY scripts/* /opt/ioc2rpz.gui/scripts/
 
+ENV Docker_CSS <link type=\"text/css\" rel=\"stylesheet\" href=\"/css/bootstrap.min.css\"/><link type=\"text/css\" rel=\"stylesheet\" href=\"/css/bootstrap-vue.min.css\"/><link rel=\"stylesheet\" href=\"/css/all.css\">
+#" - bug in Komodo
+ENV Docker_JS <script src=\"/js/vue.min.js\"></script><script src=\"/js/polyfill.min.js\"></script><script src=\"/js/bootstrap-vue.min.js\"></script><script src=\"/js/axios.min.js\"></script>
+#" - bug in Komodo
+
 RUN unzip /tmp/fontawesome-free-5.9.0-web.zip -d /tmp && cp /tmp/fontawesome-free-5.9.0-web/css/all.css /opt/ioc2rpz.gui/www/css && cp -r /tmp/fontawesome-free-5.9.0-web/webfonts /opt/ioc2rpz.gui/www/ && sed -i -e "s#^.*Docker_CSS.*#${Docker_CSS}#" -e "s#^.*Docker_JS.*#${Docker_JS}#" -e "s/^.*\(<!-- Docker_Comm_Start\).*/\1/" -e "s/^.*Docker_Comm_End.*/-->/" /opt/ioc2rpz.gui/www/index.php && sed -i -e "s#^.*Docker_CSS.*#${Docker_CSS}#" -e "s#^.*Docker_JS.*#${Docker_JS}#" -e "s/^.*\(<!-- Docker_Comm_Start\).*/\1/" -e "s/^.*Docker_Comm_End.*/-->/" /opt/ioc2rpz.gui/www/io2auth.php && chmod 644 /opt/ioc2rpz.gui/www/css/* && chmod 644 /opt/ioc2rpz.gui/www/js/* && chmod 644 /opt/ioc2rpz.gui/www/webfonts/* && rm -rf /tmp/*
 
 
