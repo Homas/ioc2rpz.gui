@@ -31,15 +31,6 @@ RUN mkdir -p /run/apache2 /etc/apache2/ssl /opt/ioc2rpz.gui/www /opt/ioc2rpz.gui
 RUN sed -i -e "s/\(.*ServerTokens\).*/\1 Prod/"  /etc/apache2/httpd.conf
 #Update index.php and io2comm_auth.php with local CSS/JS
 
-#Local CSS/JS
-ADD https://unpkg.com/bootstrap/dist/css/bootstrap.min.css /opt/ioc2rpz.gui/www/css
-ADD https://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.min.css /opt/ioc2rpz.gui/www/css
-ADD https://cdn.jsdelivr.net/npm/vue@2.5.22/dist/vue.min.js /opt/ioc2rpz.gui/www/js
-ADD https://unpkg.com/babel-polyfill@latest/dist/polyfill.min.js /opt/ioc2rpz.gui/www/js
-ADD https://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.min.js /opt/ioc2rpz.gui/www/js
-ADD https://unpkg.com/axios/dist/axios.min.js /opt/ioc2rpz.gui/www/js
-ADD https://use.fontawesome.com/releases/v5.9.0/fontawesome-free-5.9.0-web.zip /tmp
-
 COPY www/* /opt/ioc2rpz.gui/www/
 COPY www/js/* /opt/ioc2rpz.gui/www/js/
 COPY www/css/* /opt/ioc2rpz.gui/www/css/
@@ -47,12 +38,21 @@ COPY www/webfonts/* /opt/ioc2rpz.gui/www/webfonts/
 #COPY www/img/* /opt/ioc2rpz.gui/www/img/
 COPY scripts/* /opt/ioc2rpz.gui/scripts/
 
-ENV Docker_CSS <link type=\"text/css\" rel=\"stylesheet\" href=\"/css/bootstrap.min.css\"/><link type=\"text/css\" rel=\"stylesheet\" href=\"/css/bootstrap-vue.min.css\"/><link rel=\"stylesheet\" href=\"/css/all.css\">
-#" - bug in Komodo
-ENV Docker_JS <script src=\"/js/vue.min.js\"></script><script src=\"/js/polyfill.min.js\"></script><script src=\"/js/bootstrap-vue.min.js\"></script><script src=\"/js/axios.min.js\"></script>
-#" - bug in Komodo
+#Local CSS/JS
+#ADD https://unpkg.com/bootstrap/dist/css/bootstrap.min.css /opt/ioc2rpz.gui/www/css
+#ADD https://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.min.css /opt/ioc2rpz.gui/www/css
+#ADD https://cdn.jsdelivr.net/npm/vue@2.5.22/dist/vue.min.js /opt/ioc2rpz.gui/www/js
+#ADD https://unpkg.com/babel-polyfill@latest/dist/polyfill.min.js /opt/ioc2rpz.gui/www/js
+#ADD https://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.min.js /opt/ioc2rpz.gui/www/js
+#ADD https://unpkg.com/axios/dist/axios.min.js /opt/ioc2rpz.gui/www/js
+#ADD https://use.fontawesome.com/releases/v5.9.0/fontawesome-free-5.9.0-web.zip /tmp
 
-RUN unzip /tmp/fontawesome-free-5.9.0-web.zip -d /tmp && cp /tmp/fontawesome-free-5.9.0-web/css/all.css /opt/ioc2rpz.gui/www/css && cp -r /tmp/fontawesome-free-5.9.0-web/webfonts /opt/ioc2rpz.gui/www/ && sed -i -e "s#^.*Docker_CSS.*#${Docker_CSS}#" -e "s#^.*Docker_JS.*#${Docker_JS}#" -e "s/^.*\(<!-- Docker_Comm_Start\).*/\1/" -e "s/^.*Docker_Comm_End.*/-->/" /opt/ioc2rpz.gui/www/index.php && sed -i -e "s#^.*Docker_CSS.*#${Docker_CSS}#" -e "s#^.*Docker_JS.*#${Docker_JS}#" -e "s/^.*\(<!-- Docker_Comm_Start\).*/\1/" -e "s/^.*Docker_Comm_End.*/-->/" /opt/ioc2rpz.gui/www/io2auth.php && chmod 644 /opt/ioc2rpz.gui/www/css/* && chmod 644 /opt/ioc2rpz.gui/www/js/* && chmod 644 /opt/ioc2rpz.gui/www/webfonts/* && rm -rf /tmp/*
+#ENV Docker_CSS <link type=\"text/css\" rel=\"stylesheet\" href=\"/css/bootstrap.min.css\"/><link type=\"text/css\" rel=\"stylesheet\" href=\"/css/bootstrap-vue.min.css\"/><link rel=\"stylesheet\" href=\"/css/all.css\">
+##" - bug in Komodo
+#ENV Docker_JS <script src=\"/js/vue.min.js\"></script><script src=\"/js/polyfill.min.js\"></script><script src=\"/js/bootstrap-vue.min.js\"></script><script src=\"/js/axios.min.js\"></script>
+##" - bug in Komodo
+#
+#RUN unzip /tmp/fontawesome-free-5.9.0-web.zip -d /tmp && cp /tmp/fontawesome-free-5.9.0-web/css/all.css /opt/ioc2rpz.gui/www/css && cp -r /tmp/fontawesome-free-5.9.0-web/webfonts /opt/ioc2rpz.gui/www/ && sed -i -e "s#^.*Docker_CSS.*#${Docker_CSS}#" -e "s#^.*Docker_JS.*#${Docker_JS}#" -e "s/^.*\(<!-- Docker_Comm_Start\).*/\1/" -e "s/^.*Docker_Comm_End.*/-->/" /opt/ioc2rpz.gui/www/index.php && sed -i -e "s#^.*Docker_CSS.*#${Docker_CSS}#" -e "s#^.*Docker_JS.*#${Docker_JS}#" -e "s/^.*\(<!-- Docker_Comm_Start\).*/\1/" -e "s/^.*Docker_Comm_End.*/-->/" /opt/ioc2rpz.gui/www/io2auth.php && chmod 644 /opt/ioc2rpz.gui/www/css/* && chmod 644 /opt/ioc2rpz.gui/www/js/* && chmod 644 /opt/ioc2rpz.gui/www/webfonts/* && rm -rf /tmp/*
 
 
 VOLUME ["/opt/ioc2rpz.gui/export-cfg", "/opt/ioc2rpz.gui/www/io2cfg", "/etc/apache2/ssl"]

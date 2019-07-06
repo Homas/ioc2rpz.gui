@@ -13,7 +13,7 @@ Vue.component('io2-table', {
           <b-col md="4" class="my-1">
           </b-col>
           <b-col md="4" class="my-1">
-            <b-form-group horizontal class="mb-0">
+            <b-form-group class="mb-0">
               <b-input-group>
                 <b-form-input v-model="filter" placeholder="Search" />
                 <b-input-group-append>
