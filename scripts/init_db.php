@@ -17,10 +17,12 @@ function initSQLiteDB($DBF){
 	/*
 	ALTER TABLE servers ADD column custom_config text;
 	create table if not exists tkeys_groups (user_id integer, group_name text, foreign key(user_id) references users(rowid));
-	insert into tkeys_groups values(1,"mgmt"),(1,"public");
 	create table if not exists tkeys_tsig_groups (tsig_id integer, user_id integer, tsig_group_id integer, foreign key(tsig_group_id) references tkeys_groups(rowid), foreign key(user_id) references users(rowid), foreign key(tsig_id) references tkeys(rowid));
 	create table if not exists servers_tsig_groups (server_id integer, user_id integer, tsig_group_id integer, foreign key(tsig_group_id) references tkeys_groups(rowid), foreign key(user_id) references users(rowid), foreign key(server_id) references servers(rowid));
 	create table if not exists rpzs_tkeys_groups (rpz_id integer, user_id integer, tkey_group_id integer, foreign key(rpz_id) references rpzs(rowid), foreign key(user_id) references users(rowid), foreign key(tkey_group_id) references tkeys_groups(rowid));		
+
+	insert into tkeys_groups values(1,"mgmt"),(1,"public");
+
 	*/
 	
   #2019-03-01
