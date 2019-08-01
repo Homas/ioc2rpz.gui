@@ -179,6 +179,9 @@ Hey dude! Help me out for a couple of :beers:!
 
 [![Beerpay](https://beerpay.io/Homas/ioc2rpz/badge.svg?style=beer-square)](https://beerpay.io/Homas/ioc2rpz)  [![Beerpay](https://beerpay.io/Homas/ioc2rpz/make-wish.svg?style=flat-square)](https://beerpay.io/Homas/ioc2rpz?focus=wish)
 
+# Contact us
+You can contact us by email: feedback(at)ioc2rpz[.]net or in [Telegram](https://t.me/ioc2rpz).
+
 # License
 Copyright 2017 - 2019 Vadim Pavlov ioc2rpz[at]gmail[.]com
 

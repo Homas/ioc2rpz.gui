@@ -1,5 +1,5 @@
 <?php
-#(c) Vadim Pavlov 2018
+#(c) Vadim Pavlov 2019
 #ioc2rpz GUI vars
 
 const DB="sqlite"; //for a single user it is Ok
@@ -15,7 +15,7 @@ const io2mgmt="rest"; #ioc2rpz management interface: rest or dns
 const io2mgmt_verifyssl=false; #Verify SSL. If there is a self signed certificate - set to false.
 const rest_mgmt_port=8443;
 
-$io2ver=2019061502;
+$io2ver=2019073101;
 
 function filterIntArr($array){
   $result = [];
