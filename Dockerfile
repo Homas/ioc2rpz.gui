@@ -28,7 +28,7 @@ RUN mkdir -p /run/apache2 /etc/apache2/ssl /opt/ioc2rpz.gui/www /opt/ioc2rpz.gui
     ln -sf /proc/self/fd/1 /var/log/apache2/ssl_request.log && \
     rm -rf /var/cache/apk/* /tmp/* /var/tmp/*
 
-RUN sed -i -e "s/\(.*ServerTokens\).*/\1 Prod/"  /etc/apache2/httpd.conf && echo -e "TraceEnable Off\n"  >> /etc/apache2/httpd.conf
+RUN sed -i -e "s/\(.*ServerTokens\).*/\1 Prod/"  /etc/apache2/httpd.conf && echo -e "TraceEnable Off\n"  >> /etc/apache2/httpd.conf && sed -i -e "s/^.*\(expose_php =\).*/\1 Off/" /etc/php7/php.ini
 #Update index.php and io2comm_auth.php with local CSS/JS
 
 COPY www/* /opt/ioc2rpz.gui/www/
