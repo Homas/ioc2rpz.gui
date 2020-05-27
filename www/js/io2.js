@@ -25,8 +25,7 @@ Vue.component('io2-table', {
         </b-row>
         <b-row>
           <b-col md="12">
-            <b-table :busy.sync="busy" :items="get_tables" :id="table" :ref="table" :fields="fields" :api-url="'/io2data.php/'+table" :current-page="currentPage" :per-page="perPage" :no-provider-paging=true :no-provider-sorting=true :no-provider-filtering=true :outlined=true :striped=true :small=true :filter="filter" @filtered="onFiltered" @refreshed="onRefreshred(table)" v-model="tblDispl">
-              <slot></slot>
+            <b-table :busy="busy" :items="get_tables" :id="table" :ref="table" :fields="fields" :api-url="'/io2data.php/'+table" :current-page="currentPage" :per-page="perPage" :no-provider-paging=true :no-provider-sorting=true :no-provider-filtering=true :outlined=true :striped=true :small=true :filter="filter" @filtered="onFiltered" @refreshed="onRefreshred(table)" v-model="tblDispl">
               <template slot="actions_e" slot-scope="row">
                 <b-button size="sm" @click.stop="mgmtRec('info', table, row, $event.target)" class="" v-b-tooltip.hover title="Information" variant="outline-secondary"><i class="fa fa-info-circle"></i></b-button>
                 <b-button size="sm" @click.stop="mgmtRec('export', table, row, $event.target)" class="" v-if="table == 'servers'" v-b-tooltip.hover title="Export Configuration" variant="outline-secondary"><i class="fa fa-download"></i></b-button>
@@ -55,9 +54,13 @@ Vue.component('io2-table', {
               </template>
               <template slot="update" slot-scope="row">
                 {{ row.item.axfr_update }}/{{ row.item.ixfr_update }}
-              </template>                
+              </template>
+<!--
+              <template v-slot:cell(disabled)="row">
+-->                            
               <template slot="disabled" slot-scope="row" >
-                <b-form-checkbox unchecked-value=0 value=1 disabled :checked="row.item.disabled"/>
+
+               <b-form-checkbox unchecked-value=0 value=1 disabled :checked="row.item.disabled"/>
               </template>
               <template slot="sources_list" slot-scope="row">
                 <div v-if="row.item.sources.length<4">
@@ -473,7 +476,7 @@ new Vue({
         { key: 'rowid', label: '', sortable: true },
         { key: 'name', label: 'Name', sortable: true },
         { key: 'servers_list', label: 'Servers', sortable: true },
-        { key: 'ioc_type', label: 'IOC type', sortable: true, /*formatter: (value) => { return value=="m"?"mixed":value=="i"?"ip":"hostnames"; }*/ },
+        { key: 'ioc_type', label: 'IOC type', sortable: true }, // formatter: (value) => { return value=="m"?"mixed":value=="i"?"ip":"hostnames"; }
         { key: 'cache', label: 'Cachable', sortable: true, 'class': 'text-center' },
         { key: 'wildcard', label: 'Wildcards', sortable: true, 'class': 'text-center' },
         { key: 'action', label: 'Responce action', sortable: true, formatter: (value) => { return value=="nxdomain"?"NXDomain":value=="nodata"?"NoData":value=="passthru"?"Passthru":value=="drop"?"Drop":value=="tcp-only"?"TCP-Only":"Local Records"; } },

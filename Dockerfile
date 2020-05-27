@@ -28,7 +28,20 @@ RUN mkdir -p /run/apache2 /etc/apache2/ssl /opt/ioc2rpz.gui/www /opt/ioc2rpz.gui
     ln -sf /proc/self/fd/1 /var/log/apache2/ssl_request.log && \
     rm -rf /var/cache/apk/* /tmp/* /var/tmp/*
 
-RUN sed -i -e "s/\(.*ServerTokens\).*/\1 Prod/"  /etc/apache2/httpd.conf && echo -e "TraceEnable Off\n"  >> /etc/apache2/httpd.conf && sed -i -e "s/^.*\(expose_php =\).*/\1 Off/" /etc/php7/php.ini
+
+
+#/etc/apache2/conf.d/mpm.conf
+#<IfModule mpm_prefork_module>
+#StartServers             1
+#MinSpareServers          1
+#MaxSpareServers          0 
+#MaxRequestWorkers      250
+#MaxConnectionsPerChild   0
+#</IfModule>
+
+### Validate SSL
+
+RUN sed -i -e "s/\(.*ServerTokens\).*/\1 Prod/"  /etc/apache2/httpd.conf && echo -e "TraceEnable Off\n"  >> /etc/apache2/httpd.conf && sed -i -e "s/^.*\(expose_php =\).*/\1 Off/" /etc/php7/php.ini && sed -i -e "s/^\(SSLProxyProtocol.*\)/#\1/" -e "s/^\(SSLProxyCipherSuite.*\)/#\1/" -e "s/^\(SSLProtocol\).*/SSLProtocol -all +TLSv1.2 +TLSv1.3/" -e "s/^\(SSLCipherSuite\).*/\1 TLSv1.3 TLS_AES_256_GCM_SHA384:TLS_AES_128_GCM_SHA256\n\1 SSL ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA256\nSSLOpenSSLConfCmd Curves X25519:secp521r1:secp384r1:prime256v1/" /etc/apache2/conf.d/ssl.conf
 #Update index.php and io2comm_auth.php with local CSS/JS
 
 COPY www/* /opt/ioc2rpz.gui/www/

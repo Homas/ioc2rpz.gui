@@ -174,6 +174,9 @@ The Infoblox configuration is provided in Infoblox CSV import format. To import 
 - [bootstrap-vue](https://bootstrap-vue.js.org/)
 - [Axios](https://github.com/axios/axios)
 
+# Do you want to support to the project?
+You can suppor the project via [GitHub Sponsor](https://github.com/sponsors/Homas) (recurring payments) or make one time donation via [PayPal](https://paypal.me/ioc2rpz).
+
 # Contact us
 You can contact us by email: feedback(at)ioc2rpz[.]net or in [Telegram](https://t.me/ioc2rpz).
 
