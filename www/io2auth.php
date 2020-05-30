@@ -88,9 +88,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <title>ioc2rpz configuration</title>
 	<!-- BootstrapVue FA -->
+  <!--
+
 	<link type="text/css" rel="stylesheet" href="/css/bootstrap.min.css"/>
 	<link type="text/css" rel="stylesheet" href="/css/bootstrap-vue.css"/>
 	<link rel="stylesheet" href="/css/all.min.css">
+
+	-->
+
+    <!-- Docker_Comm_Start -->
+			<link type="text/css" rel="stylesheet" href="//unpkg.com/bootstrap/dist/css/bootstrap.min.css"/>
+			<link type="text/css" rel="stylesheet" href="//unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.css"/>    
+  		<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css">
+    <!-- Docker_Comm_End -->
+
+
   <!-- ioc2rpz CSS -->
   <link type="text/css" rel="stylesheet" href="/css/io2.css?<?=$io2ver?>"/>
 </head>
@@ -154,10 +166,25 @@
 
   </div>
 
+<!--
 	<script src="/js/vue.js"></script>
 	<script src="/js/polyfill.min.js"></script>
 	<script src="/js/bootstrap-vue.js"></script>
 	<script src="/js/axios.min.js"></script>
+-->
+
+    <!-- Docker_Comm_Start -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@latest/dist/vue.js"></script>
+    <script src="//unpkg.com/babel-polyfill@latest/dist/polyfill.min.js"></script>
+    <script src="//unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.js"></script>
+    <script src="//unpkg.com/axios/dist/axios.min.js"></script>
+    <!-- Docker_Comm_End -->
+    <!-- Docker_JS -->
+
+
+    <!-- JS -->
+
+
 
   <script src="/js/io2auth.js?<?=$io2ver?>"></script>
 </body>

@@ -1,5 +1,5 @@
 <?php
-#(c) Vadim Pavlov 2019
+#(c) Vadim Pavlov 2018-2020
 #ioc2rpz GUI vars
 
 const DB="sqlite"; //for a single user it is Ok

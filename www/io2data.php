@@ -1,8 +1,8 @@
 <?php
-#(c) Vadim Pavlov 2018
-#ioc2rpz configuration API
+#(c) Vadim Pavlov 2018-2020
+#ioc2rpz.gui API
 
-require 'io2auth.php';
+require_once 'io2auth.php';
 require_once 'io2fun.php';
 
 

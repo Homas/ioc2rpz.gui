@@ -36,16 +36,20 @@
     
       <b-navbar-toggle target="nav_collapse"></b-navbar-toggle>
     
-      <b-navbar-brand href="#"><h2>ioc2rpz</h2></b-navbar-brand>
+      <b-navbar-brand href="#"><h2>ioc2rpz.gui</h2></b-navbar-brand>
     
       <b-collapse is-nav id="nav_collapse">
-    
         <b-navbar-nav>
+ <!--   
           <b-nav-item href="#/dash/">Dashboard</b-nav-item>
-          <b-nav-item href="#/cfg/" active>Configuration</b-nav-item>
-          <b-nav-item href="http://ioc2rpz.com" target="_blank">Community</b-nav-item>
+          <b-nav-item href="#/cfg/">Configuration</b-nav-item>
+  -->  
+          <b-nav-item href="https://ioc2rpz.net" target="_blank">ioc2rpz Community</b-nav-item>
+          <b-nav-item href="http://ioc2rpz.com" target="_blank">ioc2rpz on GitHub</b-nav-item>
+          <b-nav-item href="https://github.com/Homas/ioc2rpz.gui" target="_blank">ioc2rpz.gui on GitHub</b-nav-item>
+          <b-nav-item href="https://github.com/Homas/RpiDNS" target="_blank">RpiDNS on GitHub</b-nav-item>
         </b-navbar-nav>
-    
+
         <!-- Right aligned nav items -->
         <b-navbar-nav class="ml-auto">
           <b-nav-form><b-button variant="warning" v-show="publishUpdates" @click.stop="pushUpdatestoSRV('all')">Publish configuration</b-button></b-nav-form>
@@ -86,31 +90,366 @@
     
   <div id="ConfApp" class="h-100 d-flex flex-column" v-cloak>
     <b-container fluid  class="h-100 d-flex flex-column">
-        <b-tabs ref="tabs_menu" pills vertical nav-wrapper-class="menu-bkgr h-100 col-md-2" class="h-100 corners" content-class="curl_angels" :value="cfgTab" @input="changeTab">
-        <!--  <b-tab title="Overview" href='#/cfg/overview'>
-            Overview
+        <b-tabs ref="tabs_menu" pills vertical nav-wrapper-class="menu-bkgr h-100" class="h-100 corners" content-class="curl_angels" :value="cfgTab" @input="changeTab">
+          <b-tab table="servers" href="#/cfg/servers">
+					<template slot="title"><i class="fas fa-server"></i>&nbsp;&nbsp;Servers</template>
+<!-- Servers -->
+					<div class="v-spacer"></div>							
+
+<!--
+            <io2-table table="servers" ref="io2tbl_servers" :fields="servers_fields" />
+-->
+          <b-card body-class="p-2">
+            <template slot="header">
+              <b-row>
+                <b-col cols="0" class="d-none d-lg-block"  lg="2"><span class="bold"><i class="fas fa-server"></i>&nbsp;&nbsp;Servers</span></b-col>
+                <b-col cols="12" lg="10" class="text-right">
+                  <b-form-group class="m-0">
+                    <b-button v-b-tooltip.hover title="Add" @click.stop="mgmtRec('add', 'servers', '', $event.target)" variant="outline-secondary" size="sm"><i class="fa fa-plus"></i></b-button>
+                    <b-button v-b-tooltip.hover title="Refresh" variant="outline-secondary" size="sm" @click.stop="refreshTbl('io2tbl_servers')"><i class="fa fa-sync"></i></b-button>
+                  </b-form-group>
+                </b-col>
+              </b-row>
+            </template>
+            <div>
+              <b-row>
+                <b-col md="12">             
+                  
+                  <b-table :items="get_tables" id="io2tbl_servers" ref="io2tbl_servers" :fields="servers_fields" api-url="/io2data.php/servers" no-border-collapse striped hover small :filter="servers_filter" responsive :sticky-header="`${logs_height}px`">
+                    <template v-slot:table-busy><div class="text-center text-second m-0 p-0"><b-spinner class="align-middle"></b-spinner>&nbsp;&nbsp;<strong>Loading...</strong></div></template>
+                    <template v-slot:cell(actions_e)="row">
+                      <b-button size="sm" @click.stop="mgmtRec('info', 'servers', row, $event.target)" v-b-tooltip.hover.bottom title="Information" variant="outline-secondary"><i class="fa fa-info-circle"></i></b-button>
+                      <b-button size="sm" @click.stop="mgmtRec('export', 'servers', row, $event.target)" v-b-tooltip.hover.bottom title="Export Configuration" variant="outline-secondary"><i class="fa fa-download"></i></b-button>
+                      <b-button size="sm" @click.stop="mgmtRec('publish', 'servers', row, $event.target)" v-b-tooltip.hover.bottom title="Force Publish Configuration" :variant="row.item.cfg_updated == 1?'outline-primary':'outline-secondary'"><i class="fa fa-upload"></i></b-button>
+                      <b-button size="sm" @click.stop="mgmtRec('edit', 'servers', row, $event.target)" v-b-tooltip.hover.bottom title="Edit" variant="outline-secondary"><i class="fa fa-pencil-alt"></i></b-button>
+                      <b-button size="sm" @click.stop="requestDelete('servers',row)" class="" v-b-tooltip.hover.bottom title="Delete" variant="outline-secondary"><i class="fa fa-times-circle"></i></b-button>
+                    </template>
+              
+                    <template v-slot:cell(disabled)="row">
+                     <b-form-checkbox unchecked-value=0 value=1 disabled :checked="row.item.disabled"/>
+                    </template>
+                
+                    <template v-slot:cell(mgmt)="row">
+                      <b-form-checkbox unchecked-value=0 value=1 disabled :checked="row.item.mgmt"/>
+                    </template>
+                
+                  </b-table>
+                </b-col>
+              </b-row>
+            </div>
+          </b-card>
+
+<!-- Servers -->
           </b-tab>
-        -->
-          <b-tab table="servers" title="Servers" href="#/cfg/servers">
-            <io2-table table="servers" ref="io2tbl_servers" :fields="servers_fields" /> 
+
+					<b-tab>
+<!-- RpiDNS -->
+						<template slot="title"><i class="fas fa-atom"></i><span class="d-none d-lg-inline" v-bind:class="{ hidden: toggleMenu>0 }">&nbsp;&nbsp;RpiDNS</span>&nbsp;<span class="fa fa-beta"></span></template>
+						<!--RpiDNS page-->
+						<?php
+							require 'rpidns.php';
+            ?>
+						<!--End RpiDNS page-->
+<!-- RpiDNS -->
           </b-tab>
-          <b-tab table="tkeys" title="TSIG keys" href="#/cfg/tkeys" > 
+
+          <b-tab table="tkeys_groups" href="#/cfg/tkeys_groups" >
+            <template slot="title"><i class="fas fa-users"></i>&nbsp;&nbsp;Key groups</template>
+<!-- TKeys Groups -->
+
+					<div class="v-spacer"></div>							
+
+            <b-card body-class="p-2">
+              <template slot="header">
+                <b-row>
+                  <b-col cols="0" class="d-none d-lg-block"  lg="2"><span class="bold"><i class="fas fa-users"></i>&nbsp;&nbsp;Key groups</span></b-col>
+                  <b-col cols="12" lg="10" class="text-right">
+                    <b-form-group class="m-0">
+                      <b-button v-b-tooltip.hover title="Add" @click.stop="mgmtRec('add', 'tkeys_groups', '', $event.target)" variant="outline-secondary" size="sm"><i class="fa fa-plus"></i></b-button>
+                      <b-button v-b-tooltip.hover title="Refresh" variant="outline-secondary" size="sm" @click.stop="refreshTbl('io2tbl_tkeys_groups')"><i class="fa fa-sync"></i></b-button>
+                    </b-form-group>
+                  </b-col>
+                </b-row>
+              </template>
+              <div>
+                <b-row>
+                  <b-col md="12">             
+                    
+                    <b-table :items="get_tables" id="io2tbl_tkeys_groups" ref="io2tbl_tkeys_groups" :fields="tkeys_groups_fields" api-url="/io2data.php/tkeys_groups" no-border-collapse striped hover small :filter="servers_filter" responsive :sticky-header="`${logs_height}px`">
+                      <template v-slot:table-busy><div class="text-center text-second m-0 p-0"><b-spinner class="align-middle"></b-spinner>&nbsp;&nbsp;<strong>Loading...</strong></div></template>
+                      <template v-slot:cell(actions_e)="row">
+                        <b-button size="sm" @click.stop="mgmtRec('edit', 'tkeys_groups', row, $event.target)" v-b-tooltip.hover.bottom title="Edit" variant="outline-secondary"><i class="fa fa-pencil-alt"></i></b-button>
+                        <b-button size="sm" @click.stop="requestDelete('tkeys_groups',row)" class="" v-b-tooltip.hover.bottom title="Delete" variant="outline-secondary"><i class="fa fa-times-circle"></i></b-button>
+                      </template>
+                
+                      <template v-slot:cell(disabled)="row">
+                       <b-form-checkbox unchecked-value=0 value=1 disabled :checked="row.item.disabled"/>
+                      </template>
+                  
+                      <template v-slot:cell(mgmt)="row">
+                        <b-form-checkbox unchecked-value=0 value=1 disabled :checked="row.item.mgmt"/>
+                      </template>
+                  
+                    </b-table>
+                  </b-col>
+                </b-row>
+              </div>
+            </b-card>
+
+<!-- TKeys Groups -->
+          </b-tab>
+
+          
+          <b-tab table="tkeys"href="#/cfg/tkeys" >
+            <template slot="title"><i class="fas fa-key"></i>&nbsp;&nbsp;TSIG keys</template>
+<!-- TKeys -->
+<!--
             <io2-table table="tkeys" ref="io2tbl_tkeys" :fields="tkeys_fields" />              
+-->
+
+					<div class="v-spacer"></div>							
+
+            <b-card body-class="p-2">
+              <template slot="header">
+                <b-row>
+                  <b-col cols="0" class="d-none d-lg-block"  lg="2"><span class="bold"><i class="fas fa-key"></i>&nbsp;&nbsp;TSIG Keys</span></b-col>
+                  <b-col cols="12" lg="10" class="text-right">
+                    <b-form-group class="m-0">
+                      <b-button v-b-tooltip.hover title="Add" @click.stop="mgmtRec('add', 'tkeys', '', $event.target)" variant="outline-secondary" size="sm"><i class="fa fa-plus"></i></b-button>
+                      <b-button v-b-tooltip.hover title="Refresh" variant="outline-secondary" size="sm" @click.stop="refreshTbl('io2tbl_tkeys')"><i class="fa fa-sync"></i></b-button>
+                    </b-form-group>
+                  </b-col>
+                </b-row>
+              </template>
+              <div>
+                <b-row>
+                  <b-col md="12">             
+                    
+                    <b-table :items="get_tables" id="io2tbl_tkeys" ref="io2tbl_tkeys" :fields="tkeys_fields" api-url="/io2data.php/tkeys" no-border-collapse striped hover small :filter="servers_filter" responsive :sticky-header="`${logs_height}px`">
+                      <template v-slot:table-busy><div class="text-center text-second m-0 p-0"><b-spinner class="align-middle"></b-spinner>&nbsp;&nbsp;<strong>Loading...</strong></div></template>
+                      <template v-slot:cell(actions_e)="row">
+                        <b-button size="sm" @click.stop="mgmtRec('info', 'tkeys', row, $event.target)" v-b-tooltip.hover.bottom title="Information" variant="outline-secondary"><i class="fa fa-info-circle"></i></b-button>
+                        <b-button size="sm" @click.stop="mgmtRec('edit', 'tkeys', row, $event.target)" v-b-tooltip.hover.bottom title="Edit" variant="outline-secondary"><i class="fa fa-pencil-alt"></i></b-button>
+                        <b-button size="sm" @click.stop="requestDelete('tkeys',row)" class="" v-b-tooltip.hover.bottom title="Delete" variant="outline-secondary"><i class="fa fa-times-circle"></i></b-button>
+                      </template>
+                
+                      <template v-slot:cell(disabled)="row">
+                       <b-form-checkbox unchecked-value=0 value=1 disabled :checked="row.item.disabled"/>
+                      </template>
+                  
+                      <template v-slot:cell(mgmt)="row">
+                        <b-form-checkbox unchecked-value=0 value=1 disabled :checked="row.item.mgmt"/>
+                      </template>
+                  
+                    </b-table>
+                  </b-col>
+                </b-row>
+              </div>
+            </b-card>
+
+<!-- TKeys -->
           </b-tab>
-          <b-tab table="whitelists" title="Whitelists" href='#/cfg/whitelists'>
+          <b-tab table="whitelists" href='#/cfg/whitelists'>
+            <template slot="title"><i class="fas fa-list-alt"></i>&nbsp;&nbsp;Whitelists</template>
+<!-- Whitelists -->
+
+<!--
             <io2-table table="whitelists" ref="io2tbl_whitelists" :fields="whitelists_fields" />
+-->
+
+					<div class="v-spacer"></div>							
+
+            <b-card body-class="p-2">
+              <template slot="header">
+                <b-row>
+                  <b-col cols="0" class="d-none d-lg-block"  lg="2"><span class="bold"><i class="fas fa-list-alt"></i>&nbsp;&nbsp;Whitelists</span></b-col>
+                  <b-col cols="12" lg="10" class="text-right">
+                    <b-form-group class="m-0">
+                      <b-button v-b-tooltip.hover title="Add" @click.stop="mgmtRec('add', 'whitelists', '', $event.target)" variant="outline-secondary" size="sm"><i class="fa fa-plus"></i></b-button>
+                      <b-button v-b-tooltip.hover title="Refresh" variant="outline-secondary" size="sm" @click.stop="refreshTbl('io2tbl_whitelists')"><i class="fa fa-sync"></i></b-button>
+                    </b-form-group>
+                  </b-col>
+                </b-row>
+              </template>
+              <div>
+                <b-row>
+                  <b-col md="12">             
+                    
+                    <b-table :items="get_tables" id="io2tbl_whitelists" ref="io2tbl_whitelists" :fields="whitelists_fields" api-url="/io2data.php/whitelists" no-border-collapse striped hover small :filter="servers_filter" responsive :sticky-header="`${logs_height}px`">
+                      <template v-slot:table-busy><div class="text-center text-second m-0 p-0"><b-spinner class="align-middle"></b-spinner>&nbsp;&nbsp;<strong>Loading...</strong></div></template>
+                      <template v-slot:cell(actions_e)="row">
+                        <b-button size="sm" @click.stop="mgmtRec('info', 'whitelists', row, $event.target)" v-b-tooltip.hover.bottom title="Information" variant="outline-secondary"><i class="fa fa-info-circle"></i></b-button>
+                        <b-button size="sm" @click.stop="mgmtRec('edit', 'whitelists', row, $event.target)" v-b-tooltip.hover.bottom title="Edit" variant="outline-secondary"><i class="fa fa-pencil-alt"></i></b-button>
+                        <b-button size="sm" @click.stop="mgmtRec('clone', 'whitelists', row, $event.target)" v-b-tooltip.hover.bottom title="Clone" variant="outline-secondary"><i class="fa fa-clone"></i></b-button>
+                        <b-button size="sm" @click.stop="requestDelete('whitelists',row)" class="" v-b-tooltip.hover.bottom title="Delete" variant="outline-secondary"><i class="fa fa-times-circle"></i></b-button>
+                      </template>
+
+                  
+                    </b-table>
+                  </b-col>
+                </b-row>
+              </div>
+            </b-card>
+
+<!-- Whitelists -->
           </b-tab>
-          <b-tab table="sources" title="Sources" href='#/cfg/sources'>
+          <b-tab table="sources" href='#/cfg/sources'>
+            <template slot="title"><i class="fas fa-list-ul"></i>&nbsp;&nbsp;Sources</template>
+<!-- Sources -->
+            
+<!--
             <io2-table table="sources" ref="io2tbl_sources" :fields="sources_fields" />
+-->
+
+					<div class="v-spacer"></div>							
+
+            <b-card body-class="p-2">
+              <template slot="header">
+                <b-row>
+                  <b-col cols="0" class="d-none d-lg-block"  lg="2"><span class="bold"><i class="fas fa-list-ul"></i>&nbsp;&nbsp;Sources</span></b-col>
+                  <b-col cols="12" lg="10" class="text-right">
+                    <b-form-group class="m-0">
+                      <b-button v-b-tooltip.hover title="Add" @click.stop="mgmtRec('add', 'sources', '', $event.target)" variant="outline-secondary" size="sm"><i class="fa fa-plus"></i></b-button>
+                      <b-button v-b-tooltip.hover title="Refresh" variant="outline-secondary" size="sm" @click.stop="refreshTbl('io2tbl_sources')"><i class="fa fa-sync"></i></b-button>
+                      <b-button size="sm" @click.stop="importRec('import', 'sources', '', $event.target)" class="" v-b-tooltip.hover title="Import" variant="outline-secondary"><i class="fa fa-download"></i></b-button>
+                    </b-form-group>
+                  </b-col>
+                </b-row>
+              </template>
+              <div>
+                <b-row>
+                  <b-col md="12">             
+                    
+                    <b-table :items="get_tables" id="io2tbl_sources" ref="io2tbl_sources" :fields="sources_fields" api-url="/io2data.php/sources" no-border-collapse striped hover small responsive :filter="servers_filter" responsive :sticky-header="`${logs_height}px`">
+                      <template v-slot:table-busy><div class="text-center text-second m-0 p-0"><b-spinner class="align-middle"></b-spinner>&nbsp;&nbsp;<strong>Loading...</strong></div></template>
+                      <template v-slot:cell(actions_e)="row">
+                        <b-button size="sm" @click.stop="mgmtRec('info', 'sources', row, $event.target)" v-b-tooltip.hover.bottom title="Information" variant="outline-secondary"><i class="fa fa-info-circle"></i></b-button>
+                        <b-button size="sm" @click.stop="mgmtRec('edit', 'sources', row, $event.target)" v-b-tooltip.hover.bottom title="Edit" variant="outline-secondary"><i class="fa fa-pencil-alt"></i></b-button>
+                        <b-button size="sm" @click.stop="mgmtRec('clone', 'sources', row, $event.target)" v-b-tooltip.hover.bottom title="Clone" variant="outline-secondary"><i class="fa fa-clone"></i></b-button>
+                        <b-button size="sm" @click.stop="requestDelete('sources',row)" class="" v-b-tooltip.hover.bottom title="Delete" variant="outline-secondary"><i class="fa fa-times-circle"></i></b-button>
+                      </template>
+
+                  
+                    </b-table>
+                  </b-col>
+                </b-row>
+              </div>
+            </b-card>
+
+<!-- Sources -->
           </b-tab>
-          <b-tab table="rpzs" title="RPZs" href='#/cfg/rpzs'>
+          <b-tab table="rpzs"  href='#/cfg/rpzs'>
+            <template slot="title"><i class="fas fa-rss"></i>&nbsp;&nbsp;RPZs</template>
+<!-- RPZs -->
+
+<!--
             <io2-table table="rpzs" ref="io2tbl_rpzs" :fields="rpzs_fields" />
+-->
+
+					<div class="v-spacer"></div>							
+
+            <b-card body-class="p-2">
+              <template slot="header">
+                <b-row>
+                  <b-col cols="0" class="d-none d-lg-block"  lg="2"><span class="bold"><i class="fas fa-rss"></i>&nbsp;&nbsp;Response policy zones</span></b-col>
+                  <b-col cols="12" lg="10" class="text-right">
+                    <b-form-group class="m-0">
+                      <b-button v-b-tooltip.hover title="Add" @click.stop="mgmtRec('add', 'rpzs', '', $event.target)" variant="outline-secondary" size="sm"><i class="fa fa-plus"></i></b-button>
+                      <b-button v-b-tooltip.hover title="Refresh" variant="outline-secondary" size="sm" @click.stop="refreshTbl('io2tbl_rpzs')"><i class="fa fa-sync"></i></b-button>
+                    </b-form-group>
+                  </b-col>
+                </b-row>
+              </template>
+              <div>
+                <b-row>
+                  <b-col md="12">             
+                    
+                    <b-table :items="get_tables" id="io2tbl_rpzs" ref="io2tbl_rpzs" :fields="rpzs_fields" api-url="/io2data.php/rpzs" no-border-collapse striped hover small :filter="servers_filter" responsive :sticky-header="`${logs_height}px`">
+                      <template v-slot:table-busy><div class="text-center text-second m-0 p-0"><b-spinner class="align-middle"></b-spinner>&nbsp;&nbsp;<strong>Loading...</strong></div></template>
+                      <template v-slot:cell(actions_e)="row">
+                        <b-button size="sm" @click.stop="mgmtRec('info', 'rpzs', row, $event.target)" v-b-tooltip.hover.bottom title="Information" variant="outline-secondary"><i class="fa fa-info-circle"></i></b-button>
+                        <b-button size="sm" @click.stop="mgmtRec('edit', 'rpzs', row, $event.target)" v-b-tooltip.hover.bottom title="Edit" variant="outline-secondary"><i class="fa fa-pencil-alt"></i></b-button>
+                        <b-button size="sm" @click.stop="mgmtRec('clone', 'rpzs', row, $event.target)" v-b-tooltip.hover.bottom title="Clone" variant="outline-secondary"><i class="fa fa-clone"></i></b-button>
+                        <b-button size="sm" @click.stop="requestDelete('rpzs',row)" class="" v-b-tooltip.hover.bottom title="Delete" variant="outline-secondary"><i class="fa fa-times-circle"></i></b-button>
+                      </template>
+                  
+                      <template v-slot:cell(mgmt)="row">
+                        <b-form-checkbox unchecked-value=0 value=1 disabled :checked="row.item.mgmt"/>
+                      </template>
+
+                      <template v-slot:cell(wildcard)="row">
+                        <b-form-checkbox unchecked-value=0 value=1 disabled :checked="row.item.wildcard"/>
+                      </template>                
+                     <template v-slot:cell(cache)="row" >
+                        <b-form-checkbox unchecked-value=0 value=1 disabled :checked="row.item.cache"/>
+                      </template>
+                      <template v-slot:cell(update)="row">
+                        {{ row.item.axfr_update }}/{{ row.item.ixfr_update }}
+                      </template>
+                
+                      <template v-slot:cell(disabled)="row">
+                       <b-form-checkbox unchecked-value=0 value=1 disabled :checked="row.item.disabled"/>
+                      </template>
+ 
+                      <template v-slot:cell(sources_list)="row">
+                        <div v-if="row.item.sources.length<4">
+                          <div v-for='item in row.item.sources'>
+                            {{ item.name }}
+                          </div>
+                        </div>
+                        <div :id="'rpz_src'+row.item.rowid" v-else>
+                          {{ row.item.sources.length }} sources
+                           <b-tooltip :target="'rpz_src'+row.item.rowid" placement="right">
+                              <div v-for='item in row.item.sources'>
+                                {{ item.name }}
+                              </div>
+                           </b-tooltip>
+                        </div>
+                      </template>                
+                      <template v-slot:cell(servers_list)="row">
+                        <div v-if="row.item.servers.length<4">
+                          <div v-for='item in row.item.servers'>
+                            {{ item.name }}
+                          </div>
+                        </div>
+                        <div :id="'rpz_src'+row.item.rowid" v-else>
+                          {{ row.item.servers.length }} servers
+                           <b-tooltip :target="'rpz_servers'+row.item.rowid" placement="right">
+                              <div v-for='item in row.item.servers'>
+                                {{ item.name }}
+                              </div>
+                           </b-tooltip>
+                        </div>
+                      </template>                
+ 
+                      
+                    </b-table>
+                  </b-col>
+                </b-row>
+              </div>
+            </b-card>
+<!-- RPZs -->
           </b-tab>
           <b-tab title="Utils" href='#/cfg/utils'>
+            <template slot="title"><i class="fas fa-tools"></i>&nbsp;&nbsp;Utils</template>
+<!-- Utils -->
            <?php
             require 'utils.php';
             ?>
+<!-- Utils -->
           </b-tab>
+
+
+
+					<b-tab>
+<!-- Users -->
+						<template slot="title"><i class="fas fa-user-secret"></i><span class="d-none d-lg-inline">&nbsp;&nbsp;Users</span>&nbsp;<span class="fa fa-beta"></span></template>
+						<!--Users page-->
+
+						<!--End Users page-->
+<!-- Users -->
+          </b-tab>
+
       </b-tabs>
     </b-container>
 
@@ -443,7 +782,7 @@
 -->
 
     <!-- Docker_Comm_Start -->
-    <script src="https://cdn.jsdelivr.net/npm/vue@2.5.22/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@latest/dist/vue.js"></script>
     <script src="//unpkg.com/babel-polyfill@latest/dist/polyfill.min.js"></script>
     <script src="//unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.js"></script>
     <script src="//unpkg.com/axios/dist/axios.min.js"></script>
