@@ -103,7 +103,7 @@
     <!-- Docker_Comm_End -->
 
 
-  <!-- ioc2rpz CSS -->
+  <!-- Docker_CSS -->
   <link type="text/css" rel="stylesheet" href="/css/io2.css?<?=$io2ver?>"/>
 </head>
 <body>
@@ -179,8 +179,8 @@
     <script src="//unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.js"></script>
     <script src="//unpkg.com/axios/dist/axios.min.js"></script>
     <!-- Docker_Comm_End -->
-    <!-- Docker_JS -->
 
+    <!-- Docker_JS -->
 
     <!-- JS -->
 
