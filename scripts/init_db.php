@@ -87,7 +87,9 @@ function initSQLiteDB($DBF){
        'insert into tkeys values(1,"tkey_1","md5","'.base64_encode(random_bytes(16)).'",0);';
   $db->exec($sql);
 
-  $sql='insert into servers values(1,"server_1","127.0.0.1","1.0.0.1","ns1.ioc2rpz.localdomain","support@ioc2rpz.localdomain",1,0,0,"ioc2rpz.conf",1,0);'.
+//user_id integer, name text, ip text, pub_ip text uniq, ns text, email text, mgmt integer, disabled integer, stype integer, URL text, cfg_updated integer, publish_upd integer, certfile text, keyfile text, cacertfile text, custom_config text  
+  
+  $sql='insert into servers values(1,"server_1","127.0.0.1","127.0.0.1","ns1.ioc2rpz.ioc2rpz","support@ioc2rpz.ioc2rpz",1,0,0,"ioc2rpz.conf",1,0,"","","","");'.
        'insert into servers_tsig values(1,1,1);'.
        'insert into mgmt_ips values(1,1,"127.0.0.1");';
   $db->exec($sql);
