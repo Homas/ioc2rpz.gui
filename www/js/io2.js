@@ -945,11 +945,11 @@ const io2gui_app = new Vue({
     },
     
     validateB64: function(vrbl){
-      return (this.$data[vrbl].length>16 && /^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=)?$/.test(this.$data[vrbl])) ? true : this.$data[vrbl].length == 0 ? null:false;
+      return (this.$data[vrbl].length>16 && /^(?:[A-Za-z0-9\+\/]{4})*(?:[A-Za-z0-9\+\/]{2}==|[A-Za-z0-9\+\/]{3}=)?$/.test(this.$data[vrbl])) ? true : this.$data[vrbl].length == 0 ? null:false;
     },
 
     formatB64: function(val,e){
-      let a = val.replace(/[^A-Za-z0-9/=]/g,"");
+      let a = val.replace(/[^A-Za-z0-9/=\+\/]/g,"");
       if (e) e.currentTarget.value = a; // a bug in Vue.JS?
       return a;
     },
