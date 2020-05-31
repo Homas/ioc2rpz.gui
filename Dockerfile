@@ -47,7 +47,7 @@ RUN sed -i -e "s/\(.*ServerTokens\).*/\1 Prod/"  /etc/apache2/httpd.conf && echo
 COPY www/* /opt/ioc2rpz.gui/www/
 COPY www/js/* /opt/ioc2rpz.gui/www/js/
 COPY www/css/* /opt/ioc2rpz.gui/www/css/
-COPY www/webfonts/* /opt/ioc2rpz.gui/www/webfonts/
+#COPY www/webfonts/* /opt/ioc2rpz.gui/www/webfonts/
 #COPY www/img/* /opt/ioc2rpz.gui/www/img/
 COPY scripts/* /opt/ioc2rpz.gui/scripts/
 

@@ -127,8 +127,17 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
     case "POST tkeys":
       $tkeys_groups=DB_selectArray($db,"select rowid from tkeys_groups where user_id=$USERID and rowid in (".implode(",",filterIntArr(json_decode($REQUEST['tTKeysGroups']))).")");
       $sql="insert into tkeys values($USERID,'".DB_escape($db,$REQUEST['tKeyName'])."','".DB_escape($db,$REQUEST['tKeyAlg'])."','".DB_escape($db,$REQUEST['tKey'])."',".DB_boolval($REQUEST['tKeyMGMT']).");";
-			foreach($tkeys_groups as $tkey_group){$sql.="insert into tkeys_tsig_groups values($srvid,$USERID,${tkey_group['rowid']});\n";};       
-      if (DB_execute($db,$sql)) $response='{"status":"ok"}'; else $response='{"status":"failed", "sql":"'.$sql.'"}'; //TODO remove SQL
+      if (DB_execute($db,$sql)) {
+          $tkeyid=DB_selectArray($db,"select max(rowid) as rowid from tkeys where user_id=$USERID and name='".DB_escape($db,$REQUEST['tKeyName'])."'")[0]['rowid'];
+          $sql='';
+    			foreach($tkeys_groups as $tkey_group){$sql.="insert into tkeys_tsig_groups values($tkeyid,$USERID,${tkey_group['rowid']});\n";};       // <!--- should be keyid
+          DB_execute($db,$sql);
+          $response='{"status":"ok"}';
+        } else $response='{"status":"failed", "sql":"'.$sql.'"}'; //TODO remove SQL
+
+      
+     
+      
 			//TODO add tsig_groups
       break;
     //modify TSIG
@@ -250,7 +259,7 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
           $sql.="insert into rpzs_tkeys values($rpzid,$USERID,${tkey['rowid']});\n";
         };
         foreach($tkeys_groups as $tkey_group){
-          $sql.="insert into rpzs_tkeys_groups values($srvid,$USERID,${tkey_group['rowid']});\n";
+          $sql.="insert into rpzs_tkeys_groups values($rpzid,$USERID,${tkey_group['rowid']});\n";
         };       
         foreach($servers as $tkey){
           $sql.="insert into rpzs_servers values($rpzid,$USERID,${tkey['rowid']});\n update servers set cfg_updated=1 where rowid=${tkey['rowid']};\n";
