@@ -138,9 +138,9 @@ The action menu allows you to view, edit, clone and remove RPZs.
 - it make RPZ useless for protection against DNS Tunneling, DNS Based Data Exfiltration/Infiltration and Water Torture/Phantom domain/Random subdomain attacks.
 
 #### Local records
-Local records allow you to send a custom response and for example redirect a user to a block page or a proxy. ioc2rpz supports following records: local_a, local_aaaa, local_cname, local_txt, redirect_ip
-where redirect_ip, redirect_domain are alternative names for local_a, local_aaaa and local_cname.
-You can provide multiple records, one record per line. *Only one local_cname/redirect_domain record is allowed* but you can have multiple A, AAAA, TXT records.
+Local records allow you to send a custom response and for example redirect a user to a block page or a proxy.
+ioc2rpz supports following records: `local_a`, `local_aaaa`, `local_cname`, `local_txt`, `redirect_ip` where `redirect_ip`, `redirect_domain` are alternative names for `local_a`, `local_aaaa` and `local_cname`.  
+You can provide multiple records, one record per line. **Only one local_cname/redirect_domain record is allowed** but you can have multiple A, AAAA, TXT records.  
 Lines which start with "#" or "//" are considered as comments.  
 Example:
 ```
