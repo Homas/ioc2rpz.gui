@@ -121,7 +121,7 @@ To configure RPZ you should provide:
 - select a distribution server. You may select several servers;
 - select TSIG keys which will be used to authenticate zone transfers;
 - select sources and whitelists. You must select minimum one source;
-- select the zone action. If you choose "Local records" please check the record format in ioc2rpz documentation.
+- select the zone action.
 - select IOCs type. It is used for optimization;
 - (optional) provide list of IP-addresses to notify when the RPZ updates;
 - check "Cache zone" if the RPZ should be cached. Otherwise the zone will be generate on the fly by a request;
@@ -136,6 +136,20 @@ The action menu allows you to view, edit, clone and remove RPZs.
 **It is not recommended to mix domain based and IP based sources in a single RPZ**. IP-based rules require DNS servers to resolve the queries and if any IP-based feeds precede domain based feeds:
 - it is not performance effective;
 - it make RPZ useless for protection against DNS Tunneling, DNS Based Data Exfiltration/Infiltration and Water Torture/Phantom domain/Random subdomain attacks.
+
+#### Local records
+Local records allow you to send a custom response and for example redirect a user to a block page or a proxy. ioc2rpz supports following records: local_a, local_aaaa, local_cname, local_txt, redirect_ip
+where redirect_ip, redirect_domain are alternative names for local_a, local_aaaa and local_cname.
+You can provide multiple records, one record per line. *Only one local_cname/redirect_domain record is allowed* but you can have multiple A, AAAA, TXT records.
+Lines which start with "#" or "//" are considered as comments.  
+Example:
+```
+#local records
+local_a=127.0.0.1
+local_aaaa=::1
+local_txt=Local TXT record
+local_cname=www.example.com
+```
 
 ### Publishing configuration
 A yellow "Publish configuration" button (in the top right corner next to login name) automatically displayed when a server configuration is changed, the "publish" button on the action menu is also highlighted in blue.

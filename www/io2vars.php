@@ -204,10 +204,31 @@ function erlAction($str){
       $lstr="";$cmm="";
       foreach(explode(PHP_EOL,json_decode($str)) as $item){
         $lr=explode("=",$item,2);
-        $lstr.="$cmm{\"${lr[0]}\",\"${lr[1]}\"}";
-        $cmm=",";
+        switch($lr[0]){
+          case "local_aaaa":
+            if(filter_var($lr[1],FILTER_VALIDATE_IP,FILTER_FLAG_IPV6)) $lstr.="$cmm{\"${lr[0]}\",\"${lr[1]}\"}";$cmm=",";
+            break;
+          case "local_a":
+            if(filter_var($lr[1],FILTER_VALIDATE_IP,FILTER_FLAG_IPV4)) $lstr.="$cmm{\"${lr[0]}\",\"${lr[1]}\"}";$cmm=",";
+            break;
+          case "redirect_ip":
+            if(filter_var($lr[1], FILTER_VALIDATE_IP)) $lstr.="$cmm{\"${lr[0]}\",\"${lr[1]}\"}";$cmm=",";
+            break;
+          case "local_cname":
+            if(filter_var($lr[1], FILTER_VALIDATE_DOMAIN)) $lstr.="$cmm{\"${lr[0]}\",\"${lr[1]}\"}";$cmm=",";
+            break;
+          case "redirect_domain":
+            if(filter_var($lr[1], FILTER_VALIDATE_DOMAIN)) $lstr.="$cmm{\"${lr[0]}\",\"${lr[1]}\"}";$cmm=",";
+            break;
+          case "local_txt":
+            $lstr.="$cmm{\"${lr[0]}\",\"${lr[1]}\"}";$cmm=",";
+            break;
+          default:
+            break;
+        };
       };
       $result=$lstr?"[$lstr]":'"nxdomain"';
+      break;
   };
   return $result;
 };

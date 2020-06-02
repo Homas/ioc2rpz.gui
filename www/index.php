@@ -43,11 +43,12 @@
  <!--   
           <b-nav-item href="#/dash/">Dashboard</b-nav-item>
           <b-nav-item href="#/cfg/">Configuration</b-nav-item>
-  -->  
-          <b-nav-item href="https://ioc2rpz.net" target="_blank">ioc2rpz Community</b-nav-item>
-          <b-nav-item href="http://ioc2rpz.com" target="_blank">ioc2rpz on GitHub</b-nav-item>
-          <b-nav-item href="https://github.com/Homas/ioc2rpz.gui" target="_blank">ioc2rpz.gui on GitHub</b-nav-item>
-          <b-nav-item href="https://github.com/Homas/RpiDNS" target="_blank">RpiDNS on GitHub</b-nav-item>
+  -->
+          <b-nav-text>Explore: </b-nav-text>
+          <b-nav-item href="https://ioc2rpz.net" target="_blank">Community</b-nav-item>
+          <b-nav-item href="http://ioc2rpz.com" target="_blank">ioc2rpz</b-nav-item>
+          <b-nav-item href="https://github.com/Homas/ioc2rpz.gui" target="_blank">ioc2rpz.gui</b-nav-item>
+          <b-nav-item href="https://github.com/Homas/RpiDNS" target="_blank">RpiDNS</b-nav-item>
         </b-navbar-nav>
 
         <!-- Right aligned nav items -->
@@ -631,8 +632,25 @@
                 </b-col>
               </b-row>
               <b-row v-show="ftRPZAction === 'local'">
+
+                <b-popover title="Local records" target="RPZActionCustom" triggers="hover">
+                  Supported records: local_a, local_aaaa, local_cname, local_txt, redirect_ip, redirect_domain.<br>
+                  One record per line.<br>
+                  <b>Only one local_cname record is allowed</b>.<br>
+                  Comments start with "#" or "//".<br>
+                  Example:
+                  <pre style="font-weight: 400">
+#local records
+local_a=127.0.0.1
+local_aaaa=::1
+local_txt=Local TXT record
+local_cname=www.example.com
+                  </pre>
+                  
+                </b-popover>  
+  
                 <b-col :sm="12" class="form_row text-left">
-                  <b-textarea v-model="ftRPZActionCustom" :state="validateCustomAction" :rows="3" ref="formRPZActionCustom" :readonly="infoWindow" placeholder="Enter local records" :no-resize=true  v-b-tooltip.hover title="Local records" />
+                  <b-textarea id="RPZActionCustom" v-model="ftRPZActionCustom" :state="validateCustomAction(ftRPZActionCustom)" :rows="3" ref="formRPZActionCustom" :readonly="infoWindow" placeholder="Enter local records" :no-resize=true  v-b-tooltip.hover title="Local records" />
                 </b-col>
               </b-row>
               <b-row>

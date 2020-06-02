@@ -649,11 +649,42 @@ const io2gui_app = new Vue({
   
   
   computed: {
-    validateCustomAction() {return this.infoWindow?null:true},
+
   },
   
   methods: {
-    
+ 
+    validateCustomAction:function(CustomActions) {
+     let good=CustomActions==''?null:true;
+     let gotcname=0; //only one CNAME rule is allowed
+     CustomActions.split(/\r\n|\n|\r/).forEach(function(action) {
+      rule=action.trim().split("=",2)
+      switch(rule[0]){
+        case "local_aaaa":
+          good=good && typeof rule[1] !== 'undefined' && rule[1] != "" && checkIPv6(rule[1]);
+          break;
+        case "local_a":
+          good=good && typeof rule[1] !== 'undefined' && rule[1] != "" && checkIPv4(rule[1]);
+          break;
+        case "redirect_ip":
+          good=good && typeof rule[1] !== 'undefined' && rule[1] != "" && checkIP(rule[1]);
+          break;
+        case "local_cname":
+        case "redirect_domain":
+          good=good && typeof rule[1] !== 'undefined' && rule[1] != "" && checkHostName(rule[1]);
+          gotcname++;
+          break;
+        case "local_txt":
+          good = good && typeof rule[1] !== 'undefined' && rule[1] != "" && true;
+          break;        
+        default:
+          good = good && (action.startsWith("#") || action.startsWith("//") || action=="")
+          //check comments which start with # or //
+      };
+     });
+     return good && (gotcname <= 1);
+    },
+      
     get_tables (obj) {
       let promise = axios.get(obj.apiUrl)
       return promise.then((data) => {
@@ -1151,7 +1182,7 @@ const io2gui_app = new Vue({
     
     //RPZ
     tblMgmtRPZRecord: function (ev,table) {
-      if (this.validateHostname('ftRPZName') && (this.validateIPList('ftRPZNotify') || this.validateIPList('ftRPZNotify') == null) && ((this.validateCustomAction && this.ftRPZAction === 'local')||this.ftRPZAction != 'local') && this.validateInt('ftRPZSOA_Refresh') && this.validateInt('ftRPZSOA_UpdRetry') && this.validateInt('ftRPZSOA_Exp') && this.validateInt('ftRPZSOA_NXTTL') && this.validateInt('ftRPZAXFR') && this.validateInt('ftRPZIXFR')){
+      if (this.validateHostname('ftRPZName') && (this.validateIPList('ftRPZNotify') || this.validateIPList('ftRPZNotify') == null) && ((this.validateCustomAction(this.ftRPZActionCustom) && this.ftRPZAction === 'local')||this.ftRPZAction != 'local') && this.validateInt('ftRPZSOA_Refresh') && this.validateInt('ftRPZSOA_UpdRetry') && this.validateInt('ftRPZSOA_Exp') && this.validateInt('ftRPZSOA_NXTTL') && this.validateInt('ftRPZAXFR') && this.validateInt('ftRPZIXFR')){
         var obj=this;
         if  (this.ftRPZName != this.editRow.name || this.ftRPZSOA_Refresh!=this.editRow.soa_refresh || this.ftRPZSOA_UpdRetry!=this.editRow.soa_update_retry || this.ftRPZSOA_Exp!=this.editRow.soa_expiration || this.ftRPZSOA_NXTTL!=this.editRow.soa_nx_ttl || this.ftRPZAXFR!=this.editRow.axfr_update || this.ftRPZIXFR!=this.editRow.ixfr_update || this.ftRPZCache!=this.editRow.cache || this.ftRPZWildcard!=this.editRow.wildcard || this.ftRPZAction!=this.editRow.action || this.ftRPZIOCType!=this.editRow.ioc_type || this.editRow.notify_str!=this.ftRPZNotify || this.editRow.servers_arr!=this.ftRPZSrvs || this.editRow.tkeys_arr!=this.ftRPZTKeys || this.editRow.sources_arr!=this.ftRPZSrc || this.editRow.whitelists_arr!=this.ftRPZWL ||this.ftRPZActionCustom!=this.editRow.actioncustom || this.ftRPZDisabled!=this.editRow.disabled) this.publishUpdates=true;
         let data={tRPZId: this.ftRPZId, tRPZName: this.ftRPZName, tRPZSOA_Refresh: this.ftRPZSOA_Refresh, tRPZSOA_UpdRetry: this.ftRPZSOA_UpdRetry,
@@ -1171,7 +1202,7 @@ const io2gui_app = new Vue({
         ev.preventDefault();
         if (!this.validateHostname('ftRPZName')) this.$refs.formRPZName.$el.focus();
       	  else if (!((this.validateIPList('ftRPZNotify') || this.validateIPList('ftRPZNotify') == null))) this.$refs.formRPZNotify.$el.focus() ;
-      	  else if (!this.validateCustomAction && this.ftRPZAction === 'local') this.$refs.formRPZActionCustom.$el.focus() ;
+      	  else if (!this.validateCustomAction(this.ftRPZActionCustom) && this.ftRPZAction === 'local') this.$refs.formRPZActionCustom.$el.focus() ;
       	  else if (!this.validateInt('ftRPZSOA_Refresh')) this.$refs.formRPZSOA_Refresh.$el.focus() ;
       	  else if (!this.validateInt('ftRPZSOA_UpdRetry')) this.$refs.formRPZSOA_UpdRetry.$el.focus() ;
       	  else if (!this.validateInt('ftRPZSOA_Exp')) this.$refs.formRPZSOA_Exp.$el.focus() ;
