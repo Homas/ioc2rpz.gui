@@ -1,5 +1,9 @@
 #ioc2rpz.gui change log
 
+## 1.0.0.0 2020-07-07
+- UX/UI was deeply updated
+- RpiDNS
+
 ## 0.9.4.0 2019-06-15
 - Key groups support for servers and RPZs. Groups should be directly added to the DB. 
 

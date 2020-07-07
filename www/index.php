@@ -554,7 +554,7 @@
         <div>
           <b-row>
             <b-col :sm="4" class="form_row"><b-input v-model.trim="ftSrvName" :state="validateName('ftSrvName')" :formatter="formatName" ref="formSrvName" :readonly="infoWindow" placeholder="Enter server name"  v-b-tooltip.hover title="Name" /></b-col>
-            <b-col :sm="4" class="form_row"><b-input v-model.trim="ftSrvPubIP" :state="validateIP('ftSrvPubIP')" :formatter="formatIP" ref="formSrvPubIP" :readonly="infoWindow" placeholder="Enter Server's Public IP or FQDN"  v-b-tooltip.hover title="Server's Public IP/FQDN" /></b-col>
+            <b-col :sm="4" class="form_row"><b-input v-model.trim="ftSrvPubIP" :state="validateHostnameIP('ftSrvPubIP')" :formatter="formatHostnameIP" ref="formSrvPubIP" :readonly="infoWindow" placeholder="Enter Server's Public IP or FQDN"  v-b-tooltip.hover title="Server's Public IP/FQDN" /></b-col>
             <b-col :sm="4" class="form_row"><b-input v-model.trim="ftSrvIP" :state="validateIP('ftSrvIP')" :formatter="formatIP" ref="formSrvIP" :readonly="infoWindow" placeholder="Enter Server's MGMT IP or FQDN"  v-b-tooltip.hover title="Server's MGMT IP/FQDN" /></b-col>
           </b-row>
           <b-row>
@@ -568,7 +568,7 @@
               </b-form-group>
             </b-col>
             <b-col :sm="6" class="form_row text-left">
-              <b-textarea v-model="ftSrvMGMTIP" :state="validateIPList('ftSrvMGMTIP')" :formatter="formatIP" style="height: 5em;" :rows="3" ref="formSrcNotify" :readonly="infoWindow" placeholder="Enter management stations IPs" :no-resize=true  v-b-tooltip.hover title="ACL/Management stations IPs" />
+              <b-textarea v-model="ftSrvMGMTIP" :state="validateIPList('ftSrvMGMTIP')" :formatter="formatIPList" style="height: 5em;" :rows="3" ref="formSrcNotify" :readonly="infoWindow" placeholder="Enter management stations IPs" :no-resize=true  v-b-tooltip.hover title="ACL/Management stations IPs" />
             </b-col>
           </b-row>
 

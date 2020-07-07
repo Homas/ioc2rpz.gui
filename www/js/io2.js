@@ -892,6 +892,22 @@ const io2gui_app = new Vue({
       if (e) e.currentTarget.value = a; // a bug in Vue.JS?
       return a;
     },
+
+
+    formatHostnameIP: function(val,e){
+      let a = val.replace(/[^a-zA-Z0-9\.\-\:\/]/g,"");
+      if (e) e.currentTarget.value = a; // a bug in Vue.JS?
+      return a;
+    },
+  
+    validateHostnameIP: function(vrbl){
+			return this.$data[vrbl].length == 0 ? null:checkHostIP(this.$data[vrbl]);
+		},
+
+    validateHostnameIPNet: function(vrbl){
+			return this.$data[vrbl].length == 0 ? null:checkHostIPNet(this.$data[vrbl]);
+		},
+      
     
     validateHostname: function(vrbl){
       return (this.$data[vrbl].length > 5 && checkHostName(this.$data[vrbl])) ? true : this.$data[vrbl].length == 0 ? null:false;

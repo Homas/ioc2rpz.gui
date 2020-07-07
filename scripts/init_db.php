@@ -93,9 +93,14 @@ function initSQLiteDB($DBF){
        'insert into tkeys values(1,"tkey_1","md5","'.base64_encode(random_bytes(16)).'",0);';
   $db->exec($sql);
 
-  $sql='insert into servers values(1,"server_1","127.0.0.1","127.0.0.1","ns1.ioc2rpz.local","support@ioc2rpz.local",1,0,0,"ioc2rpz.conf",1,0,"","","","");'.
+  $gw_ip=exec("ip route | grep default | awk '{print $3}'"); $gw_ip=$gw_ip?$gw_ip:"127.0.0.1";
+  
+  $sql='insert into servers values(1,"server_1","'.$gw_ip.'","127.0.0.1","ns1.ioc2rpz.local","support@ioc2rpz.local",1,0,0,"ioc2rpz.conf",1,1,"./cfg/ioc2_server.pem","./cfg/ioc2_server.key","","");'.
        'insert into servers_tsig values(1,1,1);'.
        'insert into mgmt_ips values(1,1,"127.0.0.1");';
+  $localIP = getHostByName(getHostName());
+  if ($localIP) $sql.='insert into mgmt_ips values(1,1,"'.$localIP.'");';
+  
   $db->exec($sql);
 
   $sql='insert into whitelists values(1,"whitelist_1","file:/opt/ioc2rpz/cfg/whitelist1.txt","none");';

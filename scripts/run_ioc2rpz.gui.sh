@@ -23,6 +23,24 @@ if [ ! -f /etc/apache2/ssl/ioc2_server.key ]; then
     cp /etc/ssl/apache2/server.key /etc/apache2/ssl/ioc2_server.key
 fi
 
+if [ ! -f /opt/ioc2rpz.gui/export-cfg/ioc2_server.pem ] && [ ! -f /opt/ioc2rpz.gui/export-cfg/ioc2_server.key ]; then
+    cp /etc/ssl/apache2/server.pem /opt/ioc2rpz.gui/export-cfg/ioc2_server.pem
+    cp /etc/ssl/apache2/server.key /opt/ioc2rpz.gui/export-cfg/ioc2_server.key
+fi
+
+if [ ! -f /opt/ioc2rpz.gui/export-cfg/ioc2_server.pem ] && [ ! -f /opt/ioc2rpz.gui/export-cfg/ioc2_server.key ]; then
+    cp /etc/ssl/apache2/server.pem /opt/ioc2rpz.gui/export-cfg/ioc2_server.pem
+    cp /etc/ssl/apache2/server.key /opt/ioc2rpz.gui/export-cfg/ioc2_server.key
+fi
+
+if [ ! -f /opt/ioc2rpz.gui/export-cfg/whitelist1.txt ] ; then
+    cat >> /opt/ioc2rpz.gui/export-cfg/whitelist1.txt  << EOF
+ioc2rpz.net
+ioc2rpz.com
+EOF
+fi
+
+
 ####Apache2 and cron configuration
 if [ ! -f /etc/apache2/ioc2rpz.gui.config-done.txt ]; then
     sed -i -e "s/^\(session.use_strict_mode = \).*/\1 1/" -e "s/^\(session.cookie_httponly =\)/\1 1/" -e "s/^;*\(session.cookie_secure =\)/\1 1/" /etc/php7/php.ini
