@@ -9,9 +9,7 @@
 //Logout
   if (isset($REQUEST['req']) and $REQUEST['req']=="logout" and $REQUEST['method']=='POST') { 
     session_start();
-//    secHeaders();
     session_destroy();
-//    header("Location: $proto://".$_SERVER['HTTP_HOST']."/");
     exit;
   };
 //END Logout
@@ -53,7 +51,6 @@
     }elseif ($REQUEST['pwd']!=$REQUEST['pwdConf']){
       echo '{"Status":"pwdNotMatch","description":"Passwords do not match!"}';
     }else{
-      //(name text, password text, salt text, perm integer, loginattempts integer, lastlogin integer, lastfailedlogin integer);
       $salt = mt_rand(1000, 9999);
       $sql="insert into users(name, password, salt, perm, loginattempts, lastlogin, lastfailedlogin) values('".DB_escape($db,$REQUEST['login'])."','".md5(md5(DB_escape($db,$REQUEST['pwd'])).$salt)."','$salt',1,0,0,0)";
       if (DB_execute($db,$sql)) $response='{"status":"createSuccess","description":"Administrator created!"}';
@@ -143,17 +140,19 @@
       <b-card border-variant="light" class="text-center pu-10 pd-5" v-cloak>
         <h4 slot="header" class="mb-0">ioc2rpz.gui</h4>
         <div>
-          <b-row>
-            <b-col :sm="12" class="form_row">
-              <b-input v-model.trim="ftUNameProf" placeholder="Username"  v-b-tooltip.hover title="Username" />
-            </b-col>
-            <b-col :sm="12" class="form_row">
-              <b-input type="password" v-model.trim="ftUPwd" placeholder="Password"  v-b-tooltip.hover title="Password" />
-            </b-col>
-            <b-col :sm="12" class="form_row">
-              <b-button @click.stop="signIn($event)" variant="outline-secondary">Sign in</b-button>
-            </b-col>
-          </b-row>
+					<b-form @submit="signIn($event)">
+            <b-row>
+              <b-col :sm="12" class="form_row">
+                <b-input v-model.trim="ftUNameProf" placeholder="Username"  v-b-tooltip.hover title="Username" />
+              </b-col>
+              <b-col :sm="12" class="form_row">
+                <b-input type="password" v-model.trim="ftUPwd" placeholder="Password"  v-b-tooltip.hover title="Password" />
+              </b-col>
+              <b-col :sm="12" class="form_row">
+                <b-button  type="submit" @click.stop="signIn($event)" variant="outline-secondary">Sign in</b-button>
+              </b-col>
+            </b-row>
+          </b-form>
         </div>
       </b-card>
     </div>

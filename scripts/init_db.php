@@ -1,6 +1,6 @@
 <?php
-#(c) Vadim Pavlov 2018
-#ioc2rpz GUI DB init
+#(c) Vadim Pavlov 2018-2020
+#ioc2rpz GUI DB init script
 
 #chmod 664 /srv/www/io2cfg/io2db.sqlite
 #sudo chown homas:_apache /srv/www/io2cfg/io2db.sqlite
@@ -13,6 +13,9 @@ function initSQLiteDB($DBF){
   ###
   ###create tables
   ###
+  #2020-06-08
+  #create table if not exists rpidns (user_id integer, name text, create_time DATETIME DEFAULT CURRENT_TIMESTAMP, rpidns_uuid text, commentary text, configuration json, foreign key(user_id) references users(rowid));
+  #
 	#2019-06-15
 	/*
 	ALTER TABLE servers ADD column custom_config text;
@@ -76,10 +79,13 @@ function initSQLiteDB($DBF){
        "create table if not exists rpzs_notify (rpz_id integer, user_id integer, notify text, foreign key(rpz_id) references rpzs(rowid), foreign key(user_id) references users(rowid));"; // index on notify
   $db->exec($sql);
   
-  ###insert sample data assuming that all tables were created empty
-  //$sql='insert into users values("io2admin","","","",0,0,0);';
-  //$db->exec($sql);
+  #RpiDNS
+  $sql="create table if not exists rpidns (user_id integer, name text, create_time DATETIME DEFAULT CURRENT_TIMESTAMP, rpidns_uuid text, commentary text, configuration json, foreign key(user_id) references users(rowid));";
+  $db->exec($sql);
 
+  
+  
+  # Sample data
   $sql='insert into tkeys_groups values(1,"mgmt"),(1,"public");';
   $db->exec($sql);
   
@@ -87,14 +93,11 @@ function initSQLiteDB($DBF){
        'insert into tkeys values(1,"tkey_1","md5","'.base64_encode(random_bytes(16)).'",0);';
   $db->exec($sql);
 
-//user_id integer, name text, ip text, pub_ip text uniq, ns text, email text, mgmt integer, disabled integer, stype integer, URL text, cfg_updated integer, publish_upd integer, certfile text, keyfile text, cacertfile text, custom_config text  
-  
-  $sql='insert into servers values(1,"server_1","127.0.0.1","127.0.0.1","ns1.ioc2rpz.ioc2rpz","support@ioc2rpz.ioc2rpz",1,0,0,"ioc2rpz.conf",1,0,"","","","");'.
+  $sql='insert into servers values(1,"server_1","127.0.0.1","127.0.0.1","ns1.ioc2rpz.local","support@ioc2rpz.local",1,0,0,"ioc2rpz.conf",1,0,"","","","");'.
        'insert into servers_tsig values(1,1,1);'.
        'insert into mgmt_ips values(1,1,"127.0.0.1");';
   $db->exec($sql);
 
-#  $sql='insert into whitelists values(1,"whitelist_1","file:'.ioc2rpzConf.'/whitelist1.txt","none");';
   $sql='insert into whitelists values(1,"whitelist_1","file:/opt/ioc2rpz/cfg/whitelist1.txt","none");';
   $db->exec($sql);
 
@@ -102,8 +105,6 @@ function initSQLiteDB($DBF){
        'insert into sources values(1,"notracking_hosts","https://raw.githubusercontent.com/notracking/hosts-blocklists/master/hostnames.txt","[:AXFR:]","^0\.0\.0\.0 ([A-Za-z0-9\._\-]+[A-Za-z])$");'.
        'insert into sources values(1,"notracking_domains","https://raw.githubusercontent.com/notracking/hosts-blocklists/master/domains.txt","[:AXFR:]","^address=\/([A-Za-z0-9\._\-]+[A-Za-z])\/0\.0\.0\.0$");';
   $db->exec($sql);
-
-//'insert into rpzs values(1,"dns-bh.ioc2rpz",86400,3600,2592000,7200,1,1,"nxdomain","mixed",604800,86400,0);'.  
   
   $sql='insert into rpzs values(1,"dns-bh.ioc2rpz",86400,3600,2592000,7200,1,1,"nxdomain","mixed",604800,86400,0);'.
        'insert into rpzs values(1,"notracking.ioc2rpz",86400,3600,2592000,7200,1,1,"nxdomain","mixed",604800,86400,0);'.

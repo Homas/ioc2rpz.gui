@@ -24,6 +24,9 @@ html,body {height: 100%;}
 .corners {
    padding: 0;
 }
+
+.width050{width: 055px;}
+.width100{width: 105px;}
 .width150{width: 155px;}
 .width200{width: 200px;}
 .width250{width: 250px;}
@@ -92,9 +95,13 @@ html,body {height: 100%;}
 }
 
 [v-cloak] {
-  display: none;
+  display: none !important;
 }
 
 .hidden {
   display: none;
+}
+
+.fa-times:hover{
+   color:red !important;
 }
