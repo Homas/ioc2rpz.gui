@@ -100,6 +100,7 @@ function initSQLiteDB($DBF){
        'insert into mgmt_ips values(1,1,"127.0.0.1");';
   $localIP = getHostByName(getHostName());
   if ($localIP) $sql.='insert into mgmt_ips values(1,1,"'.$localIP.'");';
+  if ($gw_ip!="127.0.0.1") $sql.='insert into mgmt_ips values(1,1,"'.$gw_ip.'");';
   
   $db->exec($sql);
 
