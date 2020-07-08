@@ -76,7 +76,7 @@ fi
 
 date '+%Y-%m-%d %H:%M';echo -e "#########\nStarting RpiDNS installation\n#########\n"
 
-echo "#########\nUpdate timezone to UTC\n#########\n"
+echo -e "#########\nUpdate timezone to UTC\n#########\n"
 timedatectl set-timezone UTC
 timedatectl set-ntp true
 
@@ -93,7 +93,7 @@ WDIR=`pwd`
 date '+%Y-%m-%d %H:%M';echo -e "#########\nUpgrading packages\n#########\n"
 
 sed -i "s/#deb/deb/" /etc/apt/sources.list
-apt-get -q -y update & apt-get -q -y upgrade & apt-get -q -y install ntpdate
+apt-get -q -y update && apt-get -q -y upgrade && apt-get -q -y install ntpdate
 
 
 if [ "${DNSSERV,,}" == "bind" ]; then
