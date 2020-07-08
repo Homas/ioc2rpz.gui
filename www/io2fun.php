@@ -523,7 +523,7 @@ echo "<html><body><h1 style=\"text-align: center;\">The request was blocked on D
 
 ######
 cd ~
-curl https://github.com/Homas/ioc2rpz.gui/raw/dev/pkg/openresty-1.15.8.1-1_armhf.deb -o openresty-1.15.8.1-1_armhf.deb
+curl https://raw.githubusercontent.com/Homas/ioc2rpz.gui/dev/pkg/openresty-1.15.8.1-1_armhf.deb -o openresty-1.15.8.1-1_armhf.deb
 dpkg -i openresty-1.15.8.1-1_armhf.deb
 apt-mark hold openresty
 
