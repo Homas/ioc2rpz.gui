@@ -47,7 +47,7 @@ new Vue({
       var obj=this;
       axios.post('/io2auth.php/signin',data).then(function (response) {
         if (response.data.status == "authSuccess"){
-          if (~window.location.href.indexOf('/io2auth.php')) window.location.href='/'; else window.location.reload(false);
+          if (~window.location.href.indexOf('/io2auth.php')) window.location.href='/'; else window.location.reload(true);
         }else{
           obj.showInfo(response.data.description,3);
         };

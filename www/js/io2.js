@@ -302,7 +302,7 @@ const io2gui_app = new Vue({
       let obj=this;
       axios.get('/io2data.php/rpidns').then(function (response) {
 				if (/DOCTYPE html/.test(response.data)){
-					window.location.reload(false);
+					window.location.reload(true);
 				}else if (response.data.status == "success"){
           obj.$root.RpiDNSList=[];
           response.data.data.forEach(function(El){
@@ -504,7 +504,7 @@ const io2gui_app = new Vue({
       let promise = axios.get(obj.apiUrl)
       return promise.then((data) => {
 				if (/DOCTYPE html/.test(data.data)){
-					window.location.reload(false);
+					window.location.reload(true);
 				}else{
           items = data.data
           this.totalRows=items.length;
@@ -668,7 +668,7 @@ const io2gui_app = new Vue({
         case "export servers":
           //alert("export "+row.item.name+" configuration");
           axios.get('/io2data.php/servercfg?rowid='+row.item.rowid,{responseType: 'blob'}).then(function (response) {
-              if (/DOCTYPE html/.test(reponse.data)){window.location.reload(false);}else{
+              if (/DOCTYPE html/.test(reponse.data)){window.location.reload(true);}else{
                 let blob = new Blob([response.data], {type:'text/plain'});
                 let link = document.createElement('a');
                 link.href = window.URL.createObjectURL(blob);               
@@ -941,7 +941,7 @@ const io2gui_app = new Vue({
       let promise = axios.get('/io2data.php/'+table);
       var items=promise.then((data) => {
 				if (/DOCTYPE html/.test(data.data)){
-					window.location.reload(false);
+					window.location.reload(true);
 				}else{
          this.$root.$data[variable]=data.data;
         };
@@ -976,10 +976,10 @@ const io2gui_app = new Vue({
         let data={tKeyId: this.ftKeyId, tKeyName: this.ftKeyName, tKey: this.ftKey, tKeyAlg: this.ftKeyAlg, tKeyMGMT: this.ftKeyMGMT, tTKeysGroups: JSON.stringify(this.ftTKeysGroups)};
         if (this.ftKeyId==-1){
           //Add
-          axios.post('/io2data.php/'+table,data).then((data) => {if (/DOCTYPE html/.test(data.data)){window.location.reload(false);} else obj.mgmtTableOk(data,obj,table);}).catch(function (error){obj.mgmtTableError(error,obj,table)})
+          axios.post('/io2data.php/'+table,data).then((data) => {if (/DOCTYPE html/.test(data.data)){window.location.reload(true);} else obj.mgmtTableOk(data,obj,table);}).catch(function (error){obj.mgmtTableError(error,obj,table)})
         }else{
           //Modify
-          axios.put('/io2data.php/'+table,data).then((data) => {if (/DOCTYPE html/.test(data.data)){window.location.reload(false);} else obj.mgmtTableOk(data,obj,table);}).catch(function (error){obj.mgmtTableError(error,obj,table)})
+          axios.put('/io2data.php/'+table,data).then((data) => {if (/DOCTYPE html/.test(data.data)){window.location.reload(true);} else obj.mgmtTableOk(data,obj,table);}).catch(function (error){obj.mgmtTableError(error,obj,table)})
         };
       } else if (ev != null) {
         ev.preventDefault();
@@ -996,10 +996,10 @@ const io2gui_app = new Vue({
         let data={tSrcId: this.ftSrcId, tSrcName: this.ftSrcName, tSrcURL: this.ftSrcURL, tSrcREGEX: this.ftSrcREGEX, tSrcURLIXFR: this.ftSrcURLIXFR};
         if (this.ftSrcId==-1){
           //Add
-          axios.post('/io2data.php/'+table,data).then((data) => {if (/DOCTYPE html/.test(data.data)){window.location.reload(false);} else obj.mgmtTableOk(data,obj,table);}).catch(function (error){obj.mgmtTableError(error,obj,table)})
+          axios.post('/io2data.php/'+table,data).then((data) => {if (/DOCTYPE html/.test(data.data)){window.location.reload(true);} else obj.mgmtTableOk(data,obj,table);}).catch(function (error){obj.mgmtTableError(error,obj,table)})
         }else{
           //Modify
-          axios.put('/io2data.php/'+table,data).then((data) => {if (/DOCTYPE html/.test(data.data)){window.location.reload(false);} else obj.mgmtTableOk(data,obj,table);}).catch(function (error){obj.mgmtTableError(error,obj,table)})
+          axios.put('/io2data.php/'+table,data).then((data) => {if (/DOCTYPE html/.test(data.data)){window.location.reload(true);} else obj.mgmtTableOk(data,obj,table);}).catch(function (error){obj.mgmtTableError(error,obj,table)})
         };
       } else if (ev != null) {
         ev.preventDefault();
@@ -1017,10 +1017,10 @@ const io2gui_app = new Vue({
         let data={rowid: this.ftUId, name: this.ftUNameProf, pwd: this.ftUPwd, perm: this.ftUPerm};
         if (this.ftUId==0){
           //Add
-          axios.post('/io2data.php/users',data).then((data) => {if (/DOCTYPE html/.test(data.data)){window.location.reload(false);} else obj.mgmtTableOk(data,obj,'users');}).catch(function (error){obj.mgmtTableError(error,obj,'users')})
+          axios.post('/io2data.php/users',data).then((data) => {if (/DOCTYPE html/.test(data.data)){window.location.reload(true);} else obj.mgmtTableOk(data,obj,'users');}).catch(function (error){obj.mgmtTableError(error,obj,'users')})
         }else{
           //Modify
-          axios.put('/io2data.php/users',data).then((data) => {if (/DOCTYPE html/.test(data.data)){window.location.reload(false);} else obj.mgmtTableOk(data,obj,'users');}).catch(function (error){obj.mgmtTableError(error,obj,'users')})
+          axios.put('/io2data.php/users',data).then((data) => {if (/DOCTYPE html/.test(data.data)){window.location.reload(true);} else obj.mgmtTableOk(data,obj,'users');}).catch(function (error){obj.mgmtTableError(error,obj,'users')})
         };
       } else if (ev != null) {
         ev.preventDefault();
@@ -1038,10 +1038,10 @@ const io2gui_app = new Vue({
                   tSrvDisabled: this.ftSrvDisabled, tSrvSType: this.ftSrvSType, tSrvURL: this.ftSrvURL, tCertFile: this.ftCertFile, tKeyFile: this.ftKeyFile, tCACertFile: this.ftCACertFile, tCustomConfig: this.ftCustomConfig};
         if (this.ftSrvId==-1){
           //Add
-          axios.post('/io2data.php/'+table,data).then((data) => {if (/DOCTYPE html/.test(data.data)){window.location.reload(false);} else obj.mgmtTableOk(data,obj,table);}).catch(function (error){obj.mgmtTableError(error,obj,table)})
+          axios.post('/io2data.php/'+table,data).then((data) => {if (/DOCTYPE html/.test(data.data)){window.location.reload(true);} else obj.mgmtTableOk(data,obj,table);}).catch(function (error){obj.mgmtTableError(error,obj,table)})
         }else{
           //Modify
-          axios.put('/io2data.php/'+table,data).then((data) => {if (/DOCTYPE html/.test(data.data)){window.location.reload(false);} else obj.mgmtTableOk(data,obj,table);}).catch(function (error){obj.mgmtTableError(error,obj,table)})
+          axios.put('/io2data.php/'+table,data).then((data) => {if (/DOCTYPE html/.test(data.data)){window.location.reload(true);} else obj.mgmtTableOk(data,obj,table);}).catch(function (error){obj.mgmtTableError(error,obj,table)})
         };
       } else if (ev != null) {
         ev.preventDefault();
@@ -1072,10 +1072,10 @@ const io2gui_app = new Vue({
                   tRPZAction: this.ftRPZAction, tRPZActionCustom: JSON.stringify(this.ftRPZActionCustom)}; //this.ftRPZActionCustom.split(/,|\s/g).filter(String)
         if (this.ftRPZId==-1){
           //Add RPZ
-          axios.post('/io2data.php/'+table,data).then((data) => {if (/DOCTYPE html/.test(data.data)){window.location.reload(false);} else obj.mgmtTableOk(data,obj,table);}).catch(function (error){obj.mgmtTableError(error,obj,table)})
+          axios.post('/io2data.php/'+table,data).then((data) => {if (/DOCTYPE html/.test(data.data)){window.location.reload(true);} else obj.mgmtTableOk(data,obj,table);}).catch(function (error){obj.mgmtTableError(error,obj,table)})
         }else{
           //Modify RPZ
-          axios.put('/io2data.php/'+table,data).then((data) => {if (/DOCTYPE html/.test(data.data)){window.location.reload(false);} else obj.mgmtTableOk(data,obj,table);}).catch(function (error){obj.mgmtTableError(error,obj,table)})
+          axios.put('/io2data.php/'+table,data).then((data) => {if (/DOCTYPE html/.test(data.data)){window.location.reload(true);} else obj.mgmtTableOk(data,obj,table);}).catch(function (error){obj.mgmtTableError(error,obj,table)})
         };
       } else if (ev != null) {
         ev.preventDefault();
@@ -1095,7 +1095,7 @@ const io2gui_app = new Vue({
       var el=this;
       if (table != 'users') toggleUpdates(0,this,true);
       axios.delete('/io2data.php/'+table+'?rowid='+JSON.stringify(rowid)).then(function (response) {
-        if (/DOCTYPE html/.test(response.data)) {window.location.reload(false);}
+        if (/DOCTYPE html/.test(response.data)) {window.location.reload(true);}
         else if (response.data.status == "ok"){
           //el.$root.$refs['io2tbl_'+table].refreshTblKeepPage(table);
           el.$root.$emit('bv::refresh::table', 'io2tbl_'+table);
@@ -1119,7 +1119,7 @@ const io2gui_app = new Vue({
           //setTimeout(function(){}, 3 * 1000);
         }else{
           //TODO better error handeling
-          if (/DOCTYPE html/.test(reponse.data)){window.location.reload(false);} else alert('Publishing error');
+          if (/DOCTYPE html/.test(reponse.data)){window.location.reload(true);} else alert('Publishing error');
         };
       }).catch(function (error){
         alert('Publishing error'); //TODO message
@@ -1192,7 +1192,7 @@ const io2gui_app = new Vue({
     
     signOut: function(){
       axios.post('/io2auth.php/logout');
-      window.location.reload(false);
+      window.location.reload(true);
     },
  
  
