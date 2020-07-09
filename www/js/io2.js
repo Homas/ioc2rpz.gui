@@ -95,6 +95,10 @@ const io2gui_app = new Vue({
       tkeys_Alg: ["md5","sha256","sha512"],
       ftTKeysGroups: [],
       ftTKeysAllGroups: [],
+      
+      //tkey groups
+      ftKeyGId: -1,
+      ftKeyGName: '',
 
       //whitelists n sources
       ftSrcId: 0,
@@ -550,6 +554,16 @@ const io2gui_app = new Vue({
           this.$root.ftUpwdConf="";
           this.$root.$emit('bv::show::modal', 'mUAdd');
         break;
+        case "add tkeys_groups":
+          this.$root.ftKeyGId=-1;
+          this.$root.ftKeyGName="";
+          this.$root.$emit('bv::show::modal', 'mTGroups');
+        break;
+        case "edit tkeys_groups":
+          this.$root.ftKeyGId=row.item.rowid;
+          this.$root.ftKeyGName=row.item.group_name;
+          this.$root.$emit('bv::show::modal', 'mTGroups');
+        break;
         case "add tkeys":
           this.$root.ftKeyId=-1;
           this.$root.genRandom('tkeyName');
@@ -984,6 +998,25 @@ const io2gui_app = new Vue({
       } else if (ev != null) {
         ev.preventDefault();
         if (!this.validateName('ftKeyName')) this.$refs.formKeyName.$el.focus()
+          else this.$refs.formKey.$el.focus();
+      };
+    },
+
+    //TKey Groups
+    tblMgmtTKeyGRecord: function (ev,table) {
+      if (this.validateName('ftKeyGName')){
+        var obj=this;         
+        let data={tKeyGId: this.ftKeyGId, tKeyGName: this.ftKeyGName};
+        if (this.ftKeyGId==-1){
+          //Add
+          axios.post('/io2data.php/'+table,data).then((data) => {if (/DOCTYPE html/.test(data.data)){window.location.reload(true);} else obj.mgmtTableOk(data,obj,table);}).catch(function (error){obj.mgmtTableError(error,obj,table)})
+        }else{
+          //Modify
+          axios.put('/io2data.php/'+table,data).then((data) => {if (/DOCTYPE html/.test(data.data)){window.location.reload(true);} else obj.mgmtTableOk(data,obj,table);}).catch(function (error){obj.mgmtTableError(error,obj,table)})
+        };
+      } else if (ev != null) {
+        ev.preventDefault();
+        if (!this.validateName('ftKeyGName')) this.$refs.formKeyGName.$el.focus()
           else this.$refs.formKey.$el.focus();
       };
     },
@@ -1577,4 +1610,43 @@ function splitRpiDNSList(obj){
 	for (i=0,j=obj.RpiDNSList.length; i<j; i+=chunk) {
 		obj.RpiDNSListDash.push(obj.RpiDNSList.slice(i,i+chunk));
 	};			
-}
+};
+
+
+
+function checkHostIPNet(V) {
+  return checkIPv4(V) || checkIPv4Net(V) || checkIPv6(V) || checkHostName(V);
+};
+
+function checkHostIP(V) {
+  return checkIPv4(V) || checkIPv6(V) || checkHostName(V);
+};
+
+function checkIP(IP) {
+  return checkIPv4(IP) || checkIPv6(IP);
+};
+
+function checkIPv4(IP) {
+  return /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(IP);
+};
+
+function checkIPv4Net(IP) {
+  return /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\/([0-9]|[1-2][0-9]|3[0-2])$/.test(IP);
+};
+
+function checkIPv6(IP) {
+  return /^(([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))(\/[0-9]+)?$/.test(IP);
+};
+
+
+
+function checkHostName(HN) {
+//  return /^(?=.{1,255}$)[0-9A-Za-z](?:(?:[0-9A-Za-z]|\b-){0,61}[0-9A-Za-z])?(?:\.[0-9A-Za-z](?:(?:[0-9A-Za-z]|\b-){0,61}[0-9A-Za-z])?)*\.?$/.test(HN);
+	return /(?=^.{4,253}$)(^((?!-)[a-zA-Z0-9-]{0,62}[a-zA-Z0-9]\.)+[a-zA-Z]{2,63}$)/.test(HN);
+};
+
+
+function checkSourceURL(HN) {
+  //TODO validation
+  return /^(http:\/\/|https:\/\/|ftp:\/\/|file:|shell:)/.test(HN);
+};

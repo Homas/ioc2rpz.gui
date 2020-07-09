@@ -526,6 +526,18 @@
         </div>
       </span>
     </b-modal>
+
+<!-- Tkey Groups Add/Modify -->
+    <b-modal id='mTGroups' centered title="TSIG Key Group" @ok="tblMgmtTKeyGRecord($event,'tkeys_groups')" body-class="pt-0 pb-0" size="lg" v-cloak>
+      <span class='text-center'>
+        <div>
+          <b-row>
+            <b-col :sm="12" class="form_row"><b-input v-model.trim="ftKeyGName" :state="validateName('ftKeyGName')" :formatter="formatName" ref="formKeyGName" placeholder="Enter group name" /></b-col>
+          </b-row>
+        </div>
+      </span>
+    </b-modal>
+
     
 <!-- Whitelists/Sources Add/Modify -->
     <b-modal id='mConfEditSources' centered :title="ftSrcTitle" @ok="tblMgmtSrcRecord($event,ftSrcType)" body-class="pt-0 pb-0" size="lg" v-cloak>

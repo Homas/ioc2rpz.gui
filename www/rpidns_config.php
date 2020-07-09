@@ -14,7 +14,7 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
 		if (strlen($script)>0){
 			header('Content-Type: application/x-sh');
 			header("Content-Transfer-Encoding: Binary"); 
-			header('Content-Disposition: attachment; filename="ioc2rpz_community_install.sh"');
+			header('Content-Disposition: attachment; filename="rpidns_install.sh"');
 			header('Expires: 0');
 			echo trim($script);
 		};

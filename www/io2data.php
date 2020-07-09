@@ -102,7 +102,14 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
       };
       $response=json_encode($rarray);
       break;
-
+    case "POST tkeys_groups":
+      $sql="insert into tkeys_groups values($USERID,'".DB_escape($db,$REQUEST['tKeyGName'])."')";
+      if (DB_execute($db,$sql)) $response='{"status":"ok"}'; else $response='{"status":"failed", "sql":"'.$sql.'"}'; //TODO remove SQL
+      break;
+    case "PUT tkeys_groups":
+      $sql="update tkeys_groups set group_name='".DB_escape($db,$REQUEST['tKeyGName'])."' where rowid=".DB_escape($db,$REQUEST['tKeyGId']);
+      if (DB_execute($db,$sql)) $response='{"status":"ok"}'; else $response='{"status":"failed", "sql":"'.$sql.'"}'; //TODO remove SQL
+      break;
     case "GET tkeys":
       $rarray=[];
       $result=DB_select($db,"select rowid,* from ${REQUEST['req']}");

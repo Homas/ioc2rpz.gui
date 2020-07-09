@@ -56,6 +56,9 @@ sudo docker run -d --name ioc2rpz.gui --log-driver=syslog  --restart always --mo
 ```
 where /home/ioc2rpz/cfg, /home/ioc2rpz/ssl, /home/ioc2rpz/db directories on a host system.
 
+## Docker Compose
+You can deploy ioc2rpz and ioc2rpz.gui using docker compose. The docker-compose.yml file can be found in [ioc2rpz.dc](https://github.com/Homas/ioc2rpz.dc) repository.
+
 ## ioc2rpz on AWS
 You can run ioc2rpz and ioc2rpz.gui on AWS. For relatively small deployments (several hundreds thousands indicators) even free tier is enough.
 The video below shows how to setup ioc2rpz and ioc2rpz.gui on AWS using ECS.
@@ -198,7 +201,7 @@ You can suppor the project via [GitHub Sponsor](https://github.com/sponsors/Homa
 You can contact us by email: feedback(at)ioc2rpz[.]net or in [Telegram](https://t.me/ioc2rpz).
 
 # License
-Copyright 2017 - 2019 Vadim Pavlov ioc2rpz[at]gmail[.]com
+Copyright 2017 - 2020 Vadim Pavlov ioc2rpz[at]gmail[.]com
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at  
