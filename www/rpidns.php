@@ -51,7 +51,7 @@ require_once 'io2fun.php';
 								<br>
 								cURL:
 								<b-input-group>
-								<b-form-input type="text" readonly size="sm" :id="'formRpiDNScURL'+item.id" :value="'curl \''+this.document.location.origin +'/rpidns_config.php/rpidns_config?uuid='+item.rpidns_uuid+'\' -o rpidns_install.sh'" style="width: 200px;"></b-form-input>
+								<b-form-input type="text" readonly size="sm" :id="'formRpiDNScURL'+item.id" :value="'curl \''+this.document.location.origin +'/rpidns_config.php/rpidns_config?uuid='+item.rpidns_uuid+'\' -o '+item.name+'_install.sh -k'" style="width: 200px;"></b-form-input>
 									<b-button size="sm" slot="append" v-b-tooltip.hover title="Copy" variant="outline-secondary" @click="this.copyToClipboardID('formRpiDNScURL'+item.id)"><i class="fa fa-copy"></i></b-button>
 								</b-input-group>
 							</b-popover>

@@ -139,7 +139,7 @@ EOD;
 
 	$feeds="\nzone \"wl.ioc2rpz.local\" policy passthru log no; #local whitelist\n";
 	$feeds_files="\n";
-	$tkey='key "'.$rpz_feeds[0]['tkey_name'].'" {algorithm '.$rpz_feeds[0]['tkey_alg'].'; secret "'.$rpz_feeds[0]['tkey']."\";};\n";
+#	$tkey='key "'.$rpz_feeds[0]['tkey_name'].'" {algorithm '."hmac-".$rpz_feeds[0]['tkey_alg'].'; secret "'.$rpz_feeds[0]['tkey']."\";};\n";
 	$ztype="w";
 	$action="nxdomain";
 	$zone_files="";
@@ -194,6 +194,7 @@ EOD;
 		$redirect=$rpz['redirect'] == 'default'? $rpiname :$rpz['redirect_cname'];
 		$action = $rpz['action'] == 'cname'? 'cname '.$redirect:$rpz['action'];
 		$feeds .= 'zone "'.$rpz['rpz'].'" policy '.$action.";#".$rpz['description']."\n\n";
+  	$tkeys[$rpz['tkey_name']]='key "'.$rpz['tkey_name'].'" {algorithm '."hmac-".$rpz['tkey_alg'].'; secret "'.$rpz['tkey']."\";};\n";
 
 #		$feeds .= 'zone "'.$rpz['rpz'].'" policy '.(($rpz['type']=='v' or $rpz['type']=='w')?"passthru log no":"nxdomain").";#".$rpz['description']."\n\n";
 		$feeds_files .= "zone \"${rpz['rpz']}\" {type slave; file \"/var/cache/bind/${rpz['rpz']}\"; masters {".$rpz['ip']." key \"${rpz['tkey_name']}\";};};\n\n";
@@ -338,7 +339,8 @@ zone "rpidns.ioc2rpz.local"{ #local zone
 };
 ';
 
-	$script .="\n\n$tkey\n$feeds_files\nEOF\n\n";
+  foreach ($tkeys as $tkey) {$script .="\n$tkey\n";}
+	$script .="\n\n$feeds_files\nEOF\n\n";
 
 	$script .= "\n\n#RPZ zones\n".$zone_files;
 	
