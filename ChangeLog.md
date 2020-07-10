@@ -2,7 +2,9 @@
 
 ## 1.0.0.0 2020-07-07
 - UX/UI was deeply updated
-- RpiDNS
+- TSIG Key Group Management
+- User Management
+- RpiDNS. DB file should be updated. Check init_db.php  comment on 2020-06-08
 
 ## 0.9.4.0 2019-06-15
 - Key groups support for servers and RPZs. Groups should be directly added to the DB. 

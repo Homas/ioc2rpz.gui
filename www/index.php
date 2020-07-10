@@ -628,7 +628,7 @@
           <span class='text-center'>
             <div>
               <b-row>
-                <b-col :sm="12" class="form_row"><b-input v-model.trim="ftRPZName" :state="validateHostname('ftRPZName')" :formatter="formatName" ref="formRPZName" :readonly="infoWindow" placeholder="Enter RPZ name"  v-b-tooltip.hover title="RPZ Name" /></b-col>
+                <b-col :sm="12" class="form_row"><b-input v-model.trim="ftRPZName" :state="validateHostnameNum('ftRPZName')" :formatter="formatName" ref="formRPZName" :readonly="infoWindow" placeholder="Enter RPZ name"  v-b-tooltip.hover title="RPZ Name" /></b-col>
               </b-row>
     
               <b-row>

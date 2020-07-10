@@ -77,7 +77,7 @@ require_once 'io2fun.php';
 			<b-container fluid>
 				<b-row class="pb-2">
 					<b-col md="12" class="p-0">
-						<b-input v-model.trim="addRpiDNSName" ref="refAddRpiDNSName" :state="validateName('addRpiDNSName')" :formatter="formatName" ref="formAddRpiDNS" placeholder="Enter name"  v-b-tooltip.hover title="Name" />
+						<b-input v-model.trim="addRpiDNSName" ref="refAddRpiDNSName" :state="validateHostnameOnly('addRpiDNSName')" :formatter="formatName" ref="formAddRpiDNS" placeholder="Enter name"  v-b-tooltip.hover title="Name" />
 					</b-col>
 				</b-row>
 

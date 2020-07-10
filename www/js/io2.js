@@ -399,7 +399,7 @@ const io2gui_app = new Vue({
 		},  
   
 		add_rpidns: function(event){			
-			if (this.validateName('addRpiDNSName') && this.ftRpiDNSRPZ.length>0 && this.addRpiDNSModel !==null && this.addRpiDNSServer !==null && ((this.addRpiDNSType=='secondary' && checkIP(this.addRpiDNSTypeIPNet)) || this.addRpiDNSType=='primary')){
+			if (this.validateHostnameOnly('addRpiDNSName') && this.ftRpiDNSRPZ.length>0 && this.addRpiDNSModel !==null && this.addRpiDNSServer !==null && ((this.addRpiDNSType=='secondary' && checkIP(this.addRpiDNSTypeIPNet)) || this.addRpiDNSType=='primary')){
 				let doc=this;
 				var data,promise;
 				let rpzfeeds = [];
@@ -422,7 +422,7 @@ const io2gui_app = new Vue({
 			}else{
 				event.preventDefault();
         
-        if (!this.validateName('addRpiDNSName') || this.addRpiDNSName.length==0) this.showInfo('Please set correct RpiDNS name',3);//	this.$refs.refAddRpiDNSName.focus();
+        if (!this.validateHostnameOnly('addRpiDNSName') || this.addRpiDNSName.length==0) this.showInfo('Please set correct RpiDNS name',3);//	this.$refs.refAddRpiDNSName.focus();
         else if (this.addRpiDNSType=='secondary' && !checkIP(this.addRpiDNSTypeIPNet)) this.showInfo('Please set a primary DNS server IP',3);
         else if (this.addRpiDNSModel ==null) this.showInfo('Please select RpiDNS model',3);	
         else if (this.addRpiDNSServer ==null) this.showInfo('Please select DNS server software',3);	
@@ -927,6 +927,14 @@ const io2gui_app = new Vue({
       return (this.$data[vrbl].length > 5 && checkHostName(this.$data[vrbl])) ? true : this.$data[vrbl].length == 0 ? null:false;
     },
 
+    validateHostnameNum: function(vrbl){
+      return (this.$data[vrbl].length > 5 && checkHostNameNum(this.$data[vrbl])) ? true : this.$data[vrbl].length == 0 ? null:false;
+    },
+
+    validateHostnameOnly: function(vrbl){
+      return (this.$data[vrbl].length > 5 && checkHostNameOnly(this.$data[vrbl])) ? true : this.$data[vrbl].length == 0 ? null:false;
+    },
+
     formatHostname: function(val,e){
       let a = val.replace(/[^a-zA-Z0-9\.\-\_]/g,"");
       if (e) e.currentTarget.value = a; // a bug in Vue.JS?
@@ -1094,7 +1102,7 @@ const io2gui_app = new Vue({
     
     //RPZ
     tblMgmtRPZRecord: function (ev,table) {
-      if (this.validateHostname('ftRPZName') && (this.validateIPList('ftRPZNotify') || this.validateIPList('ftRPZNotify') == null) && ((this.validateCustomAction(this.ftRPZActionCustom) && this.ftRPZAction === 'local')||this.ftRPZAction != 'local') && this.validateInt('ftRPZSOA_Refresh') && this.validateInt('ftRPZSOA_UpdRetry') && this.validateInt('ftRPZSOA_Exp') && this.validateInt('ftRPZSOA_NXTTL') && this.validateInt('ftRPZAXFR') && this.validateInt('ftRPZIXFR')){
+      if (this.validateHostnameNum('ftRPZName') && (this.validateIPList('ftRPZNotify') || this.validateIPList('ftRPZNotify') == null) && ((this.validateCustomAction(this.ftRPZActionCustom) && this.ftRPZAction === 'local')||this.ftRPZAction != 'local') && this.validateInt('ftRPZSOA_Refresh') && this.validateInt('ftRPZSOA_UpdRetry') && this.validateInt('ftRPZSOA_Exp') && this.validateInt('ftRPZSOA_NXTTL') && this.validateInt('ftRPZAXFR') && this.validateInt('ftRPZIXFR')){
         var obj=this;
         if  (this.ftRPZName != this.editRow.name || this.ftRPZSOA_Refresh!=this.editRow.soa_refresh || this.ftRPZSOA_UpdRetry!=this.editRow.soa_update_retry || this.ftRPZSOA_Exp!=this.editRow.soa_expiration || this.ftRPZSOA_NXTTL!=this.editRow.soa_nx_ttl || this.ftRPZAXFR!=this.editRow.axfr_update || this.ftRPZIXFR!=this.editRow.ixfr_update || this.ftRPZCache!=this.editRow.cache || this.ftRPZWildcard!=this.editRow.wildcard || this.ftRPZAction!=this.editRow.action || this.ftRPZIOCType!=this.editRow.ioc_type || this.editRow.notify_str!=this.ftRPZNotify || this.editRow.servers_arr!=this.ftRPZSrvs || this.editRow.tkeys_arr!=this.ftRPZTKeys || this.editRow.sources_arr!=this.ftRPZSrc || this.editRow.whitelists_arr!=this.ftRPZWL ||this.ftRPZActionCustom!=this.editRow.actioncustom || this.ftRPZDisabled!=this.editRow.disabled) toggleUpdates(0,this,true);
         let data={tRPZId: this.ftRPZId, tRPZName: this.ftRPZName, tRPZSOA_Refresh: this.ftRPZSOA_Refresh, tRPZSOA_UpdRetry: this.ftRPZSOA_UpdRetry,
@@ -1112,7 +1120,7 @@ const io2gui_app = new Vue({
         };
       } else if (ev != null) {
         ev.preventDefault();
-        if (!this.validateHostname('ftRPZName')) this.$refs.formRPZName.$el.focus();
+        if (!this.validateHostnameNum('ftRPZName')) this.$refs.formRPZName.$el.focus();
       	  else if (!((this.validateIPList('ftRPZNotify') || this.validateIPList('ftRPZNotify') == null))) this.$refs.formRPZNotify.$el.focus() ;
       	  else if (!this.validateCustomAction(this.ftRPZActionCustom) && this.ftRPZAction === 'local') this.$refs.formRPZActionCustom.$el.focus() ;
       	  else if (!this.validateInt('ftRPZSOA_Refresh')) this.$refs.formRPZSOA_Refresh.$el.focus() ;
@@ -1379,10 +1387,17 @@ function checkIPv6(IP) {
   return /^(([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))$/.test(IP);
 }
 
-function checkHostName(HN) {
-  return /^(?=.{1,255}$)[0-9A-Za-z](?:(?:[0-9A-Za-z]|\b-){0,61}[0-9A-Za-z])?(?:\.[0-9A-Za-z](?:(?:[0-9A-Za-z]|\b-){0,61}[0-9A-Za-z])?)*\.?$/.test(HN);
-}
-
+//function checkHostName(HN) {
+//  return /^(?=.{1,255}$)[0-9A-Za-z](?:(?:[0-9A-Za-z]|\b-){0,61}[0-9A-Za-z])?(?:\.[0-9A-Za-z](?:(?:[0-9A-Za-z]|\b-){0,61}[0-9A-Za-z])?)*\.?$/.test(HN);
+//}
+//
+//function checkHostNameOnly(HN) {
+//  return /^(?=.{1,255}$)[0-9A-Za-z](?:(?:[0-9A-Za-z]|\b-){0,61}[0-9A-Za-z])?(?:\.[0-9A-Za-z](?:(?:[0-9A-Za-z]|\b-){0,61}[0-9A-Za-z])?)*\.?$/.test(HN);
+//}
+//
+//function checkHostNameNum(HN) {
+//  return /^(?=.{1,255}$)[0-9A-Za-z](?:(?:[0-9A-Za-z]|\b-){0,61}[0-9A-Za-z])?(?:\.[0-9A-Za-z](?:(?:[0-9A-Za-z]|\b-){0,61}[0-9A-Za-z])?)*\.?$/.test(HN);
+//}
 
 function checkSourceURL(HN) {
   //TODO validation
@@ -1645,6 +1660,15 @@ function checkHostName(HN) {
 	return /(?=^.{4,253}$)(^((?!-)[a-zA-Z0-9-]{0,62}[a-zA-Z0-9]\.)+[a-zA-Z]{2,63}$)/.test(HN);
 };
 
+function checkHostNameNum(HN) {
+//  return /^(?=.{1,255}$)[0-9A-Za-z](?:(?:[0-9A-Za-z]|\b-){0,61}[0-9A-Za-z])?(?:\.[0-9A-Za-z](?:(?:[0-9A-Za-z]|\b-){0,61}[0-9A-Za-z])?)*\.?$/.test(HN);
+	return /(?=^.{4,253}$)(^((?!-)[a-zA-Z0-9-]{0,62}[a-zA-Z0-9]\.)+[a-zA-Z0-9]{2,63}$)/.test(HN);
+};
+
+function checkHostNameOnly(HN) {
+//  return /^(?=.{1,255}$)[0-9A-Za-z](?:(?:[0-9A-Za-z]|\b-){0,61}[0-9A-Za-z])?(?:\.[0-9A-Za-z](?:(?:[0-9A-Za-z]|\b-){0,61}[0-9A-Za-z])?)*\.?$/.test(HN);
+	return /(?=^.{4,253}$)(^((?!-)[a-zA-Z0-9-]{0,62}[a-zA-Z0-9]\.?)+$)/.test(HN);
+};
 
 function checkSourceURL(HN) {
   //TODO validation
