@@ -711,7 +711,77 @@ local_cname=www.example.com
           </span>
         </b-tab> 
         <b-tab title="Provision Info">
-          <div style="height: 430px;display:block;">
+          <div style="height: 400px;display:block;">
+          <span class='text-center'>
+            <div>
+              <b-row><b-col :sm="12"><div class="v-spacer"></div></b-col></b-row>
+              <b-row class='d-none d-sm-flex'>
+                <b-col :sm="2">
+                    <span class="d-flex align-self-center bold">RPZ Name:&nbsp;&nbsp;&nbsp;</span>
+                </b-col>
+                <b-col :sm="10" class="pl-0">
+                  <b-input-group>
+                    <b-form-input readonly v-model.trim="ftRPZName" ref="formRPZName"></b-form-input>
+                    <b-button v-b-tooltip.hover slot="append" title="Copy" variant="outline-secondary" size="sm" @click="copyToClipboard('formRPZName')"><i class="fa fa-copy"></i></b-button>
+                  </b-input-group>
+                </b-col>
+              </b-row>
+              <b-row><b-col :sm="12"><div class="v-spacer"></div></b-col></b-row>
+              <b-row class='d-none d-sm-flex'>
+                <b-col :sm="2">
+                    <span class="d-flex align-self-center bold">Server:&nbsp;&nbsp;&nbsp;</span>
+                </b-col>
+                <b-col :sm="4" class="pr-0 pl-0">
+                  <b-input-group>
+                    <b-form-input readonly v-model.trim="ftRPZInfoServerName" ref="formRPZInfoServerName"></b-form-input>
+                  </b-input-group>
+                </b-col>
+                <b-col :sm="6">
+                  <b-input-group>
+                    <span class="d-flex align-self-center bold">public IP:&nbsp;&nbsp;&nbsp;</span>
+                    <b-form-input readonly v-model.trim="ftRPZInfoServerIP" ref="formRPZInfoServerIP"></b-form-input>
+                    <b-button v-b-tooltip.hover slot="append" title="Copy" variant="outline-secondary" size="sm" @click="copyToClipboard('formRPZInfoServerIP')"><i class="fa fa-copy"></i></b-button>
+                  </b-input-group>
+                </b-col>
+              </b-row>
+              <b-row><b-col :sm="12"><div class="v-spacer"></div></b-col></b-row>
+              <b-row class='d-none d-sm-flex'>
+                <b-col :sm="2">
+                    <span class="d-flex align-self-center bold">Key name:&nbsp;&nbsp;&nbsp;</span>
+                </b-col>
+                <b-col :sm="2" class="pr-0 pl-0">
+                  <b-input-group>
+                    <b-form-input readonly v-model.trim="ftRPZInfoTKeyName" ref="formRPZInfoTKeyName"></b-form-input>
+                    <b-button v-b-tooltip.hover slot="append" title="Copy" variant="outline-secondary" size="sm" @click="copyToClipboard('formRPZInfoTKeyName')"><i class="fa fa-copy"></i></b-button>
+                  </b-input-group>
+                </b-col>
+                <b-col :sm="4" class="pr-0">
+                  <b-input-group>
+                    <span class="d-flex align-self-center bold">Alg:&nbsp;&nbsp;&nbsp;</span>
+                    <b-form-input readonly v-model.trim="ftRPZInfoTKeyAlg" ref="formRPZInfoTKeyAlg"></b-form-input>
+                    <b-button v-b-tooltip.hover slot="append" title="Copy" variant="outline-secondary" size="sm" @click="copyToClipboard('formRPZInfoTKeyAlg')"><i class="fa fa-copy"></i></b-button>
+                  </b-input-group>
+                </b-col>
+                <b-col :sm="4">
+                  <b-input-group>
+                    <span class="d-flex align-self-center bold">Key:&nbsp;&nbsp;&nbsp;</span>
+                    <b-form-input readonly v-model.trim="ftRPZInfoTKey" ref="formRPZInfoTKey"></b-form-input>
+                    <b-button v-b-tooltip.hover slot="append" title="Copy" variant="outline-secondary" size="sm" @click="copyToClipboard('formRPZInfoTKey')"><i class="fa fa-copy"></i></b-button>
+                  </b-input-group>
+                </b-col>
+              </b-row>
+              <b-row><b-col :sm="12"><div class="v-spacer"></div></b-col></b-row>
+              <b-row><b-col :sm="12"><div class="v-spacer"></div></b-col></b-row>
+              <b-row><b-col :sm="12"><div class="v-spacer"></div></b-col></b-row>
+              <b-row class='d-none d-sm-flex'>
+                <b-col :sm="12">
+                  <span class="bold float-left">You may check the zone availability using the following dig command:</span>
+                  <b-form-textarea id="textarea" v-model="ftRPZInfoDig" rows="6" max-rows="9" readonly></b-form-textarea>
+                </b-col>
+              </b-row>              
+            </div>
+          </span>
+
             <span v-html="ftRPZProWindowInfo"></span>
           </div>
         </b-tab> 

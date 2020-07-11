@@ -266,6 +266,12 @@ const io2gui_app = new Vue({
 			RpiDNSBttn: "Add",
 			addRpiDNSid: 0,      
       
+      ftRPZInfoServerName:'',
+      ftRPZInfoServerIP:'',
+      ftRPZInfoTKeyName:'',
+      ftRPZInfoTKeyAlg:'',
+      ftRPZInfoTKey:'',
+      ftRPZInfoDig:'',
       
 //          }
   },
@@ -757,29 +763,38 @@ const io2gui_app = new Vue({
           });
           this.$root.ftRPZNotify=RPZNotify.trim();
           
-          this.$root.ftRPZProWindowInfo=`<div class="form_row"><b>RPZ Name</b>: <input type=text readonly id='RPZInfoName' value='${row.item.name}'/> <button v-b-tooltip.hover title="Copy" class="btn btn-outline-secondary btn-sm" onclick="copyToClipboardID('RPZInfoName')"><i class="fa fa-copy"></i></button></div>`;
+//          this.$root.ftRPZProWindowInfo=`<div class="form_row"><b>RPZ Name</b>: <input type=text readonly id='RPZInfoName' value='${row.item.name}'/> <button v-b-tooltip.hover title="Copy" class="btn btn-outline-secondary btn-sm" onclick="copyToClipboardID('RPZInfoName')"><i class="fa fa-copy"></i></button></div>`;
 
           this.$root.get_lists('rpz_servers','ftRPZSrvsAll');
           let list=[];
           row.item.servers.forEach(function(el) {
             list.push(el.rowid);
-            vm.$root.ftRPZProWindowInfo+=`<div class="form_row"><b>DNS Server ${el.name} Public IP</b>: <input type=text readonly id="RPZDNSIP_${el.name}" value='${el.pub_ip}'/><button v-b-tooltip.hover title="Copy" class="btn btn-outline-secondary btn-sm" onclick="copyToClipboardID('RPZDNSIP_${el.name}')"><i class="fa fa-copy"></i></button></div>`;
+//            vm.$root.ftRPZProWindowInfo+=`<div class="form_row"><b>DNS Server ${el.name} Public IP</b>: <input type=text readonly id="RPZDNSIP_${el.name}" value='${el.pub_ip}'/><button v-b-tooltip.hover title="Copy" class="btn btn-outline-secondary btn-sm" onclick="copyToClipboardID('RPZDNSIP_${el.name}')"><i class="fa fa-copy"></i></button></div>`;
             dig_srv=dig_srv==""?el.pub_ip:dig_srv;
           });
           this.$root.ftRPZSrvs=list;
-          
+
+        this.$root.ftRPZInfoServerName=Array.isArray(row.item.servers) && row.item.servers.length?row.item.servers[0].name:'';
+        this.$root.ftRPZInfoServerIP=Array.isArray(row.item.servers) && row.item.servers.length?row.item.servers[0].pub_ip:'';        
+
+        this.$root.ftRPZInfoTKeyName=Array.isArray(row.item.tkeys) && row.item.tkeys.length?row.item.tkeys[0].name:'';
+        this.$root.ftRPZInfoTKeyAlg=Array.isArray(row.item.tkeys) && row.item.tkeys.length?'hmac-'+row.item.tkeys[0].alg:'';
+        this.$root.ftRPZInfoTKey=Array.isArray(row.item.tkeys) && row.item.tkeys.length?row.item.tkeys[0].tkey:'';
+
           
           this.$root.get_lists('rpz_tkeys','ftRPZTKeysAll');
           list=[];
           row.item.tkeys.forEach(function(el) {
             list.push(el.rowid);
-            vm.$root.ftRPZProWindowInfo+=`<div class="form_row"><b>TSIG Key</b><input type=text readonly id='RPZTKEYN_${el.name}' value='${el.name}'/><button v-b-tooltip.hover title="Copy" class="btn btn-outline-secondary btn-sm" onclick="copyToClipboardID('RPZTKEYN_${el.name}')"><i class="fa fa-copy"></i></button><input type=text readonly id='RPZTKEYA_${el.name}' value='hmac-${el.alg}'/><button v-b-tooltip.hover title="Copy" class="btn btn-outline-secondary btn-sm" onclick="copyToClipboardID('RPZTKEYA_${el.name}')"><i class="fa fa-copy"></i></button><input size=28 type=text readonly id='RPZTKEYK_${el.name}' value='${el.tkey}'/><button v-b-tooltip.hover title="Copy" class="btn btn-outline-secondary btn-sm" onclick="copyToClipboardID('RPZTKEYK_${el.name}')"><i class="fa fa-copy"></i></button></div>`;
+//            vm.$root.ftRPZProWindowInfo+=`<div class="form_row"><b>TSIG Key</b><input type=text readonly id='RPZTKEYN_${el.name}' value='${el.name}'/><button v-b-tooltip.hover title="Copy" class="btn btn-outline-secondary btn-sm" onclick="copyToClipboardID('RPZTKEYN_${el.name}')"><i class="fa fa-copy"></i></button><input type=text readonly id='RPZTKEYA_${el.name}' value='hmac-${el.alg}'/><button v-b-tooltip.hover title="Copy" class="btn btn-outline-secondary btn-sm" onclick="copyToClipboardID('RPZTKEYA_${el.name}')"><i class="fa fa-copy"></i></button><input size=28 type=text readonly id='RPZTKEYK_${el.name}' value='${el.tkey}'/><button v-b-tooltip.hover title="Copy" class="btn btn-outline-secondary btn-sm" onclick="copyToClipboardID('RPZTKEYK_${el.name}')"><i class="fa fa-copy"></i></button></div>`;
             dig_tkey=dig_tkey==""?"hmac-"+el.alg+":"+el.name+":"+el.tkey:dig_tkey;
           });
           this.$root.ftRPZTKeys=list;
 
-          vm.$root.ftRPZProWindowInfo+="<br><hr>You may check zone availability using the following dig command:<br>";
-          vm.$root.ftRPZProWindowInfo+=`<textarea rows="5" style="width:100%;resize: none;" readonly>dig +tcp @${dig_srv} -y ${dig_tkey} ${row.item.name} SOA</textarea>`
+//          vm.$root.ftRPZProWindowInfo+="<br><hr>You may check zone availability using the following dig command:<br>";
+//          vm.$root.ftRPZProWindowInfo+=`<textarea rows="5" style="width:100%;resize: none;" readonly>dig +tcp @${dig_srv} -y ${dig_tkey} ${row.item.name} SOA</textarea>`
+
+          this.$root.ftRPZInfoDig=this.$root.ftRPZInfoServerIP && this.$root.ftRPZInfoTKeyName?"dig +tcp @"+dig_srv+" -y "+dig_tkey+" "+row.item.name+" SOA":'';        
           
           this.$root.get_lists('rpz_sources','ftRPZSrcAll');
           list=[];
@@ -857,14 +872,14 @@ const io2gui_app = new Vue({
  
     
     formatURL: function(val,e){
-      let a = val.replace(/[^A-Za-z0-9/=:\?#.-_&]/g,"");
+      let a = val.replace(/[^A-Za-z0-9/=:\?#.\-_&]/g,"");
       if (e) e.currentTarget.value = a; // a bug in Vue.JS?
       return a;
     },
 
     formatSourceURL: function(val,e){
       let a;
-      if (/^shell:/.test(val) || /^file:/.test(val) || /^[:AXFR:]/.test(val)) a=val; else a = val.replace(/[^A-Za-z0-9/=:\?#.-_&]/g,"");
+      if (/^shell:/.test(val) || /^file:/.test(val) || /^[:AXFR:]/.test(val)) a=val; else a = val.replace(/[^A-Za-z0-9/=:\?#.\-_&]/g,"");
       if (e) e.currentTarget.value = a; // a bug in Vue.JS?
       return a;
     },
@@ -884,7 +899,7 @@ const io2gui_app = new Vue({
     },
 
     formatIXFRURL: function(val,e){
-      let a;// = val.replace(/[^A-Za-z0-9/=:\?#.-_\[\]&]/g,"");
+      let a;// = val.replace(/[^A-Za-z0-9/=:\?#.\-_\[\]&]/g,"");
       if (/^shell:/.test(val) || /^file:/.test(val) || /^[:AXFR:]/.test(val)) a=val; else a = val.replace(/[^A-Za-z0-9/=:\?#.-_&]/g,"");
       if (e) e.currentTarget.value = a; // a bug in Vue.JS?
       return a;
