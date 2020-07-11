@@ -862,6 +862,13 @@ const io2gui_app = new Vue({
       return a;
     },
 
+    formatSourceURL: function(val,e){
+      let a;
+      if (/^shell:/.test(val) || /^file:/.test(val) || /^[:AXFR:]/.test(val)) a=val; else a = val.replace(/[^A-Za-z0-9/=:\?#.-_&]/g,"");
+      if (e) e.currentTarget.value = a; // a bug in Vue.JS?
+      return a;
+    },
+
     validateLocFile: function (vrbl) {
       return (this.$data[vrbl].length > 0) ? true : this.$data[vrbl].length == 0 ? null:false;
     },
@@ -877,7 +884,8 @@ const io2gui_app = new Vue({
     },
 
     formatIXFRURL: function(val,e){
-      let a = val.replace(/[^A-Za-z0-9/=:\?#.-_\[\]&]/g,"");
+      let a;// = val.replace(/[^A-Za-z0-9/=:\?#.-_\[\]&]/g,"");
+      if (/^shell:/.test(val) || /^file:/.test(val) || /^[:AXFR:]/.test(val)) a=val; else a = val.replace(/[^A-Za-z0-9/=:\?#.-_&]/g,"");
       if (e) e.currentTarget.value = a; // a bug in Vue.JS?
       return a;
     },

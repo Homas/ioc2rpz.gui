@@ -547,7 +547,7 @@
             <b-col :sm="12" class="form_row"><b-input v-model.trim="ftSrcName" :state="validateName('ftSrcName')" :formatter="formatName" ref="formSrcName" :readonly="infoWindow" placeholder="Enter source name" /></b-col>
           </b-row>
           <b-row>
-            <b-col :sm="12" class="form_row"><b-textarea v-model="ftSrcURL" :state="validateURL('ftSrcURL')" :formatter="formatURL" :rows="3" ref="formSrcURL" :readonly="infoWindow" placeholder="Enter source URL" /></b-col>
+            <b-col :sm="12" class="form_row"><b-textarea v-model="ftSrcURL" :state="validateURL('ftSrcURL')" :formatter="formatSourceURL" :rows="3" ref="formSrcURL" :readonly="infoWindow" placeholder="Enter source URL" /></b-col>
           </b-row>
           <b-row v-show="ftSrcType == 'sources'">
             <b-col :sm="12" class="form_row"><b-textarea v-model="ftSrcURLIXFR" :state="validateIXFRURL('ftSrcURLIXFR')" :formatter="formatIXFRURL" :rows="3" ref="formSrcURLIXFR" :readonly="infoWindow" placeholder="Enter source update URL" /></b-col>
