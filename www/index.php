@@ -558,8 +558,8 @@
           <b-row>
             <b-col :sm="3" class="form_row"></b-col>
             <b-col :sm="2" class="form_row"><b-input v-model.trim="ftSrcMaxIOC" :state="validateInt('ftSrcMaxIOC')" :formatter="formatInt" ref="formSrcMaxIOC" :readonly="infoWindow" placeholder="Max IoCs" v-b-tooltip.hover title="Maximum IoCs (0 - unlimited)"  /></b-col>
-            <b-col :sm="2" class="form_row"><b-input v-model.trim="ftSrcHotCacheAXFR" :state="validateInt('ftSrcHotCacheAXFR')" :formatter="formatInt" ref="formSrcHotCacheAXFR" :readonly="infoWindow" placeholder="Hot cache time (full update)" v-b-tooltip.hover title="Hot cache time (full update)"  /></b-col>
-            <b-col :sm="2" class="form_row"><b-input v-model.trim="ftSrcHotCacheIXFR" :state="validateInt('ftSrcHotCacheIXFR')" :formatter="formatInt" ref="formSrcHotCacheIXFR" :readonly="infoWindow" placeholder="Hot cache time (incremental update)" v-b-tooltip.hover title="Hot cache time (incremental update)"  /></b-col>
+            <b-col :sm="2" class="form_row"><b-input v-model.trim="ftSrcHotCacheAXFR" :state="validateInt('ftSrcHotCacheAXFR')" :formatter="formatInt" ref="formSrcHotCacheAXFR" :readonly="infoWindow" placeholder="Hot cache time (full update), in sec" v-b-tooltip.hover title="Hot cache time (full update)"  /></b-col>
+            <b-col :sm="2" class="form_row"><b-input v-model.trim="ftSrcHotCacheIXFR" :state="validateInt('ftSrcHotCacheIXFR')" :formatter="formatInt" ref="formSrcHotCacheIXFR" :readonly="infoWindow" placeholder="Hot cache time (incremental update), in sec" v-b-tooltip.hover title="Hot cache time (incremental update)"  /></b-col>
             <b-col :sm="3" class="form_row"></b-col>
           </b-row>
         </div>
