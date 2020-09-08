@@ -108,9 +108,9 @@ const io2gui_app = new Vue({
       ftSrcREGEX: '',
       ftSrcType: "sources",
       ftSrcTitle: "Source",
-      ftSrcMaxIOC: 0,
-      ftSrcHotCacheAXFR: 900,
-      ftSrcHotCacheIXFR: 0,
+      ftSrcMaxIOC: '0',
+      ftSrcHotCacheAXFR: '900',
+      ftSrcHotCacheIXFR: '0',
 
       //Servers
       ftSrvId: 0,
@@ -609,9 +609,9 @@ const io2gui_app = new Vue({
           this.$root.ftSrcREGEX='';
           this.$root.ftSrcType=table;
           this.$root.ftSrcURLIXFR='';
-          this.$root.ftSrcMaxIOC=0;
-          this.$root.ftSrcHotCacheAXFR=900;
-          this.$root.ftSrcHotCacheIXFR=0;
+          this.$root.ftSrcMaxIOC='0';
+          this.$root.ftSrcHotCacheAXFR='900';
+          this.$root.ftSrcHotCacheIXFR='0';
           this.$root.ftSrcTitle=(table=="sources")?"Source":"Whitelist";
           this.$root.editRow={};
           this.$root.$emit('bv::show::modal', 'mConfEditSources');
@@ -1218,6 +1218,7 @@ const io2gui_app = new Vue({
     },
 
     ImportConfigLine: function (ev) {
+      //ftImpAction=0;
       ImportIOC2RPZ(this,this.ftImportRec);
     },
 
@@ -1530,6 +1531,9 @@ async function ImportIOC2RPZ(vm,txt){//e.target.result
               vm.ftSrcId=(WLAll[vm.ftImpPrefix+m[1]] && vm.ftImpAction==1)?WLAll[vm.ftImpPrefix+m[1]]:-1;
               vm.ftSrcName=vm.ftImpAction!=2?vm.ftImpPrefix+m[1]:(WLAll[m[1]] && vm.ftImpAction==2)?vm.ftImpPrefix+m[1]:m[1];
               vm.ftSrcURL=m[2]; vm.ftSrcREGEX=m[4]!==undefined?m[4]:m[3]; vm.ftSrcURLIXFR="";
+              vm.ftSrcMaxIOC='0';
+              vm.ftSrcHotCacheAXFR='900';
+              vm.ftSrcHotCacheIXFR='0';
               WL[vm.ftSrcName]=vm.ftSrcName;
               WL[m[1]]=vm.ftSrcName;
               vm.ftSrcType='whitelists';
@@ -1543,6 +1547,9 @@ async function ImportIOC2RPZ(vm,txt){//e.target.result
               vm.ftSrcId=(SrcAll[vm.ftImpPrefix+m[1]] && vm.ftImpAction==1)?SrcAll[vm.ftImpPrefix+m[1]]:-1;
               vm.ftSrcName=vm.ftImpAction!=2?vm.ftImpPrefix+m[1]:(SrcAll[m[1]] && vm.ftImpAction==2)?vm.ftImpPrefix+m[1]:m[1];
               vm.ftSrcURL=m[2]; vm.ftSrcURLIXFR=m[3]; vm.ftSrcREGEX=m[5]!==undefined?m[5]:m[4];
+              vm.ftSrcMaxIOC='0';
+              vm.ftSrcHotCacheAXFR='900';
+              vm.ftSrcHotCacheIXFR='0';
               Src[vm.ftSrcName]=vm.ftSrcName;
               Src[m[1]]=vm.ftSrcName;
               vm.ftSrcType='sources';
@@ -1551,6 +1558,40 @@ async function ImportIOC2RPZ(vm,txt){//e.target.result
               Src[m[1]]=(SrcAll[vm.ftImpPrefix+m[1]] && vm.ftImpAction!=2)?vm.ftImpPrefix+m[1]:(SrcAll[m[1]] && vm.ftImpAction==2)?vm.ftImpPrefix+m[1]:m[1];
             };
           };
+//new format
+          if (m = l.match(/^{whitelist,{"([^"]+)","([^"]+)",(none|"(.*)"),"([^"]*)",([0-9]+),([0-9]+),([0-9]+)}}\.(\t* *| *\t*%.*)$/)){
+            if (vm.ftImpAction==1 || (vm.ftImpAction==2 && (!WLAll[m[1]] || (!WLAll[vm.ftImpPrefix+m[1]] && vm.ftImpPrefix)))|| (vm.ftImpAction==0 && (!WLAll[vm.ftImpPrefix+m[1]]))) {
+              vm.ftSrcId=(WLAll[vm.ftImpPrefix+m[1]] && vm.ftImpAction==1)?WLAll[vm.ftImpPrefix+m[1]]:-1;
+              vm.ftSrcName=vm.ftImpAction!=2?vm.ftImpPrefix+m[1]:(WLAll[m[1]] && vm.ftImpAction==2)?vm.ftImpPrefix+m[1]:m[1];
+              vm.ftSrcURL=m[2]; vm.ftSrcREGEX=m[4]!==undefined?m[4]:m[3]; vm.ftSrcURLIXFR="";
+              vm.ftSrcMaxIOC=m[6];
+              vm.ftSrcHotCacheAXFR=m[7];
+              vm.ftSrcHotCacheIXFR=m[8];
+              WL[vm.ftSrcName]=vm.ftSrcName;
+              WL[m[1]]=vm.ftSrcName;
+              vm.ftSrcType='whitelists';
+              await vm.tblMgmtSrcRecord(ev,'whitelists');
+            }else{
+              WL[m[1]]=(WLAll[vm.ftImpPrefix+m[1]] && vm.ftImpAction!=2)?vm.ftImpPrefix+m[1]:(WLAll[m[1]] && vm.ftImpAction==2)?vm.ftImpPrefix+m[1]:m[1];
+            };
+          };
+          if (m = l.match(/^{source,{"([^"]+)","([^"]+)","([^"]*)",(none|"(.*)"),"([^"]*)",([0-9]+),([0-9]+),([0-9]+)}}\.(\t* *| *\t*%.*)$/)){
+            if (vm.ftImpAction==1 || (vm.ftImpAction==2 && (!SrcAll[m[1]] || (!SrcAll[vm.ftImpPrefix+m[1]] && vm.ftImpPrefix)))|| (vm.ftImpAction==0 && (!SrcAll[vm.ftImpPrefix+m[1]]))) {
+              vm.ftSrcId=(SrcAll[vm.ftImpPrefix+m[1]] && vm.ftImpAction==1)?SrcAll[vm.ftImpPrefix+m[1]]:-1;
+              vm.ftSrcName=vm.ftImpAction!=2?vm.ftImpPrefix+m[1]:(SrcAll[m[1]] && vm.ftImpAction==2)?vm.ftImpPrefix+m[1]:m[1];
+              vm.ftSrcURL=m[2]; vm.ftSrcURLIXFR=m[3]; vm.ftSrcREGEX=m[5]!==undefined?m[5]:m[4];
+              vm.ftSrcMaxIOC=m[7];
+              vm.ftSrcHotCacheAXFR=m[8];
+              vm.ftSrcHotCacheIXFR=m[9];
+              Src[vm.ftSrcName]=vm.ftSrcName;
+              Src[m[1]]=vm.ftSrcName;
+              vm.ftSrcType='sources';
+              await vm.tblMgmtSrcRecord(ev,'sources');
+            }else{
+              Src[m[1]]=(SrcAll[vm.ftImpPrefix+m[1]] && vm.ftImpAction!=2)?vm.ftImpPrefix+m[1]:(SrcAll[m[1]] && vm.ftImpAction==2)?vm.ftImpPrefix+m[1]:m[1];
+            };
+          };
+
         };
 
         await sleep(1000); //SQLite is too slow
