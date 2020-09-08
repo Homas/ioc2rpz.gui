@@ -7,11 +7,16 @@ IO2_ROOT="/opt/ioc2rpz.gui"
 ####check if sqlite db exists io2cfg/io2db.sqlite
 if [ ! -f ${IO2_ROOT}/www/io2cfg/io2db.sqlite ]; then
     #DEFAULT_ROUTE=$(ip route show default | awk '/default/ {print $3}')
+    echo "creating DB"
     /usr/bin/php ${IO2_ROOT}/scripts/init_db.php 2>&1
     chmod 660 ${IO2_ROOT}/www/io2cfg/io2db.sqlite
     chown apache:root ${IO2_ROOT}/www/io2cfg/io2db.sqlite
     chmod 775 ${IO2_ROOT}/www/io2cfg
     chown root:apache ${IO2_ROOT}/www/io2cfg
+  else
+    echo "upgrading DB if needed"
+    /usr/bin/php ${IO2_ROOT}/scripts/upgrade_db.php 2>&1
+
 fi
 
 ####check if ssl certificates were provided
@@ -72,10 +77,10 @@ EOF
 cat /tmp/$SYSUSER | crontab -u $SYSUSER -
 rm -rf /tmp/$SYSUSER
 
-fi 
+fi
 
 ###
-###Comment out the following lines if you are going to use the script to set up ioc2rpz.gui and use w/o a container 
+###Comment out the following lines if you are going to use the script to set up ioc2rpz.gui and use w/o a container
 ###
 ###start cron & apache2
 crond

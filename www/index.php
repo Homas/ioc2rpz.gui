@@ -19,7 +19,7 @@
 
     <!-- Docker_Comm_Start -->
 			<link type="text/css" rel="stylesheet" href="//unpkg.com/bootstrap/dist/css/bootstrap.min.css"/>
-			<link type="text/css" rel="stylesheet" href="//unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.css"/>    
+			<link type="text/css" rel="stylesheet" href="//unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.css"/>
   		<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css">
     <!-- Docker_Comm_End -->
 
@@ -33,14 +33,14 @@
   <div id="app" fluid class="h-100 d-flex flex-column" v-cloak>
     <div id="navbar" v-cloak>
     <b-navbar toggleable="md" type="dark" class="menu-bkgr">
-    
+
       <b-navbar-toggle target="nav_collapse"></b-navbar-toggle>
-    
+
       <b-navbar-brand href="#"><h2>ioc2rpz.gui</h2></b-navbar-brand>
-    
+
       <b-collapse is-nav id="nav_collapse">
         <b-navbar-nav>
- <!--   
+ <!--
           <b-nav-item href="#/dash/">Dashboard</b-nav-item>
           <b-nav-item href="#/cfg/">Configuration</b-nav-item>
   -->
@@ -55,7 +55,7 @@
         <b-navbar-nav class="ml-auto">
           <b-nav-form><b-button variant="warning" v-show="publishUpdates" @click.stop="pushUpdatestoSRV('all')">Publish configuration</b-button></b-nav-form>
           <div class="spacer"></div>
-    
+
 <!--
           <b-nav-form>
             <b-form-input class="mr-sm-2" type="text" placeholder="Search"></b-form-input>
@@ -66,7 +66,7 @@
             <b-dropdown-item href="#">ioc2rpz Wiki</b-dropdown-item>
             <b-dropdown-item href="#">ioc2rpz.gui Wiki</b-dropdown-item>
           </b-nav-item-dropdown>
-    
+
           <b-nav-item-dropdown text="Lang" right>
             <b-dropdown-item href="#">EN</b-dropdown-item>
             <b-dropdown-item href="#">RU</b-dropdown-item>
@@ -74,7 +74,7 @@
             <b-dropdown-item href="#">ES</b-dropdown-item>
             <b-dropdown-item href="#">FR</b-dropdown-item>
           </b-nav-item-dropdown>
--->    
+-->
           <b-nav-item-dropdown right>
             <!-- Using button-content slot -->
             <template slot="button-content">
@@ -86,11 +86,11 @@
             <b-dropdown-item-button @click.stop="signOut">Sign out</b-dropdown-item-button>
           </b-nav-item-dropdown>
         </b-navbar-nav>
-    
+
       </b-collapse>
     </b-navbar>
   </div>
-    
+
   <div id="ConfApp" class="h-100 d-flex flex-column" v-cloak>
     <b-container fluid  class="h-100 d-flex flex-column" v-cloak>
         <b-tabs ref="tabs_menu" pills vertical nav-wrapper-class="menu-bkgr h-100" class="h-100 corners" content-class="curl_angels" :value="cfgTab" @input="changeTab" v-cloak>
@@ -112,8 +112,8 @@
             </template>
             <div>
               <b-row>
-                <b-col md="12">             
-                  
+                <b-col md="12">
+
                   <b-table :items="get_tables" id="io2tbl_servers" ref="io2tbl_servers" :fields="servers_fields" api-url="/io2data.php/servers" no-border-collapse striped hover small :filter="servers_filter" responsive :sticky-header="`${logs_height}px`">
                     <template v-slot:table-busy><div class="text-center text-second m-0 p-0"><b-spinner class="align-middle"></b-spinner>&nbsp;&nbsp;<strong>Loading...</strong></div></template>
                     <template v-slot:cell(actions_e)="row">
@@ -123,15 +123,15 @@
                       <b-button size="sm" @click.stop="mgmtRec('edit', 'servers', row, $event.target)" v-b-tooltip.hover.bottom title="Edit" variant="outline-secondary"><i class="fa fa-pencil-alt"></i></b-button>
                       <b-button size="sm" @click.stop="requestDelete('servers',row)" class="" v-b-tooltip.hover.bottom title="Delete" variant="outline-secondary"><i class="fa fa-times-circle"></i></b-button>
                     </template>
-              
+
                     <template v-slot:cell(disabled)="row">
                      <b-form-checkbox unchecked-value=0 value=1 disabled :checked="row.item.disabled"/>
                     </template>
-                
+
                     <template v-slot:cell(mgmt)="row">
                       <b-form-checkbox unchecked-value=0 value=1 disabled :checked="row.item.mgmt"/>
                     </template>
-                
+
                   </b-table>
                 </b-col>
               </b-row>
@@ -156,7 +156,7 @@
             <template slot="title"><i class="fas fa-users"></i>&nbsp;&nbsp;Key groups</template>
 <!-- TKeys Groups -->
 
-					<div class="v-spacer"></div>							
+					<div class="v-spacer"></div>
 
             <b-card body-class="p-2">
               <template slot="header">
@@ -172,23 +172,23 @@
               </template>
               <div>
                 <b-row>
-                  <b-col md="12">             
-                    
+                  <b-col md="12">
+
                     <b-table :items="get_tables" id="io2tbl_tkeys_groups" ref="io2tbl_tkeys_groups" :fields="tkeys_groups_fields" api-url="/io2data.php/tkeys_groups" no-border-collapse striped hover small :filter="servers_filter" responsive :sticky-header="`${logs_height}px`">
                       <template v-slot:table-busy><div class="text-center text-second m-0 p-0"><b-spinner class="align-middle"></b-spinner>&nbsp;&nbsp;<strong>Loading...</strong></div></template>
                       <template v-slot:cell(actions_e)="row">
                         <b-button size="sm" @click.stop="mgmtRec('edit', 'tkeys_groups', row, $event.target)" v-b-tooltip.hover.bottom title="Edit" variant="outline-secondary"><i class="fa fa-pencil-alt"></i></b-button>
                         <b-button size="sm" @click.stop="requestDelete('tkeys_groups',row)" class="" v-b-tooltip.hover.bottom title="Delete" variant="outline-secondary"><i class="fa fa-times-circle"></i></b-button>
                       </template>
-                
+
                       <template v-slot:cell(disabled)="row">
                        <b-form-checkbox unchecked-value=0 value=1 disabled :checked="row.item.disabled"/>
                       </template>
-                  
+
                       <template v-slot:cell(mgmt)="row">
                         <b-form-checkbox unchecked-value=0 value=1 disabled :checked="row.item.mgmt"/>
                       </template>
-                  
+
                     </b-table>
                   </b-col>
                 </b-row>
@@ -198,11 +198,11 @@
 <!-- TKeys Groups -->
           </b-tab>
 
-          
+
           <b-tab table="tkeys"href="#/cfg/tkeys" >
             <template slot="title"><i class="fas fa-key"></i>&nbsp;&nbsp;TSIG keys</template>
 <!-- TKeys -->
-					<div class="v-spacer"></div>							
+					<div class="v-spacer"></div>
           <b-card body-class="p-2">
             <template slot="header">
               <b-row>
@@ -217,8 +217,8 @@
             </template>
             <div>
               <b-row>
-                <b-col md="12">             
-                  
+                <b-col md="12">
+
                   <b-table :items="get_tables" id="io2tbl_tkeys" ref="io2tbl_tkeys" :fields="tkeys_fields" api-url="/io2data.php/tkeys" no-border-collapse striped hover small :filter="servers_filter" responsive :sticky-header="`${logs_height}px`">
                     <template v-slot:table-busy><div class="text-center text-second m-0 p-0"><b-spinner class="align-middle"></b-spinner>&nbsp;&nbsp;<strong>Loading...</strong></div></template>
                     <template v-slot:cell(actions_e)="row">
@@ -226,15 +226,15 @@
                       <b-button size="sm" @click.stop="mgmtRec('edit', 'tkeys', row, $event.target)" v-b-tooltip.hover.bottom title="Edit" variant="outline-secondary"><i class="fa fa-pencil-alt"></i></b-button>
                       <b-button size="sm" @click.stop="requestDelete('tkeys',row)" class="" v-b-tooltip.hover.bottom title="Delete" variant="outline-secondary"><i class="fa fa-times-circle"></i></b-button>
                     </template>
-              
+
                     <template v-slot:cell(disabled)="row">
                      <b-form-checkbox unchecked-value=0 value=1 disabled :checked="row.item.disabled"/>
                     </template>
-                
+
                     <template v-slot:cell(mgmt)="row">
                       <b-form-checkbox unchecked-value=0 value=1 disabled :checked="row.item.mgmt"/>
                     </template>
-                
+
                   </b-table>
                 </b-col>
               </b-row>
@@ -246,7 +246,7 @@
           <b-tab table="whitelists" href='#/cfg/whitelists'>
             <template slot="title"><i class="fas fa-list-alt"></i>&nbsp;&nbsp;Whitelists</template>
 <!-- Whitelists -->
-            <div class="v-spacer"></div>							
+            <div class="v-spacer"></div>
             <b-card body-class="p-2">
               <template slot="header">
                 <b-row>
@@ -261,8 +261,8 @@
               </template>
               <div>
                 <b-row>
-                  <b-col md="12">             
-                    
+                  <b-col md="12">
+
                     <b-table :items="get_tables" id="io2tbl_whitelists" ref="io2tbl_whitelists" :fields="whitelists_fields" api-url="/io2data.php/whitelists" no-border-collapse striped hover small :filter="servers_filter" responsive :sticky-header="`${logs_height}px`">
                       <template v-slot:table-busy><div class="text-center text-second m-0 p-0"><b-spinner class="align-middle"></b-spinner>&nbsp;&nbsp;<strong>Loading...</strong></div></template>
                       <template v-slot:cell(actions_e)="row">
@@ -271,8 +271,8 @@
                         <b-button size="sm" @click.stop="mgmtRec('clone', 'whitelists', row, $event.target)" v-b-tooltip.hover.bottom title="Clone" variant="outline-secondary"><i class="fa fa-clone"></i></b-button>
                         <b-button size="sm" @click.stop="requestDelete('whitelists',row)" class="" v-b-tooltip.hover.bottom title="Delete" variant="outline-secondary"><i class="fa fa-times-circle"></i></b-button>
                       </template>
-  
-                  
+
+
                     </b-table>
                   </b-col>
                 </b-row>
@@ -301,8 +301,8 @@
               </template>
               <div>
                 <b-row>
-                  <b-col md="12">             
-                    
+                  <b-col md="12">
+
                     <b-table :items="get_tables" id="io2tbl_sources" ref="io2tbl_sources" :fields="sources_fields" api-url="/io2data.php/sources" no-border-collapse striped hover small responsive :filter="servers_filter" responsive :sticky-header="`${logs_height}px`">
                       <template v-slot:table-busy><div class="text-center text-second m-0 p-0"><b-spinner class="align-middle"></b-spinner>&nbsp;&nbsp;<strong>Loading...</strong></div></template>
                       <template v-slot:cell(actions_e)="row">
@@ -312,7 +312,7 @@
                         <b-button size="sm" @click.stop="requestDelete('sources',row)" class="" v-b-tooltip.hover.bottom title="Delete" variant="outline-secondary"><i class="fa fa-times-circle"></i></b-button>
                       </template>
 
-                  
+
                     </b-table>
                   </b-col>
                 </b-row>
@@ -339,8 +339,8 @@
               </template>
               <div>
                 <b-row>
-                  <b-col md="12">             
-                    
+                  <b-col md="12">
+
                     <b-table :items="get_tables" id="io2tbl_rpzs" ref="io2tbl_rpzs" :fields="rpzs_fields" api-url="/io2data.php/rpzs" no-border-collapse striped hover small :filter="servers_filter" responsive :sticky-header="`${logs_height}px`">
                       <template v-slot:table-busy><div class="text-center text-second m-0 p-0"><b-spinner class="align-middle"></b-spinner>&nbsp;&nbsp;<strong>Loading...</strong></div></template>
                       <template v-slot:cell(actions_e)="row">
@@ -349,25 +349,25 @@
                         <b-button size="sm" @click.stop="mgmtRec('clone', 'rpzs', row, $event.target)" v-b-tooltip.hover.bottom title="Clone" variant="outline-secondary"><i class="fa fa-clone"></i></b-button>
                         <b-button size="sm" @click.stop="requestDelete('rpzs',row)" class="" v-b-tooltip.hover.bottom title="Delete" variant="outline-secondary"><i class="fa fa-times-circle"></i></b-button>
                       </template>
-                  
+
                       <template v-slot:cell(mgmt)="row">
                         <b-form-checkbox unchecked-value=0 value=1 disabled :checked="row.item.mgmt"/>
                       </template>
-  
+
                       <template v-slot:cell(wildcard)="row">
                         <b-form-checkbox unchecked-value=0 value=1 disabled :checked="row.item.wildcard"/>
-                      </template>                
+                      </template>
                      <template v-slot:cell(cache)="row" >
                         <b-form-checkbox unchecked-value=0 value=1 disabled :checked="row.item.cache"/>
                       </template>
                       <template v-slot:cell(update)="row">
                         {{ row.item.axfr_update }}/{{ row.item.ixfr_update }}
                       </template>
-                
+
                       <template v-slot:cell(disabled)="row">
                        <b-form-checkbox unchecked-value=0 value=1 disabled :checked="row.item.disabled"/>
                       </template>
-  
+
                       <template v-slot:cell(sources_list)="row">
                         <div v-if="row.item.sources.length<4">
                           <div v-for='item in row.item.sources'>
@@ -382,7 +382,7 @@
                               </div>
                            </b-tooltip>
                         </div>
-                      </template>                
+                      </template>
                       <template v-slot:cell(servers_list)="row">
                         <div v-if="row.item.servers.length<4">
                           <div v-for='item in row.item.servers'>
@@ -397,9 +397,9 @@
                               </div>
                            </b-tooltip>
                         </div>
-                      </template>                
-  
-                      
+                      </template>
+
+
                     </b-table>
                   </b-col>
                 </b-row>
@@ -425,7 +425,7 @@
 						<!--Users page-->
 
 
-					<div class="v-spacer"></div>							
+					<div class="v-spacer"></div>
 
             <b-card body-class="p-2">
               <template slot="header">
@@ -441,23 +441,23 @@
               </template>
               <div>
                 <b-row>
-                  <b-col md="12">             
-                    
+                  <b-col md="12">
+
                     <b-table :items="get_tables" id="io2tbl_users" ref="io2tbl_users" :fields="users_fields" api-url="/io2data.php/users" no-border-collapse striped hover small :filter="servers_filter" responsive :sticky-header="`${logs_height}px`">
                       <template v-slot:table-busy><div class="text-center text-second m-0 p-0"><b-spinner class="align-middle"></b-spinner>&nbsp;&nbsp;<strong>Loading...</strong></div></template>
                       <template v-slot:cell(actions_e)="row">
                         <b-button size="sm" @click.stop="mgmtRec('edit', 'users', row, $event.target)" v-b-tooltip.hover.bottom title="Edit" variant="outline-secondary"><i class="fa fa-pencil-alt"></i></b-button>
                         <b-button size="sm" @click.stop="requestDelete('users',row)" class="" v-b-tooltip.hover.bottom title="Delete" variant="outline-secondary"><i class="fa fa-times-circle"></i></b-button>
                       </template>
-                
+
                       <template v-slot:cell(disabled)="row">
                        <b-form-checkbox unchecked-value=0 value=1 disabled :checked="row.item.disabled"/>
                       </template>
-                  
+
                       <template v-slot:cell(mgmt)="row">
                         <b-form-checkbox unchecked-value=0 value=1 disabled :checked="row.item.mgmt"/>
                       </template>
-                  
+
                     </b-table>
                   </b-col>
                 </b-row>
@@ -488,7 +488,7 @@
     <b-modal id='mConfDel' centered title="Confirmation required" @ok="tblDeleteRecord(deleteTbl,deleteRec)" ok-title="Confirm" body-class="pt-0 pb-0" v-cloak>
       <span class='text-center'><span v-html="modalMSG"></span></span>
     </b-modal>
-    
+
 <!-- TKey Add/Modify -->
     <b-modal id='mConfEditTSIG' centered title="TSIG Key" @ok="tblMgmtTKeyRecord($event,'tkeys')" body-class="pt-0 pb-0" v-cloak>
       <span class='text-center'>
@@ -538,7 +538,7 @@
       </span>
     </b-modal>
 
-    
+
 <!-- Whitelists/Sources Add/Modify -->
     <b-modal id='mConfEditSources' centered :title="ftSrcTitle" @ok="tblMgmtSrcRecord($event,ftSrcType)" body-class="pt-0 pb-0" size="lg" v-cloak>
       <span class='text-center'>
@@ -554,6 +554,13 @@
           </b-row>
           <b-row>
             <b-col :sm="12" class="form_row"><b-textarea v-model="ftSrcREGEX" :state="validateREGEX('ftSrcREGEX')" :rows="3" ref="formREGEX" :readonly="infoWindow" placeholder="Enter REGEX" /></b-col>
+          </b-row>
+          <b-row>
+            <b-col :sm="3" class="form_row"></b-col>
+            <b-col :sm="2" class="form_row"><b-input v-model.trim="ftSrcMaxIOC" :state="validateInt('ftSrcMaxIOC')" :formatter="formatInt" ref="formSrcMaxIOC" :readonly="infoWindow" placeholder="Max IoCs" v-b-tooltip.hover title="Maximum IoCs (0 - unlimited)"  /></b-col>
+            <b-col :sm="2" class="form_row"><b-input v-model.trim="ftSrcHotCacheAXFR" :state="validateInt('ftSrcHotCacheAXFR')" :formatter="formatInt" ref="formSrcHotCacheAXFR" :readonly="infoWindow" placeholder="Hot cache time (full update)" v-b-tooltip.hover title="Hot cache time (full update)"  /></b-col>
+            <b-col :sm="2" class="form_row"><b-input v-model.trim="ftSrcHotCacheIXFR" :state="validateInt('ftSrcHotCacheIXFR')" :formatter="formatInt" ref="formSrcHotCacheIXFR" :readonly="infoWindow" placeholder="Hot cache time (incremental update)" v-b-tooltip.hover title="Hot cache time (incremental update)"  /></b-col>
+            <b-col :sm="3" class="form_row"></b-col>
           </b-row>
         </div>
       </span>
@@ -630,7 +637,7 @@
               <b-row>
                 <b-col :sm="12" class="form_row"><b-input v-model.trim="ftRPZName" :state="validateHostnameNum('ftRPZName')" :formatter="formatName" ref="formRPZName" :readonly="infoWindow" placeholder="Enter RPZ name"  v-b-tooltip.hover title="RPZ Name" /></b-col>
               </b-row>
-    
+
               <b-row>
                 <b-col :sm="6" class="form_row text-left">
                   <b-form-group :style="{ height: (this.ftRPZSrvsAll.length<4 && ftRPZTKeysAll.length<4?'4':'8')+'em' }" class="items_list" v-b-tooltip.hover title="Servers" >
@@ -678,9 +685,9 @@ local_aaaa=::1
 local_txt=Local TXT record
 local_cname=www.example.com
                   </pre>
-                  
-                </b-popover>  
-  
+
+                </b-popover>
+
                 <b-col :sm="12" class="form_row text-left">
                   <b-textarea id="RPZActionCustom" v-model="ftRPZActionCustom" :state="validateCustomAction(ftRPZActionCustom)" :rows="3" ref="formRPZActionCustom" :readonly="infoWindow" placeholder="Enter local records" :no-resize=true  v-b-tooltip.hover title="Local records" />
                 </b-col>
@@ -709,7 +716,7 @@ local_cname=www.example.com
               </b-row>
             </div>
           </span>
-        </b-tab> 
+        </b-tab>
         <b-tab title="Provision Info">
           <div style="height: 400px;display:block;">
           <span class='text-center'>
@@ -778,13 +785,13 @@ local_cname=www.example.com
                   <span class="bold float-left">You may check the zone availability using the following dig command:</span>
                   <b-form-textarea id="textarea" v-model="ftRPZInfoDig" rows="6" max-rows="9" readonly></b-form-textarea>
                 </b-col>
-              </b-row>              
+              </b-row>
             </div>
           </span>
 
             <span v-html="ftRPZProWindowInfo"></span>
           </div>
-        </b-tab> 
+        </b-tab>
       </b-tabs>
     </b-modal>
 
@@ -792,7 +799,7 @@ local_cname=www.example.com
     <b-modal centered :hide-header="true" :hide-footer="true" :visible="mInfoMSGvis" body-class="text-center">
       <span class='text-center' v-html="msgInfoMSG"></span>
     </b-modal>
- 
+
 <!-- Import ioc2rpz config -->
     <b-modal id='mImportConfig' ref='refImportConfig' centered title="Import ioc2rpz configuration" @ok="ImportConfig()" ok-title="Import" body-class="pt-0 pb-0" size="lg" v-cloak>
       <span class='text-center'>
@@ -822,7 +829,7 @@ local_cname=www.example.com
           </b-row>
         </div>
       </span>
-    </b-modal> 
+    </b-modal>
 
 <!-- import ioc2rpz configuration record -->
     <b-modal id='mImportRec' centered title="Import configuration" @ok="ImportConfigLine($event)" body-class="pt-0 pb-0" size="lg" v-cloak>
@@ -835,7 +842,7 @@ local_cname=www.example.com
       </span>
     </b-modal>
 
- 
+
  <!-- User's profile Modal -->
     <b-modal centered title="Profile" id="mUProfile" ref="refUProfile" body-class="text-center pt-0 pb-0" size="md" v-cloak>
       <span class='text-center'>
@@ -869,7 +876,7 @@ local_cname=www.example.com
             </b-col>
             <b-col :sm="12" class="form_row">
               <b-form-select v-model="ftUPerm" :disabled="infoWindow" :options="UPerm_Options" class="mb-3"/>
-            </b-col>            
+            </b-col>
             <b-col :sm="12" class="form_row">
               <b-input type="password" v-model.trim="ftUPwd" :state="validatePass('ftUPwd')" placeholder="New password"  v-b-tooltip.hover title="Password" />
             </b-col>
@@ -908,7 +915,7 @@ local_cname=www.example.com
       </span>
     </b-modal>
 
-    
+
 <!-- End Modals -->
   </div>
   </div>

@@ -24,14 +24,14 @@ const io2gui_app = new Vue({
         { key: 'group_name', label: 'Group name', sortable: true },
         { key: 'actions_e', label: 'Actions', 'class': 'text-center',  'tdClass': 'width150'}
       ],
-      
+
       tkeys_fields: [
 //        { key: 'rowid', label: '', sortable: true },
         { key: 'name', label: 'Name', sortable: true },
         { key: 'alg', label: 'Algorithm', sortable: true  },
         { key: 'tkey', label: 'TSIG Key', formatter: (value) => { return value.length>45?value.substring(0, 44)+' ...':value; } },
         { key: 'mgmt', label: 'Management', 'class': 'text-center'},
-        //, formatter: (value) => { var cb="<input type='checkbox' "+((value) ? 'checked' : '')+">"; return cb; } 
+        //, formatter: (value) => { var cb="<input type='checkbox' "+((value) ? 'checked' : '')+">"; return cb; }
         { key: 'actions_e', label: 'Actions', 'class': 'text-center',  'tdClass': 'width150'}
       ],
       whitelists_fields: [
@@ -62,7 +62,7 @@ const io2gui_app = new Vue({
         { key: 'disabled', label: 'Disabled', 'class': 'text-center' },
         { key: 'actions_e', label: 'Actions', 'class': 'text-center',  'tdClass': 'width150' }
       ],
-      
+
       //perm loginattempts
       users_fields: [
 //        { key: 'rowid', label: '', sortable: true },
@@ -73,18 +73,18 @@ const io2gui_app = new Vue({
 //        { key: 'lastfailedlogin', label: 'Last Failer Login Attempt', sortable: true, 'tdClass': 'width250'},
         { key: 'actions_e', label: 'Actions', 'class': 'text-center',  'tdClass': 'width150'}
       ],
-      
+
       modalMSG: 'Modal',
       errorMSG: 'Error',
 
       /*
        * TODO check if it possible to move the values to relevant modal forms
        */
-      
+
       deleteRec: 0,
       deleteTbl: '',
 
-      
+
       cfgTab: 0, //Open CFG page
       //tkeys
       ftKeyId: 0,
@@ -95,7 +95,7 @@ const io2gui_app = new Vue({
       tkeys_Alg: ["md5","sha256","sha512"],
       ftTKeysGroups: [],
       ftTKeysAllGroups: [],
-      
+
       //tkey groups
       ftKeyGId: -1,
       ftKeyGName: '',
@@ -108,7 +108,10 @@ const io2gui_app = new Vue({
       ftSrcREGEX: '',
       ftSrcType: "sources",
       ftSrcTitle: "Source",
-      
+      ftSrcMaxIOC: 0,
+      ftSrcHotCacheAXFR: 900,
+      ftSrcHotCacheIXFR: 0,
+
       //Servers
       ftSrvId: 0,
       ftSrvName: '',
@@ -149,7 +152,7 @@ const io2gui_app = new Vue({
       ftRPZCache: 0,
       ftRPZWildcard: 0,
       ftRPZAction: "nxdomain", //nx/nxdomain, nod/nodata, pass/passthru, drop, tcp/tcp-only, loc/local records
-      ftRPZActionCustom: "", 
+      ftRPZActionCustom: "",
       ftRPZIOCType: "mixed", // m/mixed, f/fqdn, i/ip
       ftRPZAXFR: '',
       ftRPZIXFR: '',
@@ -169,18 +172,18 @@ const io2gui_app = new Vue({
         { value: 'fqdn', text: 'fqdn' },
         { value: 'ip', text: 'ip' },
       ],
-      
-      ftRPZProWindow: "",      
+
+      ftRPZProWindow: "",
       ftRPZProWindowInfo: "",
       RPZtabI: 0,
 
       infoWindow: true,
       publishUpdates: false, //TODO save in cookie
       editRow: {},
-      
+
       mInfoMSGvis: false,
       msgInfoMSG: '',
-      
+
       ftImpServName: '',
       ftImpServPubIP: '',
       ftImpServMGMTIP: '',
@@ -188,7 +191,7 @@ const io2gui_app = new Vue({
       ftImpFileDesc: '',
       ftImpPrefix: '',
       ftImpAction: 0,
-      
+
       ftUId: 0,
       ftUName: '',
       ftUNameProf: '',
@@ -202,16 +205,16 @@ const io2gui_app = new Vue({
         { value: 1000, text: 'Read Only', disabled: true},
       ],
 
-      
+
       ftExRPZ: [],
       ftExRPZAll: [],
       ftExFormat: '',
-      
+
       //export RPZ configs
       rpzExportSAll: false,
       rpzExportIBView: 'default',
-      rpzExportIBMember: 'infoblox.localdomain',      
-      
+      rpzExportIBMember: 'infoblox.localdomain',
+
       ftImportRec: '',
 
       RpiDNSList: [],
@@ -245,10 +248,10 @@ const io2gui_app = new Vue({
 				{ id: 'drop', value: 'drop', text: 'Block - Drop', type: "deny" },
 				{ id: 'disabled', value: 'disabled', text: 'Log only', type: "any" },
 			],
-			
+
     tRPZRpiDNS_fields: [
         { key: 'rowid', label: '', sortable: false,  'tdClass':'width005' },
-        { key: 'name', label: 'Name', sortable: false, }, //250  'tdClass': 'width200' 
+        { key: 'name', label: 'Name', sortable: false, }, //250  'tdClass': 'width200'
         { key: 'action', label: 'Action', sortable: false,  'tdClass': 'width200' }, //250
 			],
 			addRpiDNSRulesCount: 0,
@@ -258,21 +261,21 @@ const io2gui_app = new Vue({
 			addRpiDNSRedirect: "",
 			addRpiDNSRedirectURL: "",
       addRpiDNSType: "",
-      addRpiDNSTypeIPNet: "",      
+      addRpiDNSTypeIPNet: "",
 			addRpiDNSLogs: "",
 			addRpiDNSLogsURL: "",
 			addRpiDNSCheckConf: true,
 			RpiDNSLabel: "Add RpiDNS",
 			RpiDNSBttn: "Add",
-			addRpiDNSid: 0,      
-      
+			addRpiDNSid: 0,
+
       ftRPZInfoServerName:'',
       ftRPZInfoServerIP:'',
       ftRPZInfoTKeyName:'',
       ftRPZInfoTKeyAlg:'',
       ftRPZInfoTKey:'',
       ftRPZInfoDig:'',
-      
+
 //          }
   },
 
@@ -281,13 +284,13 @@ const io2gui_app = new Vue({
       var a=window.location.hash.split(/#|\//).filter(String);
       switch (a[0]){
         case "tabs_menu":
-          this.cfgTab=parseInt(a[1]);        
+          this.cfgTab=parseInt(a[1]);
       };
     };
     this.ftUName=jsUser;
     this.ftUNameProf=jsUser;
 
-		update_window_size(this);		
+		update_window_size(this);
     this.$nextTick(() => {
       window.addEventListener('resize', () => {update_window_size(this);});
     });
@@ -295,19 +298,19 @@ const io2gui_app = new Vue({
     if (window.localStorage.getItem('publishUpdates')){
        this.publishUpdates=(window.localStorage.getItem('publishUpdates')=="true");
     }
-    
+
     this.refreshRpiDNS();
-    
+
   },
-  
-  
+
+
   computed: {
 
   },
-  
+
   methods: {
-  
-  
+
+
     refreshRpiDNS: function(){
       let obj=this;
       axios.get('/io2data.php/rpidns').then(function (response) {
@@ -329,7 +332,7 @@ const io2gui_app = new Vue({
       })
     },
 
- 
+
 		rpidns_add: function(id){
       this.clear_rpidns_modal();
       this.RpiDNSLabel="Add RpiDNS";
@@ -338,7 +341,7 @@ const io2gui_app = new Vue({
       let doc=this;
       this.$emit('bv::show::modal', 'mAddRpiDNS');
 		},
-		
+
 		rpidns_edit: function(id){
 			this.clear_rpidns_modal();
 			this.addRpiDNSid=id;
@@ -347,7 +350,7 @@ const io2gui_app = new Vue({
 			this.addRpiDNSRulesCount=0;
 			var obj=this;
 			let El = this.RpiDNSList.find(item => {return item.id === id});
-			
+
 			this.addRpiDNSName=El.name;
 			this.addRpiDNSModel=this.addRpiDNSOptions.find(item => {return item.id === El.model}).value;
 			this.addRpiDNSServer=this.addRpiDNSServerOptions.find(item => {return item.id === El.dns}).value;
@@ -360,10 +363,10 @@ const io2gui_app = new Vue({
       this.addRpiDNSTypeIPNet=El.dns_ipnet === undefined ? "":El.dns_ipnet;
 
 			El.rpz.forEach(function(item){if (obj.$refs.io2tbl_rpzs.localItems.filter(e => e.name === item.feed).length > 0) {obj.ftRpiDNSRPZAction[item.feed]=item.action;obj.ftRpiDNSRPZ.push(item.feed);}});
-			
+
 			this.addRpiDNSComment=El.comment;
 			this.$emit('bv::show::modal', 'mAddRpiDNS')
-		},  
+		},
 
     validateHostnameIP: function(vrbl){
 			return this.$data[vrbl].length == 0 ? null:checkHostIP(this.$data[vrbl]);
@@ -372,19 +375,19 @@ const io2gui_app = new Vue({
     validateHostnameIPNet: function(vrbl){
 			return this.$data[vrbl].length == 0 ? null:checkHostIPNet(this.$data[vrbl]);
 		},
- 
+
     formatHostnameIPNet: function(val,e){
       let a = val.replace(/[^a-zA-Z0-9\.\-\:\/\/\,]/g,"");
       if (e) e.currentTarget.value = a; // a bug in Vue.JS?
       return a;
     },
-		
+
     formatHostnameIP: function(val,e){
       let a = val.replace(/[^a-zA-Z0-9\.\-\:\/]/g,"");
       if (e) e.currentTarget.value = a; // a bug in Vue.JS?
       return a;
-    }, 
-  
+    },
+
 		clear_rpidns_modal: function (){
 			this.addRpiDNSName="";
 			this.addRpiDNSModel=null;
@@ -402,24 +405,24 @@ const io2gui_app = new Vue({
 			this.addRpiDNSLogsURL="";
       this.addRpiDNSType="primary";
       this.addRpiDNSTypeIPNet="";
-		},  
-  
-		add_rpidns: function(event){			
+		},
+
+		add_rpidns: function(event){
 			if (this.validateHostnameOnly('addRpiDNSName') && this.ftRpiDNSRPZ.length>0 && this.addRpiDNSModel !==null && this.addRpiDNSServer !==null && ((this.addRpiDNSType=='secondary' && checkIP(this.addRpiDNSTypeIPNet)) || this.addRpiDNSType=='primary')){
 				let doc=this;
 				var data,promise;
 				let rpzfeeds = [];
 				this.ftRpiDNSRPZ.forEach(function(item){rpzfeeds.push({"feed":item,"action":doc.ftRpiDNSRPZAction[item]})});
-				
+
 				data={id:this.addRpiDNSid, name: this.addRpiDNSName, comment: this.addRpiDNSComment, model:this.addRpiDNSModel.type, dns:this.addRpiDNSServer.type, updconf: this.addRpiDNSCheckConf, rpz: JSON.stringify(rpzfeeds), redirect:this.addRpiDNSRedirect, redirect_cname:this.addRpiDNSRedirectURL, logging:this.addRpiDNSLogs, logging_host:this.addRpiDNSLogsURL, dns_type:this.addRpiDNSType, dns_ipnet:this.addRpiDNSTypeIPNet};
-      
-				if (this.RpiDNSBttn=="Add") promise = axios.post('/io2data.php/rpidns',data); else promise = axios.put('/io2data.php/rpidns',data);					
+
+				if (this.RpiDNSBttn=="Add") promise = axios.post('/io2data.php/rpidns',data); else promise = axios.put('/io2data.php/rpidns',data);
 				var items=promise.then((data) => {
 					if (data.data[0].status=="success") {
 						doc.clear_rpidns_modal();
 						doc.refreshRpiDNS();
 					}else{
-						doc.showInfo(data.data[0].description,3);					
+						doc.showInfo(data.data[0].description,3);
 					}
 				}).catch(error => {
 					doc.showInfo('Unknown error!!!',3);
@@ -427,16 +430,16 @@ const io2gui_app = new Vue({
 
 			}else{
 				event.preventDefault();
-        
+
         if (!this.validateHostnameOnly('addRpiDNSName') || this.addRpiDNSName.length==0) this.showInfo('Please set correct RpiDNS name',3);//	this.$refs.refAddRpiDNSName.focus();
         else if (this.addRpiDNSType=='secondary' && !checkIP(this.addRpiDNSTypeIPNet)) this.showInfo('Please set a primary DNS server IP',3);
-        else if (this.addRpiDNSModel ==null) this.showInfo('Please select RpiDNS model',3);	
-        else if (this.addRpiDNSServer ==null) this.showInfo('Please select DNS server software',3);	
-        else if (this.ftRpiDNSRPZ.length == 0) this.showInfo('Please select RPZ feeds',3);	
-        else this.showInfo('Please define all fields',3);				
+        else if (this.addRpiDNSModel ==null) this.showInfo('Please select RpiDNS model',3);
+        else if (this.addRpiDNSServer ==null) this.showInfo('Please select DNS server software',3);
+        else if (this.ftRpiDNSRPZ.length == 0) this.showInfo('Please select RPZ feeds',3);
+        else this.showInfo('Please define all fields',3);
 			};
-			
-		},  
+
+		},
 
 		rpidns_delete: function(rpidns_id){
 
@@ -462,23 +465,23 @@ const io2gui_app = new Vue({
 							if (data.data[0].status=="success") {
 								doc.refreshRpiDNS();
 							}else{
-								doc.showInfo(data.data[0].description,3);						
+								doc.showInfo(data.data[0].description,3);
 							}
 						}).catch(error => {
 							doc.showInfo('Unknown error!!!',3);
 						})
-		
+
 					};
-					
+
 			});
-		},    
-    
-    
+		},
+
+
 		addRpiDNSFeedActionComp: function (type){
 			//return this.addRpiDNSFeedAction.filter(item => (item.type == "allow" && (type=="w"||type=="v"))||item.type == "any"||(item.type == "deny" && type!="w" && type!="v"));
       return this.addRpiDNSFeedAction;
-		},  
-  
+		},
+
     validateCustomAction:function(CustomActions) {
      let good=CustomActions==''?null:true;
      let gotcname=0; //only one CNAME rule is allowed
@@ -501,7 +504,7 @@ const io2gui_app = new Vue({
           break;
         case "local_txt":
           good = good && typeof rule[1] !== 'undefined' && rule[1] != "" && true;
-          break;        
+          break;
         default:
           good = good && (action.startsWith("#") || action.startsWith("//") || action=="")
           //check comments which start with # or //
@@ -509,7 +512,7 @@ const io2gui_app = new Vue({
      });
      return good && (gotcname <= 1);
     },
-      
+
     get_tables (obj) {
       let promise = axios.get(obj.apiUrl)
       return promise.then((data) => {
@@ -530,17 +533,17 @@ const io2gui_app = new Vue({
       this.checkAll = false;
       this.totalRows = filteredItems.length;
       this.currentPage = 1;
-    },    
+    },
 
     refreshTbl(table){
       this.$root.$emit('bv::refresh::table', table);
     },
-    
+
     importRec: function (action, table, row, target) {
       this.$root.ftImportRec='';
       this.$root.$emit('bv::show::modal', 'mImportRec');
     },
-  
+
      mgmtRec: function (action, table, row, target) {
       this.$root.infoWindow=action == 'info'?true:false;
       switch (action+' '+table) {
@@ -606,6 +609,9 @@ const io2gui_app = new Vue({
           this.$root.ftSrcREGEX='';
           this.$root.ftSrcType=table;
           this.$root.ftSrcURLIXFR='';
+          this.$root.ftSrcMaxIOC=0;
+          this.$root.ftSrcHotCacheAXFR=900;
+          this.$root.ftSrcHotCacheIXFR=0;
           this.$root.ftSrcTitle=(table=="sources")?"Source":"Whitelist";
           this.$root.editRow={};
           this.$root.$emit('bv::show::modal', 'mConfEditSources');
@@ -622,6 +628,9 @@ const io2gui_app = new Vue({
           this.$root.ftSrcREGEX=row.item.regex;
           this.$root.ftSrcType=table;
           this.$root.ftSrcURLIXFR=(table=="sources")?row.item.url_ixfr:'';
+          this.$root.ftSrcMaxIOC=`${row.item.max_ioc}`;
+          this.$root.ftSrcHotCacheAXFR=`${row.item.hotcache_time}`;
+          this.$root.ftSrcHotCacheIXFR=`${row.item.hotcacheixfr_time}`;
           this.$root.ftSrcTitle=(table=="sources")?"Source":"Whitelist";
           this.$root.editRow=row.item;
           this.$root.$emit('bv::show::modal', 'mConfEditSources');
@@ -676,7 +685,7 @@ const io2gui_app = new Vue({
             tkeys.push(el.rowid);
           });
           this.$root.ftSrvTKeys=tkeys,
-          
+
           this.$root.editRow=row.item;
           this.$root.editRow.mgmt_ips_str=this.$root.ftSrvMGMTIP;
           this.$root.editRow.tkeys_arr=this.$root.ftSrvTKeys;
@@ -691,13 +700,13 @@ const io2gui_app = new Vue({
               if (/DOCTYPE html/.test(reponse.data)){window.location.reload(true);}else{
                 let blob = new Blob([response.data], {type:'text/plain'});
                 let link = document.createElement('a');
-                link.href = window.URL.createObjectURL(blob);               
+                link.href = window.URL.createObjectURL(blob);
                 var sFN=response.headers['content-disposition'].match(/filename="([^"]+)"/)[1];
                 link.download = sFN?sFN:row.item.name+'.conf';
                 link.click();
               };
             }).catch(function (error){alert("export failed")})
-          
+
         break;
         case "add rpzs":
           this.$root.RPZtabI=0;
@@ -722,12 +731,12 @@ const io2gui_app = new Vue({
           this.$root.ftRPZSrc=[];
           this.$root.get_lists('rpz_whitelists','ftRPZWLAll');
           this.$root.ftRPZWL=[];
-          
+
           this.$root.ftRPZAction="nxdomain";
-          this.$root.ftRPZActionCustom=""; 
-          this.$root.ftRPZIOCType="mixed";          
+          this.$root.ftRPZActionCustom="";
+          this.$root.ftRPZIOCType="mixed";
           this.$root.ftRPZNotify="";
-          
+
           this.$root.ftRPZDisabled=0;
 
           this.$root.editRow={};
@@ -754,15 +763,15 @@ const io2gui_app = new Vue({
           this.$root.ftRPZDisabled=row.item.disabled;
           let vm=this;
           var RPZNotify='';
-          
+
           let dig_srv="";
           let dig_tkey="";
-          
+
           row.item.notify.forEach(function(el) {
             RPZNotify+=el.notify+' ';
           });
           this.$root.ftRPZNotify=RPZNotify.trim();
-          
+
 //          this.$root.ftRPZProWindowInfo=`<div class="form_row"><b>RPZ Name</b>: <input type=text readonly id='RPZInfoName' value='${row.item.name}'/> <button v-b-tooltip.hover title="Copy" class="btn btn-outline-secondary btn-sm" onclick="copyToClipboardID('RPZInfoName')"><i class="fa fa-copy"></i></button></div>`;
 
           this.$root.get_lists('rpz_servers','ftRPZSrvsAll');
@@ -775,13 +784,13 @@ const io2gui_app = new Vue({
           this.$root.ftRPZSrvs=list;
 
         this.$root.ftRPZInfoServerName=Array.isArray(row.item.servers) && row.item.servers.length?row.item.servers[0].name:'';
-        this.$root.ftRPZInfoServerIP=Array.isArray(row.item.servers) && row.item.servers.length?row.item.servers[0].pub_ip:'';        
+        this.$root.ftRPZInfoServerIP=Array.isArray(row.item.servers) && row.item.servers.length?row.item.servers[0].pub_ip:'';
 
         this.$root.ftRPZInfoTKeyName=Array.isArray(row.item.tkeys) && row.item.tkeys.length?row.item.tkeys[0].name:'';
         this.$root.ftRPZInfoTKeyAlg=Array.isArray(row.item.tkeys) && row.item.tkeys.length?'hmac-'+row.item.tkeys[0].alg:'';
         this.$root.ftRPZInfoTKey=Array.isArray(row.item.tkeys) && row.item.tkeys.length?row.item.tkeys[0].tkey:'';
 
-          
+
           this.$root.get_lists('rpz_tkeys','ftRPZTKeysAll');
           list=[];
           row.item.tkeys.forEach(function(el) {
@@ -794,8 +803,8 @@ const io2gui_app = new Vue({
 //          vm.$root.ftRPZProWindowInfo+="<br><hr>You may check zone availability using the following dig command:<br>";
 //          vm.$root.ftRPZProWindowInfo+=`<textarea rows="5" style="width:100%;resize: none;" readonly>dig +tcp @${dig_srv} -y ${dig_tkey} ${row.item.name} SOA</textarea>`
 
-          this.$root.ftRPZInfoDig=this.$root.ftRPZInfoServerIP && this.$root.ftRPZInfoTKeyName?"dig +tcp @"+dig_srv+" -y "+dig_tkey+" "+row.item.name+" SOA":'';        
-          
+          this.$root.ftRPZInfoDig=this.$root.ftRPZInfoServerIP && this.$root.ftRPZInfoTKeyName?"dig +tcp @"+dig_srv+" -y "+dig_tkey+" "+row.item.name+" SOA":'';
+
           this.$root.get_lists('rpz_sources','ftRPZSrcAll');
           list=[];
           row.item.sources.forEach(function(el) {
@@ -810,18 +819,18 @@ const io2gui_app = new Vue({
           });
           this.$root.ftRPZWL=list;
 
-          
+
          this.$root.editRow=row.item;
          this.$root.editRow.notify_str=this.$root.ftRPZNotify;
          this.$root.editRow.servers_arr=this.$root.ftRPZSrvs;
          this.$root.editRow.tkeys_arr=this.$root.ftRPZTKeys;
          this.$root.editRow.sources_arr=this.$root.ftRPZSrc;
          this.$root.editRow.whitelists_arr=this.$root.ftRPZWL;
-         
+
          this.$root.$emit('bv::show::modal', 'mConfEditRPZ');
         break;
         default:
-          alert(action+' '+table); //+' ' + row.item.name          
+          alert(action+' '+table); //+' ' + row.item.name
       };
     },
     requestDelete: function (table,row) {
@@ -829,8 +838,8 @@ const io2gui_app = new Vue({
       this.$root.deleteTbl=table;
       this.$root.modalMSG='<b>Do you want to delete '+row.item.name+'?</b>';
       this.$root.$emit('bv::show::modal', 'mConfDel');
-    },   
-    
+    },
+
     validateName: function(vrbl){
       return (this.$data[vrbl].length >= 3 && /^[a-zA-Z0-9\.\-\_]+$/.test(this.$data[vrbl])) ? true : this.$data[vrbl].length == 0 ? null:false;
     },
@@ -838,14 +847,14 @@ const io2gui_app = new Vue({
     validateUName: function(vrbl){
       //todo check if name is unique
       return (this.$data[vrbl].length >= 3 && /^[a-zA-Z0-9\.\-\_]+$/.test(this.$data[vrbl])) ? true : this.$data[vrbl].length == 0 ? null:false;
-    },    
-    
+    },
+
     formatName: function(val,e){
       let a = val.replace(/[^a-zA-Z0-9\.\-\_]/g,"");
       if (e) e.currentTarget.value = a; // a bug in Vue.JS?
       return a;
     },
-    
+
     validateB64: function(vrbl){
       return (this.$data[vrbl].length>16 && /^(?:[A-Za-z0-9\+\/]{4})*(?:[A-Za-z0-9\+\/]{2}==|[A-Za-z0-9\+\/]{3}=)?$/.test(this.$data[vrbl])) ? true : this.$data[vrbl].length == 0 ? null:false;
     },
@@ -855,7 +864,7 @@ const io2gui_app = new Vue({
       if (e) e.currentTarget.value = a; // a bug in Vue.JS?
       return a;
     },
-    
+
     validateInt: function(vrbl){
       return (this.$data[vrbl].length > 0 && /^[0-9]+$/.test(this.$data[vrbl])) ? true : this.$data[vrbl].length == 0 ? null:false;
     },
@@ -869,8 +878,8 @@ const io2gui_app = new Vue({
     validateURL: function (vrbl) {
       return (this.$data[vrbl].length > 0 && checkSourceURL(this.$data[vrbl])) ? true : this.$data[vrbl].length == 0 ? null:false;
     },
- 
-    
+
+
     formatURL: function(val,e){
       let a = val.replace(/[^A-Za-z0-9/=:\?#.\-_&]/g,"");
       if (e) e.currentTarget.value = a; // a bug in Vue.JS?
@@ -892,8 +901,8 @@ const io2gui_app = new Vue({
       let a = val.replace(/[^A-Za-z0-9/=:\?#.-_&]/g,"");
       if (e) e.currentTarget.value = a; // a bug in Vue.JS?
       return a;
-    },    
-    
+    },
+
     validateIXFRURL: function (vrbl) {
       return this.$data[vrbl].length == 0 ? null: (this.validateURL(vrbl) || this.$data[vrbl]=='[:AXFR:]' || (/^\[:AXFR:\]((\?|\&)[;&a-zA-Z0-9\d%_.~+=-]*)?(\[:FTimestamp:\]|\[:ToTimestamp:\])?(\#[-a-zA-Z0-9\d_]*)?(\[:FTimestamp:\]|\[:ToTimestamp:\])?$/.test(this.$data[vrbl])));
     },
@@ -904,16 +913,16 @@ const io2gui_app = new Vue({
       if (e) e.currentTarget.value = a; // a bug in Vue.JS?
       return a;
     },
-    
+
     validateREGEX: function(vrbl){
       //none
       return (this.$data[vrbl].length > 0 && /^.+$/.test(this.$data[vrbl])) ? true : this.$data[vrbl].length == 0 ? null:false;
     },
-    
+
     validateIP: function(vrbl){
       return (this.$data[vrbl].length > 0 && checkIP(this.$data[vrbl])) ? true : this.$data[vrbl].length == 0 ? null:false;
     },
- 
+
     formatIP: function(val,e){
       let a = val.replace(/[^0-9\.:\-]/g,"");
       if (e) e.currentTarget.value = a; // a bug in Vue.JS?
@@ -936,7 +945,7 @@ const io2gui_app = new Vue({
       if (e) e.currentTarget.value = a; // a bug in Vue.JS?
       return a;
     },
-  
+
     validateHostnameIP: function(vrbl){
 			return this.$data[vrbl].length == 0 ? null:checkHostIP(this.$data[vrbl]);
 		},
@@ -944,8 +953,8 @@ const io2gui_app = new Vue({
     validateHostnameIPNet: function(vrbl){
 			return this.$data[vrbl].length == 0 ? null:checkHostIPNet(this.$data[vrbl]);
 		},
-      
-    
+
+
     validateHostname: function(vrbl){
       return (this.$data[vrbl].length > 5 && checkHostName(this.$data[vrbl])) ? true : this.$data[vrbl].length == 0 ? null:false;
     },
@@ -973,7 +982,7 @@ const io2gui_app = new Vue({
       if (e) e.currentTarget.value = a; // a bug in Vue.JS?
       return a;
     },
-    
+
     validatePass: function(pass1){
       return ((this.$data[pass1].length > 7 && /([0-9])/.test(this.$data[pass1]) && /([a-z])/.test(this.$data[pass1]) && /([A-Z])/.test(this.$data[pass1]) && /([!,%,&,@,#,$,^,*,?,_,~,\,,\.])/.test(this.$data[pass1])) || this.$data[pass1].length > 15) ? true : this.$data[pass1].length == 0 ? null:false;
     },
@@ -981,7 +990,7 @@ const io2gui_app = new Vue({
     validatePassMatch: function(pass1, pass2){
       return this.$data[pass1] == this.$data[pass2] ? true : false;
     },
- 
+
     get_lists: function(table,variable) {
       let promise = axios.get('/io2data.php/'+table);
       var items=promise.then((data) => {
@@ -994,7 +1003,7 @@ const io2gui_app = new Vue({
         this.$root.$data[variable]=[];
       })
     },
-    
+
     mgmtTableOk: function (response,obj,table){
       if (response.data.status == "ok"){
         //obj.$root.$refs['io2tbl_'+table].refreshTblKeepPage(table);
@@ -1004,12 +1013,12 @@ const io2gui_app = new Vue({
         alert('sql error while adding '+table);
       };
     },
-    
+
     mgmtTableError: function (errore,obj,table){
       //TODO better error handeling
       alert('error while adding '+table+' ');
     },
-    
+
     /*
      *TODO check if PUT/POST json is valid (escape quotes etc)
      */
@@ -1017,7 +1026,7 @@ const io2gui_app = new Vue({
     tblMgmtTKeyRecord: function (ev,table) {
       if (this.validateName('ftKeyName') && this.validateB64('ftKey')){
         var obj=this;
-        if ((this.ftKeyId!=-1 && (this.$root.ftKeyName != this.editRow.name || this.$root.ftKey!=this.editRow.tkey || this.$root.ftKeyAlg!=this.editRow.alg || this.$root.ftKeyMGMT!=this.editRow.mgmt || this.$root.ftTKeysGroups!=this.editRow.tkey_groups))) toggleUpdates(0,this,true);          
+        if ((this.ftKeyId!=-1 && (this.$root.ftKeyName != this.editRow.name || this.$root.ftKey!=this.editRow.tkey || this.$root.ftKeyAlg!=this.editRow.alg || this.$root.ftKeyMGMT!=this.editRow.mgmt || this.$root.ftTKeysGroups!=this.editRow.tkey_groups))) toggleUpdates(0,this,true);
         let data={tKeyId: this.ftKeyId, tKeyName: this.ftKeyName, tKey: this.ftKey, tKeyAlg: this.ftKeyAlg, tKeyMGMT: this.ftKeyMGMT, tTKeysGroups: JSON.stringify(this.ftTKeysGroups)};
         if (this.ftKeyId==-1){
           //Add
@@ -1036,7 +1045,7 @@ const io2gui_app = new Vue({
     //TKey Groups
     tblMgmtTKeyGRecord: function (ev,table) {
       if (this.validateName('ftKeyGName')){
-        var obj=this;         
+        var obj=this;
         let data={tKeyGId: this.ftKeyGId, tKeyGName: this.ftKeyGName};
         if (this.ftKeyGId==-1){
           //Add
@@ -1051,13 +1060,13 @@ const io2gui_app = new Vue({
           else this.$refs.formKey.$el.focus();
       };
     },
-    
+
     //Sources/Whitelists
     tblMgmtSrcRecord: function (ev,table) {
-      if (this.validateName('ftSrcName') && this.validateURL('ftSrcURL') && (this.validateREGEX('ftSrcREGEX')==null || this.validateREGEX('ftSrcREGEX')) && (((this.validateIXFRURL('ftSrcURLIXFR') || this.validateIXFRURL('ftSrcURLIXFR')==null) && this.ftSrcType == 'sources') || this.ftSrcType != 'sources')){
+      if (this.validateName('ftSrcName') && this.validateURL('ftSrcURL') && (this.validateREGEX('ftSrcREGEX')==null || this.validateREGEX('ftSrcREGEX')) && (((this.validateIXFRURL('ftSrcURLIXFR') || this.validateIXFRURL('ftSrcURLIXFR')==null) && this.ftSrcType == 'sources') || this.ftSrcType != 'sources') && this.validateInt('ftSrcMaxIOC') && this.validateInt('ftSrcHotCacheAXFR') && this.validateInt('ftSrcHotCacheIXFR')) {
         var obj=this;
         if (this.ftSrcId!=-1 && (this.ftSrcName != this.editRow.name || this.ftSrcURL!=this.editRow.url || this.ftSrcREGEX!=this.editRow.regex || (this.ftSrcURLIXFR!=this.editRow.url_ixfr  && this.ftSrcType == 'sources'))) toggleUpdates(0,this,true);
-        let data={tSrcId: this.ftSrcId, tSrcName: this.ftSrcName, tSrcURL: this.ftSrcURL, tSrcREGEX: this.ftSrcREGEX, tSrcURLIXFR: this.ftSrcURLIXFR};
+        let data={tSrcId: this.ftSrcId, tSrcName: this.ftSrcName, tSrcURL: this.ftSrcURL, tSrcREGEX: this.ftSrcREGEX, tSrcURLIXFR: this.ftSrcURLIXFR, tSrcMaxIOC: this.ftSrcMaxIOC, tSrcHotCacheAXFR: this.ftSrcHotCacheAXFR, tSrcHotCacheIXFR: this.ftSrcHotCacheIXFR};
         if (this.ftSrcId==-1){
           //Add
           axios.post('/io2data.php/'+table,data).then((data) => {if (/DOCTYPE html/.test(data.data)){window.location.reload(true);} else obj.mgmtTableOk(data,obj,table);}).catch(function (error){obj.mgmtTableError(error,obj,table)})
@@ -1069,12 +1078,12 @@ const io2gui_app = new Vue({
         ev.preventDefault();
         if (!this.validateName('ftSrcName')) this.$refs.formSrcName.$el.focus();
       	  else if (!this.validateURL('ftSrcURL') && this.validateREGEX('ftSrcURL')!=null) this.$refs.formSrcURL.$el.focus() ;
-      	  else if (!this.validateREGEX('ftSrcREGEX') && this.validateREGEX('ftSrcREGEX')!=null) this.$refs.formREGEX.$el.focus(); 
+      	  else if (!this.validateREGEX('ftSrcREGEX') && this.validateREGEX('ftSrcREGEX')!=null) this.$refs.formREGEX.$el.focus();
           else this.$refs.formSrcURLIXFR.$el.focus();
       };
     },
-    
-    //Users 
+
+    //Users
     manageUsers: function (ev) {
       if (this.validateUName('ftUNameProf') && this.validatePass('ftUPwd')&& this.validatePassMatch('ftUPwd','ftUpwdConf') ){
         let obj=this;
@@ -1089,11 +1098,11 @@ const io2gui_app = new Vue({
       } else if (ev != null) {
         ev.preventDefault();
       };
-    },    
-    
+    },
+
     //Server
     tblMgmtSrvRecord: function (ev,table) {
-    
+
       if (this.validateName('ftSrvName') && (this.validateIP('ftSrvPubIP') || this.validateIP('ftSrvPubIP') == null) && (this.validateIP('ftSrvIP') || this.validateIP('ftSrvIP') == null) && this.validateHostname('ftSrvNS') && this.validateEmail('ftSrvEmail') && (this.validateIPList('ftSrvMGMTIP') || this.validateIP('ftSrvMGMTIP') == null)){
         var obj=this;
         if  (this.ftSrvName != this.editRow.name || this.ftSrvIP!=this.editRow.ip || this.ftSrvPubIP!=this.editRow.pub_ip || this.ftSrvNS!=this.editRow.ns || this.ftSrvEmail!=this.editRow.email || this.ftSrvMGMT!=this.editRow.mgmt || this.ftSrvSType!=this.editRow.stype || this.ftSrvURL!=this.editRow.URL || this.ftSrvMGMTIP!=this.editRow.mgmt_ips_str || this.ftSrvTKeys!=this.editRow.tkeys_arr|| this.ftCertFile!=this.editRow.certfile|| this.ftKeyFile!=this.editRow.keyfile|| this.ftCACertFile!=this.editRow.cacertfile|| this.ftCustomConfig!=this.editRow.custom_config) toggleUpdates(0,this,true);
@@ -1122,14 +1131,14 @@ const io2gui_app = new Vue({
 
     },
 
-    
+
     //RPZ
     tblMgmtRPZRecord: function (ev,table) {
       if (this.validateHostnameNum('ftRPZName') && (this.validateIPList('ftRPZNotify') || this.validateIPList('ftRPZNotify') == null) && ((this.validateCustomAction(this.ftRPZActionCustom) && this.ftRPZAction === 'local')||this.ftRPZAction != 'local') && this.validateInt('ftRPZSOA_Refresh') && this.validateInt('ftRPZSOA_UpdRetry') && this.validateInt('ftRPZSOA_Exp') && this.validateInt('ftRPZSOA_NXTTL') && this.validateInt('ftRPZAXFR') && this.validateInt('ftRPZIXFR')){
         var obj=this;
         if  (this.ftRPZName != this.editRow.name || this.ftRPZSOA_Refresh!=this.editRow.soa_refresh || this.ftRPZSOA_UpdRetry!=this.editRow.soa_update_retry || this.ftRPZSOA_Exp!=this.editRow.soa_expiration || this.ftRPZSOA_NXTTL!=this.editRow.soa_nx_ttl || this.ftRPZAXFR!=this.editRow.axfr_update || this.ftRPZIXFR!=this.editRow.ixfr_update || this.ftRPZCache!=this.editRow.cache || this.ftRPZWildcard!=this.editRow.wildcard || this.ftRPZAction!=this.editRow.action || this.ftRPZIOCType!=this.editRow.ioc_type || this.editRow.notify_str!=this.ftRPZNotify || this.editRow.servers_arr!=this.ftRPZSrvs || this.editRow.tkeys_arr!=this.ftRPZTKeys || this.editRow.sources_arr!=this.ftRPZSrc || this.editRow.whitelists_arr!=this.ftRPZWL ||this.ftRPZActionCustom!=this.editRow.actioncustom || this.ftRPZDisabled!=this.editRow.disabled) toggleUpdates(0,this,true);
         let data={tRPZId: this.ftRPZId, tRPZName: this.ftRPZName, tRPZSOA_Refresh: this.ftRPZSOA_Refresh, tRPZSOA_UpdRetry: this.ftRPZSOA_UpdRetry,
-                  tRPZSOA_Exp: this.ftRPZSOA_Exp, tRPZSOA_NXTTL: this.ftRPZSOA_NXTTL, tRPZCache: this.ftRPZCache,tRPZWildcard: this.ftRPZWildcard, 
+                  tRPZSOA_Exp: this.ftRPZSOA_Exp, tRPZSOA_NXTTL: this.ftRPZSOA_NXTTL, tRPZCache: this.ftRPZCache,tRPZWildcard: this.ftRPZWildcard,
                   tRPZNotify: JSON.stringify(this.ftRPZNotify.split(/,|\s/g).filter(String)), tRPZSrvs: JSON.stringify(this.ftRPZSrvs),
                   tRPZIOCType: this.ftRPZIOCType, tRPZAXFR: this.ftRPZAXFR, tRPZIXFR: this.ftRPZIXFR, tRPZDisabled: this.ftRPZDisabled,
                   tRPZTKeys: JSON.stringify(this.ftRPZTKeys), tRPZWL: JSON.stringify(this.ftRPZWL), tRPZSrc: JSON.stringify(this.ftRPZSrc),
@@ -1172,7 +1181,7 @@ const io2gui_app = new Vue({
         alert('error while deleting '+table+' ' + rowid);
       })
     },
-    
+
     pushUpdatestoSRV: function (SrvId) {
       var obj=this;
       toggleUpdates(0,obj,false);
@@ -1199,33 +1208,33 @@ const io2gui_app = new Vue({
       }, time * 1000);
     },
 
-    
+
     ImportConfig: function (ev) {
       var file = new FileReader();
       var vm = this;
       //onprogress, onabort, onerror, onloadstart
       file.onload = function(e) {ImportIOC2RPZ(vm,e.target.result);};
-      file.readAsText(vm.ftImpFiles[0]);      
+      file.readAsText(vm.ftImpFiles[0]);
     },
 
     ImportConfigLine: function (ev) {
       ImportIOC2RPZ(this,this.ftImportRec);
     },
-    
+
     checkImpFile: function (e) {
       this.ftImpFiles = e.dataTransfer.files;
       this.ftImpFileDesc='File name: '+encodeURI(this.ftImpFiles[0].name)+", size: "+this.ftImpFiles[0].size+' bytes';
     },
-    
+
     alert: function (txt) {
       alert(txt);
     },
-    
+
     copyToClipboard(ref) {
       this.$refs[ref].$el.select();
       document.execCommand('copy');
     },
-    genRandom(type){ 
+    genRandom(type){
       switch (type){
         case "tkeyName":
           this.$root.ftKeyName='tkey-'+Math.random().toString(36).substr(2, 10)+'-'+Math.random().toString(36).substr(2, 10);
@@ -1233,8 +1242,8 @@ const io2gui_app = new Vue({
         case "tkey":
           //let key=[];
           //key['md5'] = new Uint8Array(16);
-          //key['sha256'] = new Uint8Array(32); 
-          //key['sha512'] = new Uint8Array(64); 
+          //key['sha256'] = new Uint8Array(32);
+          //key['sha512'] = new Uint8Array(64);
           //window.crypto.getRandomValues(key[this.$root.ftKeyAlg]);
           //this.$root.ftKey=btoa(key[this.$root.ftKeyAlg]);
 
@@ -1253,13 +1262,13 @@ const io2gui_app = new Vue({
       history.pushState(null, null, '#tabs_menu/'+tab);
       if (this.$refs.tabs_menu.$children[tab].$attrs.table) this.$root.$emit('bv::refresh::table', this.$refs.tabs_menu.$children[tab].$attrs.table);
     },
-    
+
     signOut: function(){
       axios.post('/io2auth.php/logout');
       window.location.reload(true);
     },
- 
- 
+
+
     //Export RPZ zones
     exportShowModal: function(format){
       this.$root.ftExFormat=format;
@@ -1268,11 +1277,11 @@ const io2gui_app = new Vue({
       this.$root.rpzExportSAll = false;
       this.$emit('bv::show::modal', 'mExpRPZ')
     },
-    
+
     rpzExportToggleAll: function(checked){
       this.ftExRPZ = checked ? this.ftExRPZAll.map(function(el){return el.value}) : []
     },
-    
+
     //Generate export configuration
     exportDNSConfig: async function(){
       let p = axios.get('/io2data.php/rpzs?rowid='+JSON.stringify(this.$root.ftExRPZ));
@@ -1297,7 +1306,7 @@ zone "${el['name']}" {
   type slave;
   file "/var/cache/bind/${el['name']}";
   masters {${servers}};
-}; 
+};
 
           `;
           zone_opt[el['ioc_type']]+=`
@@ -1348,7 +1357,7 @@ key "${keys[i]['name']}"{
 rpzMaster("${el['servers'][0]['pub_ip']}", "${el['name']}"${pdns_opt})
 `;
           });
-          
+
           break;
         case 'Infoblox':
           let zone_pri=[]; zone_pri['fqdn']=[]; zone_pri['mixed']=[]; zone_pri['ip']=[];
@@ -1365,11 +1374,11 @@ rpzMaster("${el['servers'][0]['pub_ip']}", "${el['name']}"${pdns_opt})
             el['tkeys'].some(function(el){
               tkey++;
               return ((el['alg']!='sha512') && (el['tkey'].indexOf('/')==-1));
-            });            
+            });
             if (el['tkeys'].length==0){
               tkey_str=`${el['servers'][0]['name']}/${el['servers'][0]['pub_ip']}/FALSE/FALSE/FALSE`;
             }else{
-              tkey_str=`${el['servers'][0]['name']}/${el['servers'][0]['pub_ip']}/FALSE/FALSE/TRUE/${el['tkeys'][tkey]['name']}/${el['tkeys'][tkey]['tkey']}/${TKEY_Alg[el['tkeys'][tkey]['alg']]}`;              
+              tkey_str=`${el['servers'][0]['name']}/${el['servers'][0]['pub_ip']}/FALSE/FALSE/TRUE/${el['tkeys'][tkey]['name']}/${el['tkeys'][tkey]['tkey']}/${TKEY_Alg[el['tkeys'][tkey]['alg']]}`;
             };
             zone_pri[el['ioc_type']].push(`
   responsepolicyzone,${el['name']},FORWARD,${RPZ_IB_Options[el['action']]},,${IBNView},responsepolicy,${tkey_str},${IBMember}/False/False/False,`);
@@ -1381,10 +1390,10 @@ rpzMaster("${el['servers'][0]['pub_ip']}", "${el['name']}"${pdns_opt})
           break;
       };
       downloadAsPlainText(this.$root.ftExFormat+"_sample_config.txt",options+keys_txt+zones);
-      
+
     },
- 
-        
+
+
   }
 });
 
@@ -1461,7 +1470,7 @@ async function ImportIOC2RPZ(vm,txt){//e.target.result
         if (sources.data) sources.data.forEach(function(el){SrcAll[el['name']]=el['rowid']});
         if (whitelists.data) whitelists.data.forEach(function(el){WLAll[el['name']]=el['rowid']});
         if (rpzs.data) rpzs.data.forEach(function(el){RpzAll[el['name']]=el['rowid']});
-        
+
         for(let line of txt.split(/\r|\n/)){
           //this.ftImpServName: '',
           //this.ftImpPrefix: '',
@@ -1487,7 +1496,7 @@ async function ImportIOC2RPZ(vm,txt){//e.target.result
 
             Rpz[m[1]]['whitelists']=[];
             if (m[15]) m[15].split(/,|\s|"/g).filter(String).forEach(function(el){Rpz[m[1]]['whitelists'].push(el);});
-          
+
             Rpz[m[1]]['name']=m[1];
             Rpz[m[1]]['soa_refresh']=m[2];
             Rpz[m[1]]['soa_update']=m[3];
@@ -1497,7 +1506,7 @@ async function ImportIOC2RPZ(vm,txt){//e.target.result
             Rpz[m[1]]['wildcards']=m[7]=="true"?1:0;
 
             Rpz[m[1]]['action']=m[8]; //
-            
+
             Rpz[m[1]]['ioc_type']=m[10];
             Rpz[m[1]]['AXFR_time']=m[11];
             Rpz[m[1]]['IXFR_time']=m[12];
@@ -1537,7 +1546,7 @@ async function ImportIOC2RPZ(vm,txt){//e.target.result
               Src[vm.ftSrcName]=vm.ftSrcName;
               Src[m[1]]=vm.ftSrcName;
               vm.ftSrcType='sources';
-              await vm.tblMgmtSrcRecord(ev,'sources'); 
+              await vm.tblMgmtSrcRecord(ev,'sources');
             }else{
               Src[m[1]]=(SrcAll[vm.ftImpPrefix+m[1]] && vm.ftImpAction!=2)?vm.ftImpPrefix+m[1]:(SrcAll[m[1]] && vm.ftImpAction==2)?vm.ftImpPrefix+m[1]:m[1];
             };
@@ -1581,7 +1590,7 @@ async function ImportIOC2RPZ(vm,txt){//e.target.result
             if (servers.data) servers.data.forEach(function(el){if (vm.ftSrvName==el['name']) SrvId=el['rowid']});
           } while (SrvId == undefined)
         };
-        
+
       //          tRPZSrvs: JSON.stringify(this.ftRPZSrvs),
       //          tRPZDisabled: this.ftRPZDisabled,
 
@@ -1603,11 +1612,11 @@ async function ImportIOC2RPZ(vm,txt){//e.target.result
             }else{
               vm.ftRPZAction="local"; vm.ftRPZActionCustom=Rpz[RpzName]['action'];
             };
-            
+
             vm.ftRPZIOCType=Rpz[RpzName]['ioc_type'];
             vm.ftRPZAXFR=Rpz[RpzName]['AXFR_time'];
             vm.ftRPZIXFR=Rpz[RpzName]['IXFR_time'];
-            
+
             vm.ftRPZTKeys=[];
             if (Rpz[RpzName]['tkeys']) Rpz[RpzName]['tkeys'].forEach(function(el){
               if (TKeys[el] && TKeysAll[TKeys[el]]) vm.ftRPZTKeys.push(TKeysAll[TKeys[el]]);
@@ -1626,7 +1635,7 @@ async function ImportIOC2RPZ(vm,txt){//e.target.result
 
             vm.tblMgmtRPZRecord(ev,'rpzs');
           };
-        };  
+        };
 };
 
 function update_window_size(obj){
@@ -1647,7 +1656,7 @@ function splitRpiDNSList(obj){
 	var i,j, chunk = parseInt((obj.$refs.RpiDNSCards.offsetWidth==0?(window.innerWidth-165):obj.$refs.RpiDNSCards.offsetWidth-50) / 315); chunk = chunk>0?chunk:1;
 	for (i=0,j=obj.RpiDNSList.length; i<j; i+=chunk) {
 		obj.RpiDNSListDash.push(obj.RpiDNSList.slice(i,i+chunk));
-	};			
+	};
 };
 
 

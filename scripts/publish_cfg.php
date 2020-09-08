@@ -30,14 +30,15 @@ foreach($serv_upd as $srv){
           curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, io2mgmt_verifyssl);
           curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, io2mgmt_verifyssl);
           curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+          curl_setopt($curl, CURLOPT_TIMEOUT, 1000);
           $res = curl_exec($curl);
-          curl_close($curl);          
+          curl_close($curl);
         };
         echo $res;
       };
       #TODO check the response
       #ioc2rpz-reload-cfg.	900	IN	TXT	"ioc2rpz configuration was reloaded"
-      
+
       $sql="update servers set publish_upd=0 where rowid=${srv['rowid']}";
       DB_execute($db,$sql); //TODO error handling
       break;
