@@ -844,6 +844,10 @@ const io2gui_app = new Vue({
       return (this.$data[vrbl].length >= 3 && /^[a-zA-Z0-9\.\-\_]+$/.test(this.$data[vrbl])) ? true : this.$data[vrbl].length == 0 ? null:false;
     },
 
+    validateNameAT: function(vrbl){
+      return (this.$data[vrbl].length >= 3 && /^[a-zA-Z0-9@\/\.\-\_]+$/.test(this.$data[vrbl])) ? true : this.$data[vrbl].length == 0 ? null:false;
+    },
+
     validateUName: function(vrbl){
       //todo check if name is unique
       return (this.$data[vrbl].length >= 3 && /^[a-zA-Z0-9\.\-\_]+$/.test(this.$data[vrbl])) ? true : this.$data[vrbl].length == 0 ? null:false;
@@ -882,6 +886,12 @@ const io2gui_app = new Vue({
 
     formatURL: function(val,e){
       let a = val.replace(/[^A-Za-z0-9/=:\?#.\-_&]/g,"");
+      if (e) e.currentTarget.value = a; // a bug in Vue.JS?
+      return a;
+    },
+
+    formatURLAT: function(val,e){
+      let a = val.replace(/[^A-Za-z0-9@/=:\?#.\-_&]/g,"");
       if (e) e.currentTarget.value = a; // a bug in Vue.JS?
       return a;
     },

@@ -604,14 +604,14 @@
             <b-col :sm="12" class="form_row text-left">
               <b-form-radio-group :disabled="infoWindow || (ftSrvMGMT == 0)" name="nSrvSType" v-model="ftSrvSType">
                 <b-form-radio value="0">Local</b-form-radio>
-                <b-form-radio value="1" disabled>SCP/SFTP</b-form-radio>
+                <b-form-radio value="1">SCP</b-form-radio>
                 <b-form-radio value="2" disabled>AWS S3</b-form-radio>
               </b-form-radio-group>
             </b-col>
           </b-row>
           <b-row>
             <b-col :sm="12" class="form_row text-left">
-              <b-input v-model.trim="ftSrvURL" :state="validateName('ftSrvURL')" :formatter="formatURL"  ref="formSrvURL" :readonly="infoWindow" placeholder="Enter file name"  v-b-tooltip.hover title="File Name" />
+              <b-input v-model.trim="ftSrvURL" :state="validateNameAT('ftSrvURL')" :formatter="formatURLAT"  ref="formSrvURL" :readonly="infoWindow" placeholder="Enter file name"  v-b-tooltip.hover title="File Name" />
             </b-col>
           </b-row>
           <b-row>
