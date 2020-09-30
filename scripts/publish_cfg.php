@@ -66,7 +66,8 @@ foreach($serv_upd as $srv){
         ssh2_disconnect ($scp);
         unlink($fn);
       };
-
+      $sql="update servers set publish_upd=0 where rowid=${srv['rowid']}";
+      DB_execute($db,$sql); //TODO error handling
       break;
     case 2: #AWS S3
       break;
