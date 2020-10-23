@@ -20,7 +20,7 @@ WORKDIR /opt/ioc2rpz.gui
 
 RUN mkdir -p /run/apache2 /etc/apache2/ssl /opt/ioc2rpz.gui/www /opt/ioc2rpz.gui/www/js /opt/ioc2rpz.gui/www/css /opt/ioc2rpz.gui/www/webfonts /opt/ioc2rpz.gui/img /opt/ioc2rpz.gui/www/io2cfg \
     /opt/ioc2rpz.gui/export-cfg /opt/ioc2rpz.gui/scripts && \
-    apk add bash openrc curl coreutils openssl apache2 libxml2-dev apache2-utils php7 php7-apache2 php7-session php7-json php7-curl apache2-ssl sqlite php7-sqlite3 php7-ctype bind-tools knot-utils && \
+    apk add bash openrc curl coreutils openssl apache2 libxml2-dev apache2-utils php7 php7-apache2 php7-session php7-json php7-curl php7-pecl-ssh2 apache2-ssl sqlite php7-sqlite3 php7-ctype bind-tools knot-utils && \
     ln -sf /proc/self/fd/1 /var/log/apache2/access.log && \
     ln -sf /proc/self/fd/1 /var/log/apache2/error.log && \
     ln -sf /proc/self/fd/1 /var/log/apache2/ssl_access.log && \
@@ -34,15 +34,14 @@ RUN mkdir -p /run/apache2 /etc/apache2/ssl /opt/ioc2rpz.gui/www /opt/ioc2rpz.gui
 #<IfModule mpm_prefork_module>
 #StartServers             1
 #MinSpareServers          1
-#MaxSpareServers          0 
+#MaxSpareServers          0
 #MaxRequestWorkers      250
 #MaxConnectionsPerChild   0
 #</IfModule>
 
 ### Validate SSL
 
-RUN sed -i -e "s/\(.*ServerTokens\).*/\1 Prod/"  /etc/apache2/httpd.conf && echo -e "TraceEnable Off\n"  >> /etc/apache2/httpd.conf && sed -i -e "s/^.*\(expose_php =\).*/\1 Off/" /etc/php7/php.ini && sed -i -e "s/^\(SSLProxyProtocol.*\)/#\1/" -e "s/^\(SSLProxyCipherSuite.*\)/#\1/" -e "s/^\(SSLProtocol\).*/SSLProtocol -all +TLSv1.2 +TLSv1.3/" -e "s/^\(SSLCipherSuite\).*/\1 TLSv1.3 TLS_AES_256_GCM_SHA384:TLS_AES_128_GCM_SHA256\n\1 SSL ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA256\nSSLOpenSSLConfCmd Curves X25519:secp521r1:secp384r1:prime256v1/" /etc/apache2/conf.d/ssl.conf
-#Update index.php and io2comm_auth.php with local CSS/JS
+RUN sed -i -e "s/\(.*ServerTokens\).*/\1 Prod/"  /etc/apache2/httpd.conf && echo -e "TraceEnable Off\n"  >> /etc/apache2/httpd.conf && sed -i -e "s/^.*\(expose_php =\).*/\1 Off/" /etc/php7/php.ini && sed -i -e "s/^\(SSLProxyProtocol.*\)/#\1/" -e "s/^\(SSLProxyCipherSuite.*\)/#\1/" -e "s/^\(SSLProtocol\).*/SSLProtocol -all +TLSv1.2 +TLSv1.3/" -e "s/^\(SSLCipherSuite\).*/\1 TLSv1.3 TLS_AES_256_GCM_SHA384:TLS_AES_128_GCM_SHA256\n\1 SSL ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA256\nSSLOpenSSLConfCmd Curves X25519:secp521r1:secp384r1:prime256v1/" -e "/<VirtualHost _default_:443>/ a Header always set Strict-Transport-Security \"max-age=63072000; includeSubDomains\"" /etc/apache2/conf.d/ssl.conf
 
 COPY www/* /opt/ioc2rpz.gui/www/
 COPY www/js/* /opt/ioc2rpz.gui/www/js/
