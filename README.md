@@ -95,6 +95,7 @@ To add a server navigate to "Configuration" --> "Servers" and press the "+" butt
 "Server's Public IP/FQDN" is used only in the export DNS configurations. "Server's MGMT IP/FQDN" is used to manage ioc2rpz service. The public and management IP-addresses are not exposed into ioc2rpz configuration. If you select "Disabled" checkbox when you still can change the server's configuration in the GUI but it will not be published.
 
 <p align="center"><img src="https://github.com/Homas/ioc2rpz.gui/blob/dev/ioc2rpz.gui_scp_configuration.png"></a></p>
+
 To manage multiple ioc2rpz servers you need:  
 * if multiple ioc2rpz instances are running on the same host or remote directory mounted to the server - define distinct configuration file names or locations per server.  
 * if configuration should be uploaded by SCP:  
