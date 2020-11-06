@@ -95,13 +95,13 @@ To add a server navigate to "Configuration" --> "Servers" and press the "+" butt
 "Server's Public IP/FQDN" is used only in the export DNS configurations. "Server's MGMT IP/FQDN" is used to manage ioc2rpz service. The public and management IP-addresses are not exposed into ioc2rpz configuration. If you select "Disabled" checkbox when you still can change the server's configuration in the GUI but it will not be published.
 
 <p align="center"><img src="https://github.com/Homas/ioc2rpz.gui/blob/dev/ioc2rpz.gui_scp_configuration.png"></a></p>
-To manage multiple ioc2rpz servers you need:
-- if multiple ioc2rpz instances are running on the same host or remote directory mounted to the server - define distinct configuration file names or locations per server
-- if configuration should be uploaded by SCP:
-1. Configure SCP path (like on the screenshot),
+To manage multiple ioc2rpz servers you need:  
+- if multiple ioc2rpz instances are running on the same host or remote directory mounted to the server - define distinct configuration file names or locations per server.  
+- if configuration should be uploaded by SCP:  
+1. Configure SCP path (like on the screenshot).  
 2. Add public and private SSH keys to [Installation_Directory]/cfg/[Remote_server_name]_rsa.pub and [Installation_Directory]/cfg/[Remote_server_name]_rsa
-E.g. for io2core-de3 you should create io2core-de3_rsa.pub and io2core-de3_rsa. (see line 54 in this file: https://github.com/Homas/ioc2rpz.gui/blob/master/scripts/publish_cfg.php )
-3. Add the public ssh key to ~/.ssh/authorized_keys on the remote server for the management user.
+E.g. for io2core-de3 you should create io2core-de3_rsa.pub and io2core-de3_rsa. (see line 54 in this file: https://github.com/Homas/ioc2rpz.gui/blob/master/scripts/publish_cfg.php)  
+3. Add the public ssh key to ~/.ssh/authorized_keys on the remote server for the management user.  
 
 The servers action menu allows you to view, edit, clone and remove servers, export and publish server's configuration. You may force publishing server's configuration independent on any changes.
 
