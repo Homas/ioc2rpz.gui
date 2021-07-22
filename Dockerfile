@@ -51,7 +51,7 @@ COPY www/css/* /opt/ioc2rpz.gui/www/css/
 COPY scripts/* /opt/ioc2rpz.gui/scripts/
 
 #Local CSS/JS
-ADD https://unpkg.com/bootstrap/dist/css/bootstrap.min.css /opt/ioc2rpz.gui/www/css
+ADD https://unpkg.com/bootstrap@4.5.3/dist/css/bootstrap.min.css /opt/ioc2rpz.gui/www/css
 ADD https://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.min.css /opt/ioc2rpz.gui/www/css
 ADD https://cdn.jsdelivr.net/npm/vue@latest/dist/vue.min.js /opt/ioc2rpz.gui/www/js
 ADD https://unpkg.com/babel-polyfill@latest/dist/polyfill.min.js /opt/ioc2rpz.gui/www/js
