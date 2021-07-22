@@ -9,7 +9,8 @@ You can watch a demo of ioc2rpz technology including ioc2rpz.gui on the followin
 **Although ioc2rpz.gui was developed keeping security in mind it was not tested on penetrations and must be installed and used in restricted management networks.**
 
 ## Setup
-You may serup ioc2rp.gui using following options:
+You may setup ioc2rp.gui using following options:
+- Using a docker compose is a preferred installation method. In [ioc2rpz.dc](https://github.com/Homas/ioc2rpz.dc) project you can find the docker-compose.yml file.
 - A docker container. It is the to install ioc2rpz.gui. Please refer the [Docker Container](#docker-container) section.
 - "run_ioc2rpz.gui.sh" script. "run_ioc2rpz.gui.sh" script is used to start services in a container and make required settings. To run the script:
     - check that all dependencies are installed
@@ -28,7 +29,7 @@ You may serup ioc2rp.gui using following options:
 
 Right now ioc2rpz.gui use only SQLite database with a database file stored in "/opt/ioc2rpz.gui/www/io2cfg" folder. Make sure that set up a relevant access permissions to the directory/db-file.
 
-ioc2rpz configuration files are saved to "/opt/ioc2rpz.gui/export-cfg" folder. 
+ioc2rpz configuration files are saved to "/opt/ioc2rpz.gui/export-cfg" folder.
 
 The database initialization script also creates a sample configuration. You need to update public and management IP-addresses of ioc2rpz server before using it. If you already started ioc2rpz server please restart it or send a management signal to reload its configuration.
 
@@ -42,7 +43,7 @@ bash openrc curl coreutils openssl apache2 libxml2-dev apache2-utils php7 php7-a
 If you use other Linux distribution or a web-server please find out required packages by yourself.
 
 ## Docker Container[](#docker-container)
-ioc2rpz.gui is available on the Docker Hub. Just search for ioc2rpz.gui 
+ioc2rpz.gui is available on the Docker Hub. Just search for ioc2rpz.gui
 - ioc2rpz.gui automatically create a sample configuration;
 - ioc2rpz.gui use 80/tcp, 443/tcp ports. The ports should be exposed to a host system;
 - ioc2rpz.gui use the following volumes:
@@ -84,14 +85,24 @@ The TSIG key and it's name automatically generated. You may generate a name and/
 ioc2rpz supports md5, sha256, sha512 hash algorithms so you need to select required algorithm. Some DNS servers do not support all algorithms.
 The "Management key" checkbox is used to distinguish keys which are used to manage ioc2rpz. These keys can not be used for RPZ transfers.
 
-The action menu next to each TSIG key allows you to view, edit and remove the key. 
+The action menu next to each TSIG key allows you to view, edit and remove the key.
 
 ### Servers
 Server tab is used to generate configurations and manages ioc2rpz servers. You can manage multiple ioc2rpz servers on a single ioc2rpz.gui instance.
-Currently ioc2rpz.gui fully supports only ioc2rpz running on the same host but can save configurations to local files for multiple servers. In upcoming releases it will be possible to upload configurations to remote ftp/scp/sftp servers and/or S3 bucket. 
+ioc2rpz.gui supports publishing configuration files to a local directory, mounted directory or remote server via scp.
 
 To add a server navigate to "Configuration" --> "Servers" and press the "+" button. All fields except "Management stations IPs" are required.
 "Server's Public IP/FQDN" is used only in the export DNS configurations. "Server's MGMT IP/FQDN" is used to manage ioc2rpz service. The public and management IP-addresses are not exposed into ioc2rpz configuration. If you select "Disabled" checkbox when you still can change the server's configuration in the GUI but it will not be published.
+
+<p align="center"><img src="https://github.com/Homas/ioc2rpz.gui/blob/dev/ioc2rpz.gui_scp_configuration.png"></a></p>
+
+To manage multiple ioc2rpz servers you need:  
+* if multiple ioc2rpz instances are running on the same host or remote directory mounted to the server - define distinct configuration file names or locations per server.  
+* if configuration should be uploaded by SCP:  
+1. Configure SCP path (like on the screenshot).  
+2. Add public and private SSH keys to [Installation_Directory]/cfg/[Remote_server_name]_rsa.pub and [Installation_Directory]/cfg/[Remote_server_name]_rsa
+E.g. for io2core-de3 you should create io2core-de3_rsa.pub and io2core-de3_rsa. (see line 54 in this file: https://github.com/Homas/ioc2rpz.gui/blob/master/scripts/publish_cfg.php)  
+3. Add the public ssh key to ~/.ssh/authorized_keys on the remote server for the management user.  
 
 The servers action menu allows you to view, edit, clone and remove servers, export and publish server's configuration. You may force publishing server's configuration independent on any changes.
 
@@ -110,7 +121,7 @@ To create a source navigate to "Configuration" --> "Sources" and press the "+" b
 The action menu allows you to view, edit, clone and remove sources.
 
 ### Whitelists
-Whitelists are used to prevent possible errors and blocking trusted domains and IP addresses. The whitelisted IOCs are removed from response policy zones. ioc2rpz does check only exact match, so it will not split or discard a network if a whitelisted IP address is included into a blocked subnet and vice versa. A whitelist is a text file or a feed of text data. Indicators should be separated by newline characters (/n,/r or both /n/r).  Whitelists must contain valid FQDNs and/or IP addresses. 
+Whitelists are used to prevent possible errors and blocking trusted domains and IP addresses. The whitelisted IOCs are removed from response policy zones. ioc2rpz does check only exact match, so it will not split or discard a network if a whitelisted IP address is included into a blocked subnet and vice versa. A whitelist is a text file or a feed of text data. Indicators should be separated by newline characters (/n,/r or both /n/r).  Whitelists must contain valid FQDNs and/or IP addresses.
 
 To create a source navigate to "Configuration" --> "Whitelists" and press the "+" button. Fill the following fields and press "Ok":
 - whitelist name;
@@ -186,7 +197,7 @@ The Infoblox configuration is provided in Infoblox CSV import format. To import 
 - [ ] Unchecked checkboxes in tables on odd lines
 - [ ] TSIG generated in JS are not always valid.
 - [ ] (SQLite issue) Config import. Not all sources were added to a last RPZ. SRV was not added.
-- [ ] REGEX. "-" in  [ ] must be last. Looks like erl bug. 
+- [ ] REGEX. "-" in  [ ] must be last. Looks like erl bug.
 - [ ] Validate IOC in the ioc2rpz. Errors with tailing.
 
 ## Built with
@@ -205,7 +216,7 @@ Copyright 2017 - 2020 Vadim Pavlov ioc2rpz[at]gmail[.]com
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at  
-  
+
     http://www.apache.org/licenses/LICENSE-2.0  
-  
+
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
