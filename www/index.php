@@ -565,10 +565,8 @@
             <b-col :sm="2" class="form_row">
               <b-form-select v-model="ftSrcIoCType" :options="RPZ_IType_Options" :disabled="infoWindow" v-b-tooltip.hover title="IoCs type" />
             </b-col>
-            <b-col :sm="2" class="form_row align-self-center text-left">
-              <b-form-checkbox unchecked-value=0 value=1 :disabled="infoWindow"  v-model="ftSrcKeepInCache">Cache source</b-form-checkbox>
-
-            <b-col :sm="1" class="form_row"></b-col>
+            <b-col :sm="3" class="form_row align-self-center text-left">
+              <b-form-checkbox unchecked-value=0 value=1 :disabled="infoWindow"  v-model="ftSrcKeepInCache">Keep in cache</b-form-checkbox>
 
           </b-row>
         </div>

@@ -703,7 +703,7 @@ const io2gui_app = new Vue({
         case "export servers":
           //alert("export "+row.item.name+" configuration");
           axios.get('/io2data.php/servercfg?rowid='+row.item.rowid,{responseType: 'blob'}).then(function (response) {
-              if (/DOCTYPE html/.test(reponse.data)){window.location.reload(true);}else{
+              if (/DOCTYPE html/.test(response.data)){window.location.reload(true);}else{
                 let blob = new Blob([response.data], {type:'text/plain'});
                 let link = document.createElement('a');
                 link.href = window.URL.createObjectURL(blob);
@@ -1081,7 +1081,7 @@ const io2gui_app = new Vue({
     tblMgmtSrcRecord: function (ev,table) {
       if (this.validateName('ftSrcName') && this.validateURL('ftSrcURL') && (this.validateREGEX('ftSrcREGEX')==null || this.validateREGEX('ftSrcREGEX')) && (((this.validateIXFRURL('ftSrcURLIXFR') || this.validateIXFRURL('ftSrcURLIXFR')==null) && this.ftSrcType == 'sources') || this.ftSrcType != 'sources') && this.validateInt('ftSrcMaxIOC') && this.validateInt('ftSrcHotCacheAXFR') && this.validateInt('ftSrcHotCacheIXFR')) {
         var obj=this;
-        if (this.ftSrcId!=-1 && (this.ftSrcName != this.editRow.name || this.ftSrcURL!=this.editRow.url || this.ftSrcREGEX!=this.editRow.regex || this.ftSrcMaxIOC!=this.editRow.max_ioc || this.ftSrcHotCacheAXFR!=this.editRow.hotcache_time || this.ftSrcHotCacheIXFR!=this.editRow.hotcacheixfr_time || (this.ftSrcURLIXFR!=this.editRow.url_ixfr  && this.ftSrcType == 'sources'))) toggleUpdates(0,this,true);
+        if (this.ftSrcId!=-1 && (this.ftSrcName != this.editRow.name || this.ftSrcURL!=this.editRow.url || this.ftSrcREGEX!=this.editRow.regex || this.ftSrcMaxIOC!=this.editRow.max_ioc || this.ftSrcHotCacheAXFR!=this.editRow.hotcache_time || this.ftSrcHotCacheIXFR!=this.editRow.hotcacheixfr_time || (this.ftSrcURLIXFR!=this.editRow.url_ixfr  && this.ftSrcType == 'sources') || this.ftSrcIoCType!=row.item.ioc_type || this.ftSrcKeepInCache!=row.item.keep_in_cache)) toggleUpdates(0,this,true);
         let data={tSrcId: this.ftSrcId, tSrcName: this.ftSrcName, tSrcURL: this.ftSrcURL, tSrcREGEX: this.ftSrcREGEX, tSrcURLIXFR: this.ftSrcURLIXFR, tSrcMaxIOC: this.ftSrcMaxIOC, tSrcHotCacheAXFR: this.ftSrcHotCacheAXFR, tSrcHotCacheIXFR: this.ftSrcHotCacheIXFR, tSrcIoCType: this.ftSrcIoCType, tSrcKeepInCache: this.ftSrcKeepInCache};
         if (this.ftSrcId==-1){
           //Add
