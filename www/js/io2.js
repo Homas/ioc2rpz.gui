@@ -275,6 +275,8 @@ const io2gui_app = new Vue({
       ftRPZInfoTKeyAlg:'',
       ftRPZInfoTKey:'',
       ftRPZInfoDig:'',
+      ftSrcIoCType: 'mixed',
+      ftSrcKeepInCache: 0,
 
 //          }
   },
@@ -614,6 +616,8 @@ const io2gui_app = new Vue({
           this.$root.ftSrcHotCacheIXFR='0';
           this.$root.ftSrcTitle=(table=="sources")?"Source":"Whitelist";
           this.$root.editRow={};
+          this.$root.ftSrcIoCType='mixed';
+          this.$root.ftSrcKeepInCache=0;
           this.$root.$emit('bv::show::modal', 'mConfEditSources');
         break;
         case "info whitelists":
@@ -626,6 +630,8 @@ const io2gui_app = new Vue({
           this.$root.ftSrcName=action=="clone"?row.item.name+"_clone":row.item.name;
           this.$root.ftSrcURL=row.item.url;
           this.$root.ftSrcREGEX=row.item.regex;
+          this.$root.ftSrcIoCType=row.item.ioc_type;
+          this.$root.ftSrcKeepInCache=row.item.keep_in_cache;
           this.$root.ftSrcType=table;
           this.$root.ftSrcURLIXFR=(table=="sources")?row.item.url_ixfr:'';
           this.$root.ftSrcMaxIOC=`${row.item.max_ioc}`;

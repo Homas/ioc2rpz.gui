@@ -1,5 +1,6 @@
 #!/bin/bash
 #ioc2rpz installation/configuration script
+#(c) Vadim Pavlov 2018-2021
 
 SYSUSER=`whoami | awk '{print $1}'`
 IO2_ROOT="/opt/ioc2rpz.gui"

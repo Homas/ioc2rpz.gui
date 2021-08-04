@@ -1,11 +1,11 @@
 <?php
-#(c) Vadim Pavlov 2018-2020
+#(c) Vadim Pavlov 2018-2021
 #ioc2rpz GUI DB upgrade script
 
 define("IO2PATH", "/opt/ioc2rpz.gui"); #/opt/ioc2rpz.gui
 require IO2PATH."/www/io2vars.php";
 
-define("DBVersion", 1);
+define("DBVersion", 2);
 
 function upgradeSQLiteDB($DBF){
   $db = new SQLite3($DBF);
@@ -22,6 +22,11 @@ function upgradeSQLiteDB($DBF){
         $sql.="alter table sources add column max_ioc integer default 0;";
         $sql.="alter table sources add column hotcache_time integer default 900;";
         $sql.="alter table sources add column hotcacheixfr_time integer default 0;";
+        case 1:
+        $sql.="alter table whitelists ADD column ioc_type text default 'mixed';";
+        $sql.="alter table whitelists ADD column keep_in_cache integer default 0;";
+        $sql.="alter table sources ADD column ioc_type text default 'mixed';";
+        $sql.="alter table sources ADD column keep_in_cache integer default 0;";
   };
   if ($db_version != DBVersion){
     echo "Upgrading DB from version $db_version to ".DBVersion;

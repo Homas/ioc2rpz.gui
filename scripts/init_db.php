@@ -1,5 +1,5 @@
 <?php
-#(c) Vadim Pavlov 2018-2020
+#(c) Vadim Pavlov 2018-2021
 #ioc2rpz GUI DB init script
 
 #chmod 664 /srv/www/io2cfg/io2db.sqlite
@@ -13,6 +13,13 @@ function initSQLiteDB($DBF){
   ###
   ###create tables
   ###
+  #2021-08-01
+  #ALTER TABLE whitelists ADD column ioc_type text default 'mixed';
+  #ALTER TABLE whitelists ADD column keep_in_cache integer default 0;
+  #ALTER TABLE sources ADD column ioc_type text default 'mixed';
+  #ALTER TABLE sources ADD column keep_in_cache integer default 0;
+  #
+  #
   #2020-06-08
   #create table if not exists rpidns (user_id integer, name text, create_time DATETIME DEFAULT CURRENT_TIMESTAMP, rpidns_uuid text, commentary text, configuration json, foreign key(user_id) references users(rowid));
   #
@@ -62,11 +69,11 @@ function initSQLiteDB($DBF){
   $db->exec($sql);
 
   #create whitelists table
-  $sql="create table if not exists whitelists (user_id integer, name text, url text, regex text, userid text default NULL, max_ioc integer default 0, hotcache_time integer default 900, hotcacheixfr_time integer default 0, foreign key(user_id) references users(rowid));";
+  $sql="create table if not exists whitelists (user_id integer, name text, url text, regex text, userid text default NULL, max_ioc integer default 0, hotcache_time integer default 900, hotcacheixfr_time integer default 0, ioc_type text default 'mixed', keep_in_cache integer default 0, foreign key(user_id) references users(rowid));";
   $db->exec($sql);
 
   #create sources table
-  $sql="create table if not exists sources (user_id integer, name text, url text, url_ixfr text, regex text, userid text default NULL, max_ioc integer default 0, hotcache_time integer default 900, hotcacheixfr_time integer default 0, foreign key(user_id) references users(rowid));";
+  $sql="create table if not exists sources (user_id integer, name text, url text, url_ixfr text, regex text, userid text default NULL, max_ioc integer default 0, hotcache_time integer default 900, hotcacheixfr_time integer default 0,ioc_type text default 'mixed', keep_in_cache integer default 0, foreign key(user_id) references users(rowid));";
   $db->exec($sql);
 
   #create rpzs table, servers, whitelists, sources, tkeys, notify
