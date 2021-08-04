@@ -556,16 +556,19 @@
             <b-col :sm="12" class="form_row"><b-textarea v-model="ftSrcREGEX" :state="validateREGEX('ftSrcREGEX')" :rows="3" ref="formREGEX" :readonly="infoWindow" placeholder="Enter REGEX" /></b-col>
           </b-row>
           <b-row>
+            <b-col :sm="1" class="form_row"></b-col>
+
             <b-col :sm="2" class="form_row"><b-input v-model.trim="ftSrcMaxIOC" :state="validateInt('ftSrcMaxIOC')" :formatter="formatInt" ref="formSrcMaxIOC" :readonly="infoWindow" placeholder="Max IoCs" v-b-tooltip.hover title="Maximum IoCs (0 - unlimited)"  /></b-col>
             <b-col :sm="2" class="form_row"><b-input v-model.trim="ftSrcHotCacheAXFR" :state="validateInt('ftSrcHotCacheAXFR')" :formatter="formatInt" ref="formSrcHotCacheAXFR" :readonly="infoWindow" placeholder="Hot cache time (full update), in sec" v-b-tooltip.hover title="Hot cache time (full update)"  /></b-col>
             <b-col :sm="2" class="form_row"><b-input v-model.trim="ftSrcHotCacheIXFR" :state="validateInt('ftSrcHotCacheIXFR')" :formatter="formatInt" ref="formSrcHotCacheIXFR" :readonly="infoWindow" placeholder="Hot cache time (incremental update), in sec" v-b-tooltip.hover title="Hot cache time (incremental update)"  /></b-col>
 
-            <b-col :sm="3" class="form_row">
+            <b-col :sm="2" class="form_row">
               <b-form-select v-model="ftSrcIoCType" :options="RPZ_IType_Options" :disabled="infoWindow" v-b-tooltip.hover title="IoCs type" />
             </b-col>
-            <b-col :sm="3" class="form_row">
-              <b-form-checkbox unchecked-value=0 value=1 :disabled="infoWindow"  v-model="ftSrcKeepInCache">Cache zone</b-form-checkbox>
-            </b-col>
+            <b-col :sm="2" class="form_row align-self-center text-left">
+              <b-form-checkbox unchecked-value=0 value=1 :disabled="infoWindow"  v-model="ftSrcKeepInCache">Cache source</b-form-checkbox>
+
+            <b-col :sm="1" class="form_row"></b-col>
 
           </b-row>
         </div>

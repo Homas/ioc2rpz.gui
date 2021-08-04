@@ -1082,7 +1082,7 @@ const io2gui_app = new Vue({
       if (this.validateName('ftSrcName') && this.validateURL('ftSrcURL') && (this.validateREGEX('ftSrcREGEX')==null || this.validateREGEX('ftSrcREGEX')) && (((this.validateIXFRURL('ftSrcURLIXFR') || this.validateIXFRURL('ftSrcURLIXFR')==null) && this.ftSrcType == 'sources') || this.ftSrcType != 'sources') && this.validateInt('ftSrcMaxIOC') && this.validateInt('ftSrcHotCacheAXFR') && this.validateInt('ftSrcHotCacheIXFR')) {
         var obj=this;
         if (this.ftSrcId!=-1 && (this.ftSrcName != this.editRow.name || this.ftSrcURL!=this.editRow.url || this.ftSrcREGEX!=this.editRow.regex || this.ftSrcMaxIOC!=this.editRow.max_ioc || this.ftSrcHotCacheAXFR!=this.editRow.hotcache_time || this.ftSrcHotCacheIXFR!=this.editRow.hotcacheixfr_time || (this.ftSrcURLIXFR!=this.editRow.url_ixfr  && this.ftSrcType == 'sources'))) toggleUpdates(0,this,true);
-        let data={tSrcId: this.ftSrcId, tSrcName: this.ftSrcName, tSrcURL: this.ftSrcURL, tSrcREGEX: this.ftSrcREGEX, tSrcURLIXFR: this.ftSrcURLIXFR, tSrcMaxIOC: this.ftSrcMaxIOC, tSrcHotCacheAXFR: this.ftSrcHotCacheAXFR, tSrcHotCacheIXFR: this.ftSrcHotCacheIXFR};
+        let data={tSrcId: this.ftSrcId, tSrcName: this.ftSrcName, tSrcURL: this.ftSrcURL, tSrcREGEX: this.ftSrcREGEX, tSrcURLIXFR: this.ftSrcURLIXFR, tSrcMaxIOC: this.ftSrcMaxIOC, tSrcHotCacheAXFR: this.ftSrcHotCacheAXFR, tSrcHotCacheIXFR: this.ftSrcHotCacheIXFR, tSrcIoCType: this.ftSrcIoCType, tSrcKeepInCache: this.ftSrcKeepInCache};
         if (this.ftSrcId==-1){
           //Add
           axios.post('/io2data.php/'+table,data).then((data) => {if (/DOCTYPE html/.test(data.data)){window.location.reload(true);} else obj.mgmtTableOk(data,obj,table);}).catch(function (error){obj.mgmtTableError(error,obj,table)})
