@@ -120,7 +120,7 @@ function initSQLiteDB($DBF){
   $sql='insert into whitelists values(1,"whitelist_1","file:/opt/ioc2rpz/cfg/whitelist1.txt","none", NULL, 0, 900, 0, "mixed", 0);';
   $db->exec($sql);
 
-  $sql='insert into sources values(1,"notracking_hosts","https://raw.githubusercontent.com/notracking/hosts-blocklists/master/hostnames.txt","[:AXFR:]","^0\.0\.0\.0 ([A-Za-z0-9\._\-]+[A-Za-z])$", NULL, 0, 900, 0);'.
+  $sql='insert into sources values(1,"notracking_hosts","https://raw.githubusercontent.com/notracking/hosts-blocklists/master/hostnames.txt","[:AXFR:]","^0\.0\.0\.0 ([A-Za-z0-9\._\-]+[A-Za-z])$", NULL, 0, 900, 0, "mixed", 0);'.
        'insert into sources values(1,"notracking_domains","https://raw.githubusercontent.com/notracking/hosts-blocklists/master/domains.txt","[:AXFR:]","^address=\/([A-Za-z0-9\._\-]+[A-Za-z])\/0\.0\.0\.0$", NULL, 0, 900, 0, "mixed", 0);';
   $db->exec($sql);
 
