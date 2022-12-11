@@ -130,7 +130,7 @@ function initSQLiteDB($DBF){
        'insert into rpzs_sources values(1,1,1);'.
        'insert into rpzs_sources values(1,1,2);'.
        'insert into rpzs_notify values(1,1,"127.0.0.1");'.
-       'insert into rpzs_tkeys values(1,1,2);'
+       'insert into rpzs_tkeys values(1,1,2);';
   $db->exec($sql);
 
   #close DB
