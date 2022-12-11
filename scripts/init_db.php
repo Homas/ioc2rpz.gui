@@ -7,6 +7,7 @@
 
 define("IO2PATH", "/opt/ioc2rpz.gui"); #/opt/ioc2rpz.gui
 require IO2PATH."/www/io2vars.php";
+define("DBVersion", 2);
 
 function initSQLiteDB($DBF){
   $db = new SQLite3($DBF);
@@ -46,6 +47,11 @@ function initSQLiteDB($DBF){
 
   //TODO enable foreign keys
   //PRAGMA foreign_keys = ON;
+
+  //set DB version
+  $sql="PRAGMA user_version=".DBVersion.";";
+  $db->exec($sql);
+
 
   #create users table
   $sql="create table if not exists users (name text, password text, salt text, perm integer, loginattempts integer, lastlogin integer, lastfailedlogin integer);";
