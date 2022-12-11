@@ -117,26 +117,20 @@ function initSQLiteDB($DBF){
 
   $db->exec($sql);
 
-  $sql='insert into whitelists values(1,"whitelist_1","file:/opt/ioc2rpz/cfg/whitelist1.txt","none", NULL, 0, 900, 0);';
+  $sql='insert into whitelists values(1,"whitelist_1","file:/opt/ioc2rpz/cfg/whitelist1.txt","none", NULL, 0, 900, 0, "mixed", 0);';
   $db->exec($sql);
 
-  $sql='insert into sources values(1,"dns-bh","http://mirror1.malwaredomains.com/files/spywaredomains.zones","[:AXFR:]",\'^zone \"([A-Za-z0-9\-\._]+)\".*$\', NULL, 0, 900, 0);'.
-       'insert into sources values(1,"notracking_hosts","https://raw.githubusercontent.com/notracking/hosts-blocklists/master/hostnames.txt","[:AXFR:]","^0\.0\.0\.0 ([A-Za-z0-9\._\-]+[A-Za-z])$", NULL, 0, 900, 0);'.
-       'insert into sources values(1,"notracking_domains","https://raw.githubusercontent.com/notracking/hosts-blocklists/master/domains.txt","[:AXFR:]","^address=\/([A-Za-z0-9\._\-]+[A-Za-z])\/0\.0\.0\.0$", NULL, 0, 900, 0);';
+  $sql='insert into sources values(1,"notracking_hosts","https://raw.githubusercontent.com/notracking/hosts-blocklists/master/hostnames.txt","[:AXFR:]","^0\.0\.0\.0 ([A-Za-z0-9\._\-]+[A-Za-z])$", NULL, 0, 900, 0);'.
+       'insert into sources values(1,"notracking_domains","https://raw.githubusercontent.com/notracking/hosts-blocklists/master/domains.txt","[:AXFR:]","^address=\/([A-Za-z0-9\._\-]+[A-Za-z])\/0\.0\.0\.0$", NULL, 0, 900, 0, "mixed", 0);';
   $db->exec($sql);
 
-  $sql='insert into rpzs values(1,"dns-bh.ioc2rpz",86400,3600,2592000,7200,1,1,"nxdomain","mixed",604800,86400,0);'.
-       'insert into rpzs values(1,"notracking.ioc2rpz",86400,3600,2592000,7200,1,1,"nxdomain","mixed",604800,86400,0);'.
+  $sql='insert into rpzs values(1,"notracking.ioc2rpz",86400,3600,2592000,7200,1,1,"nxdomain","mixed",604800,86400,0);'.
        'insert into rpzs_servers values(1,1,1);'.
-       'insert into rpzs_servers values(2,1,1);'.
        'insert into rpzs_whitelists values(1,1,1);'.
-       'insert into rpzs_whitelists values(2,1,1);'.
        'insert into rpzs_sources values(1,1,1);'.
-       'insert into rpzs_sources values(2,1,2);'.
-       'insert into rpzs_sources values(2,1,3);'.
+       'insert into rpzs_sources values(1,1,2);'.
        'insert into rpzs_notify values(1,1,"127.0.0.1");'.
        'insert into rpzs_tkeys values(1,1,2);'.
-       'insert into rpzs_tkeys values(2,1,2);';
   $db->exec($sql);
 
   #close DB
