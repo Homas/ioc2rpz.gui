@@ -1,5 +1,6 @@
 #!/bin/bash
 #ioc2rpz installation/configuration script
+#(c) Vadim Pavlov 2018-2021
 
 SYSUSER=`whoami | awk '{print $1}'`
 IO2_ROOT="/opt/ioc2rpz.gui"
@@ -48,7 +49,7 @@ fi
 
 ####Apache2 and cron configuration
 if [ ! -f /etc/apache2/ioc2rpz.gui.config-done.txt ]; then
-    sed -i -e "s/^\(session.use_strict_mode = \).*/\1 1/" -e "s/^\(session.cookie_httponly =\)/\1 1/" -e "s/^;*\(session.cookie_secure =\)/\1 1/" /etc/php7/php.ini
+    sed -i -e "s/^\(session.use_strict_mode = \).*/\1 1/" -e "s/^\(session.cookie_httponly =\)/\1 1/" -e "s/^;*\(session.cookie_secure =\)/\1 1/" /etc/php81/php.ini
 
     sed -i -e "s%SSLCertificateFile /etc/ssl/apache2/server.pem%SSLCertificateFile /etc/apache2/ssl/ioc2_server.pem%"  /etc/apache2/conf.d/ssl.conf
     sed -i -e "s%SSLCertificateKeyFile /etc/ssl/apache2/server.key%SSLCertificateKeyFile /etc/apache2/ssl/ioc2_server.key%"  /etc/apache2/conf.d/ssl.conf

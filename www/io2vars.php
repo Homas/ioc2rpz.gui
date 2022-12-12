@@ -15,7 +15,7 @@ const io2mgmt="rest"; #ioc2rpz management interface: rest or dns
 const io2mgmt_verifyssl=false; #Verify SSL. If there is a self signed certificate - set to false.
 const rest_mgmt_port=8443;
 
-$io2ver=2020090701;
+$io2ver=2022121101;
 
 function filterIntArr($array){
   $result = [];
@@ -154,12 +154,12 @@ function genConfig($db,$USERID,$SrvId){
   //whitelists
   $cfg.="\n% whitelist record: name, path, regex\n";
   $row=DB_selectArray($db,"select * from whitelists where user_id=$USERID and rowid in (select whitelist_id from rpzs_whitelists left join rpzs on rpzs_whitelists.rpz_id=rpzs.rowid left join rpzs_servers on rpzs_servers.rpz_id=rpzs.rowid where server_id=$SrvId);");
-  foreach($row as $item){$cfg.="{whitelist,{\"${item['name']}\",\"${item['url']}\",".($item['regex']=="none"?"none":'"'.erlEscape($item['regex']).'"').",".($item['userid']==NULL?'""':$item['userid']).",${item['max_ioc']},${item['hotcache_time']},${item['hotcacheixfr_time']}}}.\n";};
+  foreach($row as $item){$cfg.="{whitelist,{\"${item['name']}\",\"${item['url']}\",".($item['regex']=="none"?"none":'"'.erlEscape($item['regex']).'"').",".($item['userid']==NULL?'""':$item['userid']).",${item['max_ioc']},${item['hotcache_time']},${item['hotcacheixfr_time']},\"${item['ioc_type']}\",".($item['keep_in_cache']?"true":"false")."}}.\n";};
 
   //sources
   $cfg.="\n% source record: name, axfr_path, ixfr_path, regex\n";
   $row=DB_selectArray($db,"select * from sources where user_id=$USERID and rowid in (select source_id from rpzs_sources left join rpzs on rpzs_sources.rpz_id=rpzs.rowid left join rpzs_servers on rpzs_servers.rpz_id=rpzs.rowid where server_id=$SrvId);");
-  foreach($row as $item){$cfg.="{source,{\"${item['name']}\",\"${item['url']}\",\"${item['url_ixfr']}\",".($item['regex']=="none"?"none":'"'.erlEscape($item['regex']).'"').",".($item['userid']==NULL?'""':$item['userid']).",${item['max_ioc']},${item['hotcache_time']},${item['hotcacheixfr_time']}}}.\n";};
+  foreach($row as $item){$cfg.="{source,{\"${item['name']}\",\"${item['url']}\",\"${item['url_ixfr']}\",".($item['regex']=="none"?"none":'"'.erlEscape($item['regex']).'"').",".($item['userid']==NULL?'""':$item['userid']).",${item['max_ioc']},${item['hotcache_time']},${item['hotcacheixfr_time']},\"${item['ioc_type']}\",".($item['keep_in_cache']?"true":"false")."}}.\n";};
 
   //rpzs -- add groups {groups,["ip2"]},
   $cfg.="\n% rpz record: name, SOA refresh, SOA update retry, SOA expiration, SOA NXDomain TTL, Cache, Wildcards, Action, [tkeys], ioc_type, AXFR_time, IXFR_time, [sources], [notify], [whitelists]\n";

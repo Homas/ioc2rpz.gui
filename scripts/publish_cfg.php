@@ -1,5 +1,5 @@
 <?php
-#(c) Vadim Pavlov 2018
+#(c) Vadim Pavlov 2018-2021
 #ioc2rpz GUI DB init
 
 define("IO2PATH", "/opt/ioc2rpz.gui"); #/opt/ioc2rpz.gui

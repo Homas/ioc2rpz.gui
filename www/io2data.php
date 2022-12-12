@@ -166,20 +166,20 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
 
     //add whitelist
     case "POST whitelists":
-      $sql="insert into whitelists values($USERID,'".DB_escape($db,$REQUEST['tSrcName'])."','".DB_escape($db,$REQUEST['tSrcURL'])."','".DB_escape($db,$REQUEST['tSrcREGEX'])."',NULL,".intval($REQUEST['tSrcMaxIOC']).",".intval($REQUEST['tSrcHotCacheAXFR']).",".intval($REQUEST['tSrcHotCacheIXFR']).")";
+      $sql="insert into whitelists values($USERID,'".DB_escape($db,$REQUEST['tSrcName'])."','".DB_escape($db,$REQUEST['tSrcURL'])."','".DB_escape($db,$REQUEST['tSrcREGEX'])."',NULL,".intval($REQUEST['tSrcMaxIOC']).",".intval($REQUEST['tSrcHotCacheAXFR']).",".intval($REQUEST['tSrcHotCacheIXFR']).",'".($REQUEST['tSrcIoCType']=='fqdn'?'fqdn':($REQUEST['tSrcIoCType']=='ip'?'ip':'mixed'))."',".intval($REQUEST['tSrcKeepInCache']).")";
       if (DB_execute($db,$sql)) $response='{"status":"ok"}'; else $response='{"status":"failed", "sql":"'.$sql.'"}'; //TODO remove SQL
       break;
     //modify whitelist
     case "PUT whitelists":
       $sql_update="update servers set cfg_updated=1 where rowid in (select distinct server_id from rpzs_servers left join rpzs_${REQUEST['req']} on rpzs_${REQUEST['req']}.rpz_id=rpzs_servers.rpz_id where rpzs_${REQUEST['req']}.".rtrim($REQUEST['req'],"s")."_id=".intval($REQUEST['tSrcId']).");\n";
-      $sql="update whitelists set name='".DB_escape($db,$REQUEST['tSrcName'])."', url='".DB_escape($db,$REQUEST['tSrcURL'])."', regex='".DB_escape($db,$REQUEST['tSrcREGEX'])."', max_ioc=".intval($REQUEST['tSrcMaxIOC']).", hotcache_time=".intval($REQUEST['tSrcHotCacheAXFR']).", hotcacheixfr_time=".intval($REQUEST['tSrcHotCacheIXFR'])." where rowid='".intval($REQUEST['tSrcId'])."';\n$sql_update";
+      $sql="update whitelists set name='".DB_escape($db,$REQUEST['tSrcName'])."', url='".DB_escape($db,$REQUEST['tSrcURL'])."', regex='".DB_escape($db,$REQUEST['tSrcREGEX'])."', max_ioc=".intval($REQUEST['tSrcMaxIOC']).", hotcache_time=".intval($REQUEST['tSrcHotCacheAXFR']).", hotcacheixfr_time=".intval($REQUEST['tSrcHotCacheIXFR']).",ioc_type='".($REQUEST['tSrcIoCType']=='fqdn'?'fqdn':($REQUEST['tSrcIoCType']=='ip'?'ip':'mixed'))."',keep_in_cache=".intval($REQUEST['tSrcKeepInCache'])." where rowid='".intval($REQUEST['tSrcId'])."';\n$sql_update";
 
       if (DB_execute($db,$sql)) $response='{"status":"ok"}'; else $response='{"status":"failed", "sql":"'.$sql.'"}'; //TODO remove SQL
       break;
 
     //add sources
     case "POST sources":
-      $sql="insert into sources values($USERID,'".DB_escape($db,$REQUEST['tSrcName'])."','".DB_escape($db,$REQUEST['tSrcURL'])."','".DB_escape($db,$REQUEST['tSrcURLIXFR'])."','".DB_escape($db,$REQUEST['tSrcREGEX'])."',NULL,".intval($REQUEST['tSrcMaxIOC']).",".intval($REQUEST['tSrcHotCacheAXFR']).",".intval($REQUEST['tSrcHotCacheIXFR']).")";
+      $sql="insert into sources values($USERID,'".DB_escape($db,$REQUEST['tSrcName'])."','".DB_escape($db,$REQUEST['tSrcURL'])."','".DB_escape($db,$REQUEST['tSrcURLIXFR'])."','".DB_escape($db,$REQUEST['tSrcREGEX'])."',NULL,".intval($REQUEST['tSrcMaxIOC']).",".intval($REQUEST['tSrcHotCacheAXFR']).",".intval($REQUEST['tSrcHotCacheIXFR']).",'".($REQUEST['tSrcIoCType']=='fqdn'?'fqdn':($REQUEST['tSrcIoCType']=='ip'?'ip':'mixed'))."',".intval($REQUEST['tSrcKeepInCache']).")";
       if (DB_execute($db,$sql)) $response='{"status":"ok"}'; else $response='{"status":"failed", "sql":"'.$sql.'"}'; //TODO remove SQL
       break;
     //modify sources
@@ -187,7 +187,7 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
 
       $sql_update="update servers set cfg_updated=1 where rowid in (select distinct server_id from rpzs_servers left join rpzs_${REQUEST['req']} on rpzs_${REQUEST['req']}.rpz_id=rpzs_servers.rpz_id where  rpzs_${REQUEST['req']}.".rtrim($REQUEST['req'],"s")."_id=".intval($REQUEST['tSrcId']).");\n";
 
-      $sql="update sources set name='".DB_escape($db,$REQUEST['tSrcName'])."', url='".DB_escape($db,$REQUEST['tSrcURL'])."', url_ixfr='".DB_escape($db,$REQUEST['tSrcURLIXFR'])."', regex='".DB_escape($db,$REQUEST['tSrcREGEX'])."', max_ioc=".intval($REQUEST['tSrcMaxIOC']).", hotcache_time=".intval($REQUEST['tSrcHotCacheAXFR']).", hotcacheixfr_time=".intval($REQUEST['tSrcHotCacheIXFR'])." where rowid='".intval($REQUEST['tSrcId'])."';\n$sql_update";
+      $sql="update sources set name='".DB_escape($db,$REQUEST['tSrcName'])."', url='".DB_escape($db,$REQUEST['tSrcURL'])."', url_ixfr='".DB_escape($db,$REQUEST['tSrcURLIXFR'])."', regex='".DB_escape($db,$REQUEST['tSrcREGEX'])."', max_ioc=".intval($REQUEST['tSrcMaxIOC']).", hotcache_time=".intval($REQUEST['tSrcHotCacheAXFR']).", hotcacheixfr_time=".intval($REQUEST['tSrcHotCacheIXFR']).", ioc_type='".($REQUEST['tSrcIoCType']=='fqdn'?'fqdn':($REQUEST['tSrcIoCType']=='ip'?'ip':'mixed'))."',keep_in_cache=".intval($REQUEST['tSrcKeepInCache'])." where rowid='".intval($REQUEST['tSrcId'])."';\n$sql_update";
       if (DB_execute($db,$sql)) $response='{"status":"ok"}'; else $response='{"status":"failed", "sql":"'.$sql.'"}'; //TODO remove SQL
       break;
 

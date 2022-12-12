@@ -1,5 +1,5 @@
 <?php
-#(c) Vadim Pavlov 2018-2020
+#(c) Vadim Pavlov 2018-2021
 #ioc2rpz GUI DB init script
 
 #chmod 664 /srv/www/io2cfg/io2db.sqlite
@@ -7,12 +7,20 @@
 
 define("IO2PATH", "/opt/ioc2rpz.gui"); #/opt/ioc2rpz.gui
 require IO2PATH."/www/io2vars.php";
+define("DBVersion", 2);
 
 function initSQLiteDB($DBF){
   $db = new SQLite3($DBF);
   ###
   ###create tables
   ###
+  #2021-08-01
+  #ALTER TABLE whitelists ADD column ioc_type text default 'mixed';
+  #ALTER TABLE whitelists ADD column keep_in_cache integer default 0;
+  #ALTER TABLE sources ADD column ioc_type text default 'mixed';
+  #ALTER TABLE sources ADD column keep_in_cache integer default 0;
+  #
+  #
   #2020-06-08
   #create table if not exists rpidns (user_id integer, name text, create_time DATETIME DEFAULT CURRENT_TIMESTAMP, rpidns_uuid text, commentary text, configuration json, foreign key(user_id) references users(rowid));
   #
@@ -40,6 +48,11 @@ function initSQLiteDB($DBF){
   //TODO enable foreign keys
   //PRAGMA foreign_keys = ON;
 
+  //set DB version
+  $sql="PRAGMA user_version=".DBVersion.";";
+  $db->exec($sql);
+
+
   #create users table
   $sql="create table if not exists users (name text, password text, salt text, perm integer, loginattempts integer, lastlogin integer, lastfailedlogin integer);";
   $db->exec($sql);
@@ -62,11 +75,11 @@ function initSQLiteDB($DBF){
   $db->exec($sql);
 
   #create whitelists table
-  $sql="create table if not exists whitelists (user_id integer, name text, url text, regex text, userid text default NULL, max_ioc integer default 0, hotcache_time integer default 900, hotcacheixfr_time integer default 0, foreign key(user_id) references users(rowid));";
+  $sql="create table if not exists whitelists (user_id integer, name text, url text, regex text, userid text default NULL, max_ioc integer default 0, hotcache_time integer default 900, hotcacheixfr_time integer default 0, ioc_type text default 'mixed', keep_in_cache integer default 0, foreign key(user_id) references users(rowid));";
   $db->exec($sql);
 
   #create sources table
-  $sql="create table if not exists sources (user_id integer, name text, url text, url_ixfr text, regex text, userid text default NULL, max_ioc integer default 0, hotcache_time integer default 900, hotcacheixfr_time integer default 0, foreign key(user_id) references users(rowid));";
+  $sql="create table if not exists sources (user_id integer, name text, url text, url_ixfr text, regex text, userid text default NULL, max_ioc integer default 0, hotcache_time integer default 900, hotcacheixfr_time integer default 0,ioc_type text default 'mixed', keep_in_cache integer default 0, foreign key(user_id) references users(rowid));";
   $db->exec($sql);
 
   #create rpzs table, servers, whitelists, sources, tkeys, notify
@@ -104,26 +117,20 @@ function initSQLiteDB($DBF){
 
   $db->exec($sql);
 
-  $sql='insert into whitelists values(1,"whitelist_1","file:/opt/ioc2rpz/cfg/whitelist1.txt","none", NULL, 0, 900, 0);';
+  $sql='insert into whitelists values(1,"whitelist_1","file:/opt/ioc2rpz/cfg/whitelist1.txt","none", NULL, 0, 900, 0, "mixed", 0);';
   $db->exec($sql);
 
-  $sql='insert into sources values(1,"dns-bh","http://mirror1.malwaredomains.com/files/spywaredomains.zones","[:AXFR:]",\'^zone \"([A-Za-z0-9\-\._]+)\".*$\', NULL, 0, 900, 0);'.
-       'insert into sources values(1,"notracking_hosts","https://raw.githubusercontent.com/notracking/hosts-blocklists/master/hostnames.txt","[:AXFR:]","^0\.0\.0\.0 ([A-Za-z0-9\._\-]+[A-Za-z])$", NULL, 0, 900, 0);'.
-       'insert into sources values(1,"notracking_domains","https://raw.githubusercontent.com/notracking/hosts-blocklists/master/domains.txt","[:AXFR:]","^address=\/([A-Za-z0-9\._\-]+[A-Za-z])\/0\.0\.0\.0$", NULL, 0, 900, 0);';
+  $sql='insert into sources values(1,"notracking_hosts","https://raw.githubusercontent.com/notracking/hosts-blocklists/master/hostnames.txt","[:AXFR:]","^0\.0\.0\.0 ([A-Za-z0-9\._\-]+[A-Za-z])$", NULL, 0, 900, 0, "mixed", 0);'.
+       'insert into sources values(1,"notracking_domains","https://raw.githubusercontent.com/notracking/hosts-blocklists/master/domains.txt","[:AXFR:]","^address=\/([A-Za-z0-9\._\-]+[A-Za-z])\/0\.0\.0\.0$", NULL, 0, 900, 0, "mixed", 0);';
   $db->exec($sql);
 
-  $sql='insert into rpzs values(1,"dns-bh.ioc2rpz",86400,3600,2592000,7200,1,1,"nxdomain","mixed",604800,86400,0);'.
-       'insert into rpzs values(1,"notracking.ioc2rpz",86400,3600,2592000,7200,1,1,"nxdomain","mixed",604800,86400,0);'.
+  $sql='insert into rpzs values(1,"notracking.ioc2rpz",86400,3600,2592000,7200,1,1,"nxdomain","mixed",604800,86400,0);'.
        'insert into rpzs_servers values(1,1,1);'.
-       'insert into rpzs_servers values(2,1,1);'.
        'insert into rpzs_whitelists values(1,1,1);'.
-       'insert into rpzs_whitelists values(2,1,1);'.
        'insert into rpzs_sources values(1,1,1);'.
-       'insert into rpzs_sources values(2,1,2);'.
-       'insert into rpzs_sources values(2,1,3);'.
+       'insert into rpzs_sources values(1,1,2);'.
        'insert into rpzs_notify values(1,1,"127.0.0.1");'.
-       'insert into rpzs_tkeys values(1,1,2);'.
-       'insert into rpzs_tkeys values(2,1,2);';
+       'insert into rpzs_tkeys values(1,1,2);';
   $db->exec($sql);
 
   #close DB
