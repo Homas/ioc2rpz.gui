@@ -244,13 +244,13 @@
 <!-- TKeys -->
           </b-tab>
           <b-tab table="whitelists" href='#/cfg/whitelists'>
-            <template slot="title"><i class="fas fa-list-alt"></i>&nbsp;&nbsp;Whitelists</template>
+            <template slot="title"><i class="fas fa-list-alt"></i>&nbsp;&nbsp;Allowlists</template>
 <!-- Whitelists -->
             <div class="v-spacer"></div>
             <b-card body-class="p-2">
               <template slot="header">
                 <b-row>
-                  <b-col cols="0" class="d-none d-lg-block"  lg="2"><span class="bold"><i class="fas fa-list-alt"></i>&nbsp;&nbsp;Whitelists</span></b-col>
+                  <b-col cols="0" class="d-none d-lg-block"  lg="2"><span class="bold"><i class="fas fa-list-alt"></i>&nbsp;&nbsp;Allowlists</span></b-col>
                   <b-col cols="12" lg="10" class="text-right">
                     <b-form-group class="m-0">
                       <b-button v-b-tooltip.hover title="Add" @click.stop="mgmtRec('add', 'whitelists', '', $event.target)" variant="outline-secondary" size="sm"><i class="fa fa-plus"></i></b-button>
@@ -664,7 +664,7 @@
                   </b-form-group>
                 </b-col>
                 <b-col :sm="6" class="form_row text-left">
-                  <b-form-group :style="{ height: (this.ftRPZSrcAll.length<4 && ftRPZWLAll.length<4?'4':'8')+'em' }" class="items_list" v-b-tooltip.hover title="Whitelists">
+                  <b-form-group :style="{ height: (this.ftRPZSrcAll.length<4 && ftRPZWLAll.length<4?'4':'8')+'em' }" class="items_list" v-b-tooltip.hover title="Allowlists">
                     <b-form-checkbox-group :disabled="infoWindow" plain stacked v-model="ftRPZWL" :options="ftRPZWLAll" />
                   </b-form-group>
                 </b-col>
