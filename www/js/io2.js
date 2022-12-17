@@ -1281,8 +1281,7 @@ const io2gui_app = new Vue({
     },
 
     signOut: function(){
-      axios.post('/io2auth.php/logout');
-      window.location.reload(true);
+      axios.post('/io2auth.php/logout').then(function (response){window.location.reload(true)});
     },
 
 

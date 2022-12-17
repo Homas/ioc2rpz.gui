@@ -22,8 +22,7 @@ new Vue({
 
     createUser: function(e){
       e.preventDefault();
-      if (this.$root.ftUNameProf.length == 0) e.preventDefault(); //TODO check all values
-
+//      if (this.$root.ftUNameProf.length == 0) e.preventDefault(); //TODO check all values
       var data={login: this.ftUNameProf, pwd: this.ftUPwd, pwdConf: this.ftUpwdConf};
       var obj=this;
       axios.post('/io2auth.php/createadmin',data).then(function (response) {
@@ -39,10 +38,10 @@ new Vue({
         obj.showInfo('Unknown error!!!',3);
       })
    },
-    
+
     signIn: function(e){ //
 //      if (this.$root.ftUNameProf.length == 0) e.preventDefault(); //TODO
-      
+      e.preventDefault();
       var data={login: this.ftUNameProf, pwd: this.ftUPwd};
       var obj=this;
       axios.post('/io2auth.php/signin',data).then(function (response) {
@@ -63,7 +62,7 @@ new Vue({
       setTimeout(function(){
         self.mInfoMSGvis = false; // Use your variable name
       }, time * 1000);
-    },    
-    
+    },
+
   }
 });
