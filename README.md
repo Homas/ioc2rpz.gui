@@ -1,9 +1,12 @@
 # ioc2rpz.gui
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)  
 
+## Short summary
+ioc2rpz™: The DNS Security Solution - ioc2rpz™ is a powerful DNS server that transforms threat indicators into actionable Response Policy Zone (RPZ) feeds. It automates the update process, ensuring your network is protected against the latest threats, including malicious domains and IP addresses. By converting IOC feeds into RPZs, ioc2rpz™ acts as a crucial link between threat intelligence and DNS security, compatible with RPZ-supporting DNS servers like ISC Bind or PowerDNS.
+
 ## Overview
-ioc2rpz.gui is a web interface for [ioc2rpz](https://github.com/Homas/ioc2rpz). ioc2rzp is a custom DNS server which was built to automatically maintain and distribute RPZ feeds.
-You can watch a demo of ioc2rpz technology including ioc2rpz.gui on the following video.
+ioc2rpz.gui is a web interface for [ioc2rpz™](https://github.com/Homas/ioc2rpz). ioc2rzp is a custom DNS server which was built to automatically maintain and distribute RPZ feeds.
+You can watch a demo of ioc2rpz™ technology including ioc2rpz.gui on the following video.
 <p align="center"><a href="http://www.youtube.com/watch?feature=player_embedded&v=bvhyMFa_mBM" target="_blank"><img src="https://github.com/Homas/ioc2rpz/blob/master/ioc2rpz_demo.png"></a></p>
 
 **Although ioc2rpz.gui was developed keeping security in mind it was not tested on penetrations and must be installed and used in restricted management networks.**
@@ -29,9 +32,9 @@ You may setup ioc2rp.gui using following options:
 
 Right now ioc2rpz.gui use only SQLite database with a database file stored in "/opt/ioc2rpz.gui/www/io2cfg" folder. Make sure that set up a relevant access permissions to the directory/db-file.
 
-ioc2rpz configuration files are saved to "/opt/ioc2rpz.gui/export-cfg" folder.
+ioc2rpz™ configuration files are saved to "/opt/ioc2rpz.gui/export-cfg" folder.
 
-The database initialization script also creates a sample configuration. You need to update public and management IP-addresses of ioc2rpz server before using it. If you already started ioc2rpz server please restart it or send a management signal to reload its configuration.
+The database initialization script also creates a sample configuration. You need to update public and management IP-addresses of ioc2rpz™ server before using it. If you already started ioc2rpz™ server please restart it or send a management signal to reload its configuration.
 
 **The init script doesn't create a default user. You should create the administrator after the first start. Please do it ASAP.**
 
@@ -47,7 +50,7 @@ ioc2rpz.gui is available on the Docker Hub. Just search for ioc2rpz.gui
 - ioc2rpz.gui automatically create a sample configuration;
 - ioc2rpz.gui use 80/tcp, 443/tcp ports. The ports should be exposed to a host system;
 - ioc2rpz.gui use the following volumes:
-    - "/opt/ioc2rpz.gui/export-cfg" to export ioc2rpz configurations. If you run ioc2rpz on the same host the folder should be shared;
+    - "/opt/ioc2rpz.gui/export-cfg" to export ioc2rpz™ configurations. If you run ioc2rpz™ on the same host the folder should be shared;
     - "/opt/ioc2rpz.gui/www/io2cfg" to store SQLite database;
     - "/etc/apache2/ssl" to store SSL certificates.
 
@@ -58,46 +61,46 @@ sudo docker run -d --name ioc2rpz.gui --log-driver=syslog  --restart always --mo
 where /home/ioc2rpz/cfg, /home/ioc2rpz/ssl, /home/ioc2rpz/db directories on a host system.
 
 ## Docker Compose
-You can deploy ioc2rpz and ioc2rpz.gui using docker compose. The docker-compose.yml file can be found in [ioc2rpz.dc](https://github.com/Homas/ioc2rpz.dc) repository.
+You can deploy ioc2rpz™ and ioc2rpz.gui using docker compose. The docker-compose.yml file can be found in [ioc2rpz.dc](https://github.com/Homas/ioc2rpz.dc) repository.
 
-## ioc2rpz on AWS
-You can run ioc2rpz and ioc2rpz.gui on AWS. For relatively small deployments (several hundreds thousands indicators) even free tier is enough.
-The video below shows how to setup ioc2rpz and ioc2rpz.gui on AWS using ECS.
+## ioc2rpz™ on AWS
+You can run ioc2rpz™ and ioc2rpz.gui on AWS. For relatively small deployments (several hundreds thousands indicators) even free tier is enough.
+The video below shows how to setup ioc2rpz™ and ioc2rpz.gui on AWS using ECS.
 <p align="center"><a href="http://www.youtube.com/watch?feature=player_embedded&v=C-y4p5TXt8s" target="_blank"><img src="https://github.com/Homas/ioc2rpz/blob/master/ioc2rpz_aws_setup.png"></a></p>
 
-## ioc2rpz configuration
+## ioc2rpz™ configuration
 
 ### Configuration workflow
-To configure ioc2rpz server you need to:
+To configure ioc2rpz™ server you need to:
 1. Create TSIG Keys for management and response policy zones transfers;
 2. Create a server record;
 3. Add sources;
 4. (optional) Add whitelists;
 5. Create a response policy zone;
-6. Publish the ioc2rpz configuration;
+6. Publish the ioc2rpz™ configuration;
 7. (optional) Export RPZs configuration in a required format.
 
 ### TSIG keys
-TSIG keys are used for ioc2rpz server management and RPZ transfer. It is not required to use TSIG keys for zone transfers but highly recommended.
+TSIG keys are used for ioc2rpz™ server management and RPZ transfer. It is not required to use TSIG keys for zone transfers but highly recommended.
 
 To add a new TSIG key navigate to "Configuration" --> "TSIG keys" and press the "+" button.
 The TSIG key and it's name automatically generated. You may generate a name and/or a key by using the "Generate" button or provide your values.
-ioc2rpz supports md5, sha256, sha512 hash algorithms so you need to select required algorithm. Some DNS servers do not support all algorithms.
-The "Management key" checkbox is used to distinguish keys which are used to manage ioc2rpz. These keys can not be used for RPZ transfers.
+ioc2rpz™ supports md5, sha256, sha512 hash algorithms so you need to select required algorithm. Some DNS servers do not support all algorithms.
+The "Management key" checkbox is used to distinguish keys which are used to manage ioc2rpz™. These keys can not be used for RPZ transfers.
 
 The action menu next to each TSIG key allows you to view, edit and remove the key.
 
 ### Servers
-Server tab is used to generate configurations and manages ioc2rpz servers. You can manage multiple ioc2rpz servers on a single ioc2rpz.gui instance.
+Server tab is used to generate configurations and manages ioc2rpz™ servers. You can manage multiple ioc2rpz™ servers on a single ioc2rpz™.gui instance.
 ioc2rpz.gui supports publishing configuration files to a local directory, mounted directory or remote server via scp.
 
 To add a server navigate to "Configuration" --> "Servers" and press the "+" button. All fields except "Management stations IPs" are required.
-"Server's Public IP/FQDN" is used only in the export DNS configurations. "Server's MGMT IP/FQDN" is used to manage ioc2rpz service. The public and management IP-addresses are not exposed into ioc2rpz configuration. If you select "Disabled" checkbox when you still can change the server's configuration in the GUI but it will not be published.
+"Server's Public IP/FQDN" is used only in the export DNS configurations. "Server's MGMT IP/FQDN" is used to manage ioc2rpz™ service. The public and management IP-addresses are not exposed into ioc2rpz™ configuration. If you select "Disabled" checkbox when you still can change the server's configuration in the GUI but it will not be published.
 
 <p align="center"><img src="https://github.com/Homas/ioc2rpz.gui/blob/dev/ioc2rpz.gui_scp_configuration.png"></a></p>
 
-To manage multiple ioc2rpz servers you need:  
-* if multiple ioc2rpz instances are running on the same host or remote directory mounted to the server - define distinct configuration file names or locations per server.  
+To manage multiple ioc2rpz™ servers you need:  
+* if multiple ioc2rpz™ instances are running on the same host or remote directory mounted to the server - define distinct configuration file names or locations per server.  
 * if configuration should be uploaded by SCP:  
 1. Configure SCP path (like on the screenshot).  
 2. Add public and private SSH keys to [Installation_Directory]/cfg/[Remote_server_name]_rsa.pub and [Installation_Directory]/cfg/[Remote_server_name]_rsa
@@ -111,7 +114,7 @@ A source is a feed of malicious indicators. FQDNs, IPv4 and IPv6-addresses are s
 
 To create a source navigate to "Configuration" --> "Sources" and press the "+" button. Fill the following fields and press "Ok":
 - source name;
-- source URL for full source transfer (AXFR). ioc2rpz can use http/https/ftp and local files to fetch indicators. Prefix "file:" is used for local files. Basic HTTP authentication is supported as well. You should include username/password in the URL in the following format "https://username:password@host.domain";
+- source URL for full source transfer (AXFR). ioc2rpz™ can use http/https/ftp and local files to fetch indicators. Prefix "file:" is used for local files. Basic HTTP authentication is supported as well. You should include username/password in the URL in the following format "https://username:password@host.domain";
 - source path for incremental source transfer (IXFR). AXFR,IXFR paths support keywords to shorten URLs and provide zone update timestamps:
   - **[:AXFR:]** - full AXFR path. Can be used only in IXFR paths;
   - **[:FTimestamp:]** - timestamp when the source was last time updated  (e.g. 1507946281)
@@ -120,10 +123,10 @@ To create a source navigate to "Configuration" --> "Sources" and press the "+" b
 
 The action menu allows you to view, edit, clone and remove sources.
 
-### Whitelists
-Whitelists are used to prevent possible errors and blocking trusted domains and IP addresses. The whitelisted IOCs are removed from response policy zones. ioc2rpz does check only exact match, so it will not split or discard a network if a whitelisted IP address is included into a blocked subnet and vice versa. A whitelist is a text file or a feed of text data. Indicators should be separated by newline characters (/n,/r or both /n/r).  Whitelists must contain valid FQDNs and/or IP addresses.
+### Allowlists
+Allowlists are used to prevent possible errors and blocking trusted domains and IP addresses. The whitelisted IOCs are removed from response policy zones. ioc2rpz™ does check only exact match, so it will not split or discard a network if a whitelisted IP address is included into a blocked subnet and vice versa. A whitelist is a text file or a feed of text data. Indicators should be separated by newline characters (/n,/r or both /n/r).  Allowlists must contain valid FQDNs and/or IP addresses.
 
-To create a source navigate to "Configuration" --> "Whitelists" and press the "+" button. Fill the following fields and press "Ok":
+To create a source navigate to "Configuration" --> "Allowlists" and press the "+" button. Fill the following fields and press "Ok":
 - whitelist name;
 - whitelist path. URLs(http/https/ftp) and local files are supported. Prefix "file:" is used for local files. Basic HTTP authentication is supported as well. You should include username/password in the URL in the following format "https://username:password@host.domain";
 - REGEX which is used to extract indicators. A regular expression must be included in double quotes. If the field is left empty, a default REGEX will be used (`"^([A-Za-z0-9][A-Za-z0-9\-\._]+)[^A-Za-z0-9\-\._]*.*$"`). `none` is used if no REGEX is required (the whitelist contains IOCs one per line w/o an expiration date).
@@ -153,7 +156,7 @@ The action menu allows you to view, edit, clone and remove RPZs.
 
 #### Local records
 Local records allow you to send a custom response and for example redirect a user to a block page or a proxy.
-ioc2rpz supports following records: `local_a`, `local_aaaa`, `local_cname`, `local_txt`, `redirect_ip` where `redirect_ip`, `redirect_domain` are alternative names for `local_a`, `local_aaaa` and `local_cname`.  
+ioc2rpz™ supports following records: `local_a`, `local_aaaa`, `local_cname`, `local_txt`, `redirect_ip` where `redirect_ip`, `redirect_domain` are alternative names for `local_a`, `local_aaaa` and `local_cname`.  
 
 You can provide multiple records, one record per line. **Only one local_cname/redirect_domain record is allowed** but you can have multiple A, AAAA, TXT records.  
 
@@ -171,7 +174,7 @@ local_cname=www.example.com
 ### Publishing configuration
 A yellow "Publish configuration" button (in the top right corner next to login name) automatically displayed when a server configuration is changed, the "publish" button on the action menu is also highlighted in blue.
 When you request to publish data:
-- ioc2rpz configuration is saved to a file;
+- ioc2rpz™ configuration is saved to a file;
 - ioc2rpz.gui sends a reload configuration signal to a server.
 If ioc2rpz was started without configuration or there were changes in management keys it may be required to manually restart ioc2rpz service or manually send the reload configuration signal using a previous management key.
 
@@ -212,7 +215,7 @@ You can suppor the project via [GitHub Sponsor](https://github.com/sponsors/Homa
 You can contact us by email: feedback(at)ioc2rpz[.]net or in [Telegram](https://t.me/ioc2rpz).
 
 # License
-Copyright 2017 - 2020 Vadim Pavlov ioc2rpz[at]gmail[.]com
+Copyright 2017 - 2024 Vadim Pavlov ioc2rpz[at]gmail[.]com
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at  
