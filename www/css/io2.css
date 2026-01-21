@@ -109,3 +109,25 @@ html,body {height: 100%;}
 .bold {
   font-weight: bold;
 }
+
+/* Bootstrap-vue-next tabs fix for full height */
+.h-100 > .row {
+  height: 100%;
+  flex: 1;
+}
+
+/* Ensure tabs content takes full height */
+.tab-content {
+  flex: 1;
+  overflow: auto;
+}
+
+/* Fix for vertical tabs layout */
+.h-100.corners {
+  flex: 1;
+  min-height: 0;
+}
+
+.text-align-start .nav-link {
+  text-align: start !important;
+}

@@ -113,17 +113,19 @@
 
     <div class="mx-auto vcentered" style="width: 400px; <?= $show_reg ?>">
       <b-card border-variant="light" class="text-center pu-10 pd-5" v-cloak>
-        <h4 slot="header" class="mb-0">New administrator</h4>
+        <template #header>
+          <h4 class="mb-0">New administrator</h4>
+        </template>
         <div>
           <b-row>
             <b-col :sm="12" class="form_row">
-              <b-input v-model.trim="ftUNameProf" :state="validateName('ftUNameProf')" placeholder="Username"  v-b-tooltip.hover title="Username" />
+              <b-form-input v-model.trim="ftUNameProf" :state="validateName('ftUNameProf')" placeholder="Username"  v-b-tooltip.hover title="Username" />
             </b-col>
             <b-col :sm="12" class="form_row">
-              <b-input type="password" v-model.trim="ftUPwd" :state="validatePass('ftUPwd')" placeholder="Password"  v-b-tooltip.hover title="Password" />
+              <b-form-input type="password" v-model.trim="ftUPwd" :state="validatePass('ftUPwd')" placeholder="Password"  v-b-tooltip.hover title="Password" />
             </b-col>
             <b-col :sm="12" class="form_row">
-              <b-input type="password" v-model.trim="ftUpwdConf" :state="validatePassMatch('ftUPwd','ftUpwdConf')" placeholder="Confirm password"  v-b-tooltip.hover title="Confirm password" />
+              <b-form-input type="password" v-model.trim="ftUpwdConf" :state="validatePassMatch('ftUPwd','ftUpwdConf')" placeholder="Confirm password"  v-b-tooltip.hover title="Confirm password" />
             </b-col>
             <b-col :sm="12" class="form_row">
               <b-button @click.stop="createUser($event)" variant="outline-secondary">Create</b-button>
@@ -138,15 +140,17 @@
  <!-- Sign in -->
     <div class="mx-auto vcentered" style="width: 400px; <?= $show_signin ?>">
       <b-card border-variant="light" class="text-center pu-10 pd-5" v-cloak>
-        <h4 slot="header" class="mb-0">ioc2rpz.gui</h4>
+        <template #header>
+          <h4 class="mb-0">ioc2rpz.gui</h4>
+        </template>
         <div>
 					<b-form @submit="signIn($event)">
             <b-row>
               <b-col :sm="12" class="form_row">
-                <b-input v-model.trim="ftUNameProf" placeholder="Username"  v-b-tooltip.hover title="Username" />
+                <b-form-input v-model.trim="ftUNameProf" placeholder="Username"  v-b-tooltip.hover title="Username" />
               </b-col>
               <b-col :sm="12" class="form_row">
-                <b-input type="password" v-model.trim="ftUPwd" placeholder="Password"  v-b-tooltip.hover title="Password" />
+                <b-form-input type="password" v-model.trim="ftUPwd" placeholder="Password"  v-b-tooltip.hover title="Password" />
               </b-col>
               <b-col :sm="12" class="form_row">
                 <b-button  type="submit" @click.stop="signIn($event)" variant="outline-secondary">Sign in</b-button>

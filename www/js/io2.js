@@ -9,6 +9,10 @@
  * ES Module format for Vite bundling
  */
 
+// Import event bus functions for Vue 3 compatibility
+// Replaces Vue 2's $root.$emit pattern
+import { showModal, refreshTable } from '../src/eventBus.js'
+
 // ============================================
 // Helper Functions (standalone, no Vue dependency)
 // ============================================
@@ -323,6 +327,20 @@ export const appConfig = {
     logs_height: 150,
     logs_pp: 5,
 
+    // Tab index to table name mapping for Vue 3 compatibility
+    // (replaces $children access which is removed in Vue 3)
+    tabTableMap: {
+      0: 'servers',
+      1: null,  // RpiDNS - no table
+      2: 'tkeys_groups',
+      3: 'tkeys',
+      4: 'whitelists',
+      5: 'sources',
+      6: 'rpzs',
+      7: null,  // Utils - no table
+      8: 'users'
+    },
+
     servers_fields: [
       { key: 'name', label: 'Name', sortable: true },
       { key: 'ip', label: 'MGMT IP/FQDN', sortable: true },
@@ -542,7 +560,7 @@ export const appConfig = {
     rpidns_add: function(id) {
       this.clear_rpidns_modal();
       this.RpiDNSLabel = "Add RpiDNS"; this.RpiDNSBttn = "Add"; this.addRpiDNSid = 0;
-      this.$emit('bv::show::modal', 'mAddRpiDNS');
+      showModal('mAddRpiDNS');
     },
 
     rpidns_edit: function(id) {
@@ -563,7 +581,7 @@ export const appConfig = {
       this.addRpiDNSTypeIPNet = El.dns_ipnet === undefined ? "" : El.dns_ipnet;
       El.rpz.forEach(function(item) { if (obj.$refs.io2tbl_rpzs.localItems.filter(e => e.name === item.feed).length > 0) { obj.ftRpiDNSRPZAction[item.feed] = item.action; obj.ftRpiDNSRPZ.push(item.feed); } });
       this.addRpiDNSComment = El.comment;
-      this.$emit('bv::show::modal', 'mAddRpiDNS');
+      showModal('mAddRpiDNS');
     },
 
     validateHostnameIP: function(vrbl) {
@@ -662,12 +680,55 @@ export const appConfig = {
       return good && (gotcname <= 1);
     },
 
+    /**
+     * Items provider function for bootstrap-vue-next BTable
+     * In bootstrap-vue-next, the provider function receives a context object
+     * and should return items directly or a Promise that resolves to items
+     * 
+     * @param {Object} ctx - Provider context with currentPage, perPage, filter, sortBy, signal
+     * @param {string} apiUrl - The API URL to fetch data from (passed via closure or table ref)
+     * @returns {Promise<Array>} Promise resolving to array of items
+     */
+    async tableProvider(ctx, apiUrl) {
+      try {
+        const response = await axios.get(apiUrl, { signal: ctx.signal });
+        if (/DOCTYPE html/.test(response.data)) {
+          window.location.reload(true);
+          return [];
+        }
+        const items = response.data;
+        this.totalRows = items.length;
+        return items;
+      } catch (error) {
+        if (error.name === 'CanceledError' || error.name === 'AbortError') {
+          // Request was cancelled, this is expected behavior
+          return [];
+        }
+        console.error('Table provider error:', error);
+        return [];
+      }
+    },
+
+    /**
+     * Legacy get_tables function for backward compatibility
+     * This wraps the new tableProvider for tables that still use the old pattern
+     * @deprecated Use tableProvider with provider prop instead
+     */
     get_tables(obj) {
-      let promise = axios.get(obj.apiUrl);
-      return promise.then((data) => {
-        if (/DOCTYPE html/.test(data.data)) { window.location.reload(true); }
-        else { let items = data.data; this.totalRows = items.length; return (items); }
-      }).catch(error => { return []; });
+      // For backward compatibility, extract apiUrl from the obj parameter
+      // In bootstrap-vue-next, we should use the provider prop instead
+      const apiUrl = obj.apiUrl || obj;
+      return this.tableProvider({ signal: new AbortController().signal }, apiUrl);
+    },
+
+    /**
+     * Creates a provider function for a specific API URL
+     * Use this to create provider functions for each table
+     * @param {string} apiUrl - The API URL for the table
+     * @returns {Function} Provider function for BTable
+     */
+    createTableProvider(apiUrl) {
+      return (ctx) => this.tableProvider(ctx, apiUrl);
     },
 
     onFiltered(filteredItems) {
@@ -676,12 +737,12 @@ export const appConfig = {
     },
 
     refreshTbl(table) {
-      this.$root.$emit('bv::refresh::table', table);
+      refreshTable(table);
     },
 
     importRec: function(action, table, row, target) {
       this.$root.ftImportRec = '';
-      this.$root.$emit('bv::show::modal', 'mImportRec');
+      showModal('mImportRec');
     },
 
     mgmtRec: function(action, table, row, target) {
@@ -690,22 +751,22 @@ export const appConfig = {
         case "add users":
           this.$root.ftUId = 0; this.$root.ftUNameProf = ""; this.$root.ftUPerm = 1;
           this.$root.ftUPwd = ""; this.$root.ftUpwdConf = "";
-          this.$root.$emit('bv::show::modal', 'mUAdd'); break;
+          showModal('mUAdd'); break;
         case "edit users":
           this.$root.ftUId = row.item.rowid; this.$root.ftUNameProf = row.item.name;
           this.$root.ftUPerm = row.item.perm; this.$root.ftUPwd = ""; this.$root.ftUpwdConf = "";
-          this.$root.$emit('bv::show::modal', 'mUAdd'); break;
+          showModal('mUAdd'); break;
         case "add tkeys_groups":
           this.$root.ftKeyGId = -1; this.$root.ftKeyGName = "";
-          this.$root.$emit('bv::show::modal', 'mTGroups'); break;
+          showModal('mTGroups'); break;
         case "edit tkeys_groups":
           this.$root.ftKeyGId = row.item.rowid; this.$root.ftKeyGName = row.item.group_name;
-          this.$root.$emit('bv::show::modal', 'mTGroups'); break;
+          showModal('mTGroups'); break;
         case "add tkeys":
           this.$root.ftKeyId = -1; this.$root.genRandom('tkeyName'); this.$root.genRandom('tkey');
           this.$root.ftKeyAlg = 'md5'; this.$root.ftKeyMGMT = 0; this.$root.editRow = {};
           this.$root.get_lists('tkeys_groups_list', 'ftTKeysAllGroups'); this.$root.ftTKeysGroups = [];
-          this.$root.$emit('bv::show::modal', 'mConfEditTSIG'); break;
+          showModal('mConfEditTSIG'); break;
         case "info tkeys": case "edit tkeys": case "clone tkeys":
           this.$root.ftKeyId = action == "clone" ? -1 : row.item.rowid;
           this.$root.ftKeyName = action == "clone" ? row.item.name + "_clone" : row.item.name;
@@ -715,14 +776,14 @@ export const appConfig = {
           var tkey_groups = [];
           row.item.tkey_groups.forEach(function(el) { tkey_groups.push(el.rowid); });
           this.$root.ftTKeysGroups = tkey_groups;
-          this.$root.$emit('bv::show::modal', 'mConfEditTSIG'); break;
+          showModal('mConfEditTSIG'); break;
         case "add whitelists": case "add sources":
           this.$root.ftSrcId = -1; this.$root.ftSrcName = ''; this.$root.ftSrcURL = '';
           this.$root.ftSrcREGEX = ''; this.$root.ftSrcType = table; this.$root.ftSrcURLIXFR = '';
           this.$root.ftSrcMaxIOC = '0'; this.$root.ftSrcHotCacheAXFR = '900'; this.$root.ftSrcHotCacheIXFR = '0';
           this.$root.ftSrcTitle = (table == "sources") ? "Source" : "Whitelist";
           this.$root.editRow = {}; this.$root.ftSrcIoCType = 'mixed'; this.$root.ftSrcKeepInCache = 0;
-          this.$root.$emit('bv::show::modal', 'mConfEditSources'); break;
+          showModal('mConfEditSources'); break;
         case "info whitelists": case "edit whitelists": case "clone whitelists":
         case "info sources": case "edit sources": case "clone sources":
           this.$root.ftSrcId = action == "clone" ? -1 : row.item.rowid;
@@ -736,7 +797,7 @@ export const appConfig = {
           this.$root.ftSrcHotCacheIXFR = `${row.item.hotcacheixfr_time}`;
           this.$root.ftSrcTitle = (table == "sources") ? "Source" : "Whitelist";
           this.$root.editRow = row.item;
-          this.$root.$emit('bv::show::modal', 'mConfEditSources'); break;
+          showModal('mConfEditSources'); break;
         case "add servers":
           this.$root.ftSrvId = -1; this.$root.ftSrvName = ''; this.$root.ftSrvIP = '';
           this.$root.ftSrvPubIP = ''; this.$root.ftSrvNS = ''; this.$root.ftSrvEmail = '';
@@ -746,7 +807,7 @@ export const appConfig = {
           this.$root.ftCACertFile = ""; this.$root.ftCustomConfig = "";
           this.$root.ftSrvDisabled = 0;
           this.$root.get_lists('tkeys_mgmt', 'ftSrvTKeysAll'); this.$root.editRow = {};
-          this.$root.$emit('bv::show::modal', 'mConfEditSrv'); break;
+          showModal('mConfEditSrv'); break;
         case "info servers": case "edit servers": case "clone servers":
           this.$root.ftSrvId = action == "clone" ? -1 : row.item.rowid;
           this.$root.ftSrvName = action == "clone" ? row.item.name + "_clone" : row.item.name;
@@ -766,7 +827,7 @@ export const appConfig = {
           this.$root.editRow = row.item;
           this.$root.editRow.mgmt_ips_str = this.$root.ftSrvMGMTIP;
           this.$root.editRow.tkeys_arr = this.$root.ftSrvTKeys;
-          this.$root.$emit('bv::show::modal', 'mConfEditSrv'); break;
+          showModal('mConfEditSrv'); break;
         case "publish servers":
           this.$root.pushUpdatestoSRV(row.item.rowid); break;
         case "export servers":
@@ -795,7 +856,7 @@ export const appConfig = {
           this.$root.ftRPZAction = "nxdomain"; this.$root.ftRPZActionCustom = "";
           this.$root.ftRPZIOCType = "mixed"; this.$root.ftRPZNotify = "";
           this.$root.ftRPZDisabled = 0; this.$root.editRow = {};
-          this.$root.$emit('bv::show::modal', 'mConfEditRPZ'); break;
+          showModal('mConfEditRPZ'); break;
         case "info rpzs": case "edit rpzs": case "clone rpzs":
           this.$root.RPZtabI = 0;
           this.$root.ftRPZProWindow = action == "info" ? "" : "hidden";
@@ -844,7 +905,7 @@ export const appConfig = {
           this.$root.editRow.tkeys_arr = this.$root.ftRPZTKeys;
           this.$root.editRow.sources_arr = this.$root.ftRPZSrc;
           this.$root.editRow.whitelists_arr = this.$root.ftRPZWL;
-          this.$root.$emit('bv::show::modal', 'mConfEditRPZ'); break;
+          showModal('mConfEditRPZ'); break;
         default:
           alert(action + ' ' + table);
       }
@@ -853,7 +914,7 @@ export const appConfig = {
     requestDelete: function(table, row) {
       this.$root.deleteRec = row.item.rowid; this.$root.deleteTbl = table;
       this.$root.modalMSG = '<b>Do you want to delete ' + row.item.name + '?</b>';
-      this.$root.$emit('bv::show::modal', 'mConfDel');
+      showModal('mConfDel');
     },
 
     validateName: function(vrbl) {
@@ -1008,7 +1069,7 @@ export const appConfig = {
 
     mgmtTableOk: function(response, obj, table) {
       if (response.data.status == "ok") {
-        obj.$root.$emit('bv::refresh::table', 'io2tbl_' + table);
+        refreshTable('io2tbl_' + table);
       } else {
         alert('sql error while adding ' + table);
       }
@@ -1137,7 +1198,7 @@ export const appConfig = {
       if (table != 'users') toggleUpdates(0, this, true);
       axios.delete('/io2data.php/' + table + '?rowid=' + JSON.stringify(rowid)).then(function(response) {
         if (/DOCTYPE html/.test(response.data)) { window.location.reload(true); }
-        else if (response.data.status == "ok") { el.$root.$emit('bv::refresh::table', 'io2tbl_' + table); }
+        else if (response.data.status == "ok") { refreshTable('io2tbl_' + table); }
         else { alert('sql error while deleting ' + table + ' ' + rowid); }
       }).catch(function(error) { alert('error while deleting ' + table + ' ' + rowid); });
     },
@@ -1148,7 +1209,7 @@ export const appConfig = {
       axios.post(`/io2data.php/publish_upd?SrvId=${SrvId}`).then(function(response) {
         if (response.data.status == "ok") {
           obj.showInfo('Configuration will be updated in a few seconds', 3);
-          toggleUpdates(0, obj, false); obj.$root.$emit('bv::refresh::table', 'servers');
+          toggleUpdates(0, obj, false); refreshTable('servers');
         } else {
           if (/DOCTYPE html/.test(response.data)) { window.location.reload(true); } else alert('Publishing error');
         }
@@ -1201,7 +1262,11 @@ export const appConfig = {
 
     changeTab: function(tab) {
       history.pushState(null, null, '#tabs_menu/' + tab);
-      if (this.$refs.tabs_menu.$children[tab].$attrs.table) this.$root.$emit('bv::refresh::table', this.$refs.tabs_menu.$children[tab].$attrs.table);
+      // Use tabTableMap instead of $children (removed in Vue 3)
+      const tableName = this.tabTableMap[tab];
+      if (tableName) {
+        refreshTable('io2tbl_' + tableName);
+      }
     },
 
     signOut: function() {
@@ -1213,7 +1278,7 @@ export const appConfig = {
       this.$root.get_lists('rpz_lists', 'ftExRPZAll');
       this.$root.ftExRPZ = [];
       this.$root.rpzExportSAll = false;
-      this.$emit('bv::show::modal', 'mExpRPZ');
+      showModal('mExpRPZ');
     },
 
     rpzExportToggleAll: function(checked) {

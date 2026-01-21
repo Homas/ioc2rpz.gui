@@ -1,7 +1,7 @@
 <?php
   require 'io2auth.php';
 ?>
-<div class="v-spacer"></div>
+
 <div>
     <b-card-group columns>
       <b-card header="Import configuration" title="Import ioc2rpz">

@@ -1,31 +1,31 @@
 {
-  "_bootstrap-vue.!~{003}~.js": {
-    "file": "bootstrap-vue.RkY1T-zc.css",
-    "src": "_bootstrap-vue.!~{003}~.js"
+  "_bootstrap-vue-next.!~{003}~.js": {
+    "file": "bootstrap-vue-next.Cx8ufvGS.css",
+    "src": "_bootstrap-vue-next.!~{003}~.js"
   },
-  "_bootstrap-vue.Cad0HAtT.js": {
-    "file": "bootstrap-vue.Cad0HAtT.js",
-    "name": "bootstrap-vue",
+  "_bootstrap-vue-next.CdxwHzg-.js": {
+    "file": "bootstrap-vue-next.CdxwHzg-.js",
+    "name": "bootstrap-vue-next",
     "css": [
-      "bootstrap-vue.RkY1T-zc.css"
+      "bootstrap-vue-next.Cx8ufvGS.css"
     ]
   },
   "src/auth.js": {
-    "file": "auth.C5qAV85K.js",
+    "file": "auth.VkSgfenK.js",
     "name": "auth",
     "src": "src/auth.js",
     "isEntry": true,
     "imports": [
-      "_bootstrap-vue.Cad0HAtT.js"
+      "_bootstrap-vue-next.CdxwHzg-.js"
     ]
   },
   "src/main.js": {
-    "file": "main.d3UXcW9c.js",
+    "file": "main.DGPcnbJP.js",
     "name": "main",
     "src": "src/main.js",
     "isEntry": true,
     "imports": [
-      "_bootstrap-vue.Cad0HAtT.js"
+      "_bootstrap-vue-next.CdxwHzg-.js"
     ]
   }
 }
