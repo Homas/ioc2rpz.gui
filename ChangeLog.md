@@ -1,4 +1,7 @@
 #ioc2rpz.gui change log
+## 2.0.0.0 2026-01-23
+- Migration to vue3 with vite
+
 ## 1.0.1.0 2020-09-08
 - Max IoCs, hot cache time management.
 

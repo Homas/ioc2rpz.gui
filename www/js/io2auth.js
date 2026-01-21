@@ -1,4 +1,15 @@
-new Vue({
+/**
+ * io2auth.js - Authentication module for ioc2rpz.gui
+ * 
+ * This file exports the Vue app configuration for the authentication page.
+ * The Vue instance is created in www/src/auth.js
+ */
+
+/**
+ * Vue app configuration for the authentication application
+ * Contains data, methods for user validation, sign-in, and user creation
+ */
+export const authAppConfig = {
   el: "#app",
   data: {
     ftUNameProf: '',
@@ -65,4 +76,7 @@ new Vue({
     },
 
   }
-});
+};
+
+// Default export for convenience
+export default authAppConfig;

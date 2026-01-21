@@ -1,0 +1,31 @@
+{
+  "_bootstrap-vue.!~{003}~.js": {
+    "file": "bootstrap-vue.RkY1T-zc.css",
+    "src": "_bootstrap-vue.!~{003}~.js"
+  },
+  "_bootstrap-vue.Cad0HAtT.js": {
+    "file": "bootstrap-vue.Cad0HAtT.js",
+    "name": "bootstrap-vue",
+    "css": [
+      "bootstrap-vue.RkY1T-zc.css"
+    ]
+  },
+  "src/auth.js": {
+    "file": "auth.C5qAV85K.js",
+    "name": "auth",
+    "src": "src/auth.js",
+    "isEntry": true,
+    "imports": [
+      "_bootstrap-vue.Cad0HAtT.js"
+    ]
+  },
+  "src/main.js": {
+    "file": "main.d3UXcW9c.js",
+    "name": "main",
+    "src": "src/main.js",
+    "isEntry": true,
+    "imports": [
+      "_bootstrap-vue.Cad0HAtT.js"
+    ]
+  }
+}

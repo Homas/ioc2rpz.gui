@@ -1,3 +1,10 @@
+# 2026-01-20
+- [ ] Replace notracking with own sample feeds and allow lists on github
+- [ ] New RPZ zone
+- [ ] RpiDNS - migrate to containers only
+- [ ] remove enforcement for 6 chars for usernames and RpiDNS
+- [ ] edit users doesn't work
+
 # 2020-05-28
 - [ ] Security
   - [ ] Enforce HSTS 

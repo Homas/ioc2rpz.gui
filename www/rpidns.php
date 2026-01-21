@@ -1,5 +1,5 @@
 <?php
-#(c) Vadim Pavlov 2018-2020
+#(c) Vadim Pavlov 2018-2026
 #ioc2rpz.gui RpiDNS
 
 require_once 'io2auth.php';

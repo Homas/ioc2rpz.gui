@@ -1,5 +1,5 @@
 <?php
-#(c) Vadim Pavlov 2019-2020
+#(c) Vadim Pavlov 2019-2026
 
 require_once 'io2vars.php';
 require_once 'io2fun.php';
