@@ -6,6 +6,7 @@ require_once 'io2auth.php';
 require_once 'io2fun.php';
 
 ?>
+
 <div>
 	<b-card header-class="bold" style="max-height:calc(100vh - 100px)">
 		<template #header ><!-- class="py-0 d-flex" -->
@@ -13,7 +14,7 @@ require_once 'io2fun.php';
         <b-col cols="0" class="d-none d-lg-block"  lg="2"><span class="bold"><i class="fas fa-atom"></i>&nbsp;&nbsp;RpiDNS</span></b-col>
         <b-col cols="12" lg="10" class="d-flex justify-content-end">
           <b-form-group class="m-0">
-            <b-button v-b-tooltip.hover title="Add" @click.stop="rpidns_add()" variant="outline-secondary" size="sm"><i class="fa fa-plus"></i></b-button>
+            <b-button v-b-tooltip.hover title="Add" @click.stop="rpidns_add()" variant="outline-secondary" size="sm" class="me-1"><i class="fa fa-plus"></i></b-button>
             <b-button v-b-tooltip.hover title="Refresh" variant="outline-secondary" size="sm" @click.stop="refreshRpiDNS()"><i class="fa fa-sync"></i></b-button>
           </b-form-group>
         </b-col>
@@ -29,37 +30,32 @@ require_once 'io2fun.php';
 			<template v-for="item in cardrow" :key="item.id">
 				<b-card :header="'Title'+item.name" header-tag="header" style="max-width: 300px">
 					<template #header>
-						<h6 class="mb-0">{{item.name}} <span class="float-right clickable close-icon" data-effect="fadeOut" @click="rpidns_delete(item.id)"><i class="fa fa-times"></i></span> </h6>
+						<h6 class="d-flex justify-content-between mb-0">{{item.name}} <span class="float-right clickable close-icon" data-effect="fadeOut" @click="rpidns_delete(item.id)"><i class="fa fa-times"></i></span> </h6>
 					</template>
 					<b-card-text>
 						OS: {{item.model_name}}<br>
 						DNS: {{item.dns_name}}<br>
-						RPZ: {{item.rpz.length}}<br>
+						RPZ: {{item.rpz ? item.rpz.length : 0}}<br>
 						Status: {{item.status}}<br>
 					</b-card-text>
 					<span class="float-right">
-						<b-button href="#" variant="primary" size="sm" @click="rpidns_edit(item.id)"><i class="fa fa-edit"></i></b-button>	
-						<b-button :id="'rpidns_burl'+item.id" href="#" variant="primary" size="sm"><i class="fa fa-link"></i></b-button>
+						<b-button href="#" variant="primary" size="sm" @click="rpidns_edit(item.id)" class="me-1"><i class="fa fa-edit"></i></b-button>	
+						<b-button :id="'rpidns_burl'+item.id" href="#" variant="primary" size="sm" class="me-1"><i class="fa fa-link"></i></b-button>
 							<b-popover :target="'rpidns_burl'+item.id" triggers="hover" placement="top">
 								<template #title>Script URL</template>
 								URL:
-								<b-input-group>
-								<b-form-input type="url" readonly size="sm" :id="'formRpiDNSURL'+item.id" :value="this.document.location.origin +'/rpidns_config.php/rpidns_config?uuid='+item.rpidns_uuid" style="width: 200px;"></b-form-input>
-									<template #append>
-										<b-button size="sm" v-b-tooltip.hover title="Copy" variant="outline-secondary" @click="this.copyToClipboardID('formRpiDNSURL'+item.id)"><i class="fa fa-copy"></i></b-button>
-									</template>
-								</b-input-group>
-								<br>
+								<div class="position-relative mb-2">
+									<b-form-input type="url" readonly size="sm" :id="'formRpiDNSURL'+item.id" :value="locationOrigin +'/rpidns_config.php/rpidns_config?uuid='+item.rpidns_uuid" style="width: 250px; padding-right: 32px;"></b-form-input>
+									<b-button size="sm" v-b-tooltip.hover title="Copy" variant="link" @click="copyToClipboardID('formRpiDNSURL'+item.id)" style="position:absolute;right:2px;top:50%;transform:translateY(-50%);padding:2px 4px;color:#6c757d;"><i class="fa fa-copy"></i></b-button>
+								</div>
 								cURL:
-								<b-input-group>
-								<b-form-input type="text" readonly size="sm" :id="'formRpiDNScURL'+item.id" :value="'curl \''+this.document.location.origin +'/rpidns_config.php/rpidns_config?uuid='+item.rpidns_uuid+'\' -o '+item.name+'_install.sh -k'" style="width: 200px;"></b-form-input>
-									<template #append>
-										<b-button size="sm" v-b-tooltip.hover title="Copy" variant="outline-secondary" @click="this.copyToClipboardID('formRpiDNScURL'+item.id)"><i class="fa fa-copy"></i></b-button>
-									</template>
-								</b-input-group>
+								<div class="position-relative">
+									<b-form-input type="text" readonly size="sm" :id="'formRpiDNScURL'+item.id" :value="'curl \''+locationOrigin +'/rpidns_config.php/rpidns_config?uuid='+item.rpidns_uuid+'\' -o '+item.name+'_install.sh -k'" style="width: 250px; padding-right: 32px;"></b-form-input>
+									<b-button size="sm" v-b-tooltip.hover title="Copy" variant="link" @click="copyToClipboardID('formRpiDNScURL'+item.id)" style="position:absolute;right:2px;top:50%;transform:translateY(-50%);padding:2px 4px;color:#6c757d;"><i class="fa fa-copy"></i></b-button>
+								</div>
 							</b-popover>
 
-						<a :href="this.document.location.origin +'/rpidns_config.php/rpidns_config?uuid='+item.rpidns_uuid" class="btn btn-primary btn-sm"><i class="fa fa-download"></i></a>
+						<a :href="locationOrigin +'/rpidns_config.php/rpidns_config?uuid='+item.rpidns_uuid" class="btn btn-primary btn-sm"><i class="fa fa-download"></i></a>
 					</span>
 				</b-card>
 			</template>			
@@ -86,10 +82,10 @@ require_once 'io2fun.php';
 
 				<b-row class="pb-1">
 					<b-col md="6" class="p-0 pe-1">
-						<b-form-select v-model="addRpiDNSModel" :options="addRpiDNSOptions"></b-form-select>
+						<b-form-select v-model="addRpiDNSModel" :options="addRpiDNSOptions" disabled></b-form-select>
 					</b-col>
 					<b-col md="6" class="p-0">
-						<b-form-select v-model="addRpiDNSServer" :options="addRpiDNSServerOptions"></b-form-select>
+						<b-form-select v-model="addRpiDNSServer" :options="addRpiDNSServerOptions" disabled></b-form-select>
 					</b-col>
 				</b-row>
 
@@ -106,7 +102,6 @@ require_once 'io2fun.php';
 				<b-row class="pb-1">
 					<b-col md="12" class="p-0">
 
-						<template>
 								<div >
 									<b-table striped hover sticky-header="300px" no-border-collapse :provider="createTableProvider('/io2data.php/rpzs')" :fields="tRPZRpiDNS_fields" ref="tRPZRpiDNS" small>
 																				 
@@ -133,7 +128,6 @@ require_once 'io2fun.php';
 					
 									</b-table>
 								</div>
-							</template>
 	
 					</b-col>
 				</b-row>

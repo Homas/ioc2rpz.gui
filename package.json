@@ -1,6 +1,6 @@
 {
   "name": "ioc2rpz-gui",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "ioc2rpz.gui - Web management interface for ioc2rpz DNS security server",
   "type": "module",
   "scripts": {
@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@popperjs/core": "^2.11.8",
-    "axios": "^1.6.7",
+    "axios": "^1.13.5",
     "bootstrap": "^5.3.3",
     "bootstrap-vue-next": "^0.17.3",
     "mitt": "^3.0.1",

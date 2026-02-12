@@ -1,40 +1,109 @@
 <?php
-#(c) Vadim Pavlov 2018-2026
-#ioc2rpz GUI vars
+/**
+ * ioc2rpz.gui - Configuration Variables and Database Functions
+ * 
+ * This file contains:
+ * - Database configuration constants
+ * - ioc2rpz server management settings
+ * - Database abstraction layer functions (SQLite)
+ * - Configuration generation utilities for ioc2rpz servers
+ * 
+ * @package ioc2rpz.gui
+ * @author Vadim Pavlov
+ * @copyright 2018-2026
+ * @license MIT
+ */
 
-const DB="sqlite"; //for a single user it is Ok
+/**
+ * Database type constant
+ * Currently only SQLite is supported for single-user deployments
+ */
+const DB="sqlite";
+
+/**
+ * Path to the SQLite database file relative to the www directory
+ */
 const DBFile="io2cfg/io2db.sqlite";
+
+/**
+ * Whether to create the database file if it doesn't exist
+ */
 const DBCreateIfNotExists=true;
 
+/**
+ * Directory for ioc2rpz configuration files
+ */
 const ioc2rpzConf="io2cfg";
 
+/**
+ * Path to the dig command for DNS queries
+ * Alternative: /usr/bin/kdig +tls for DNS over TLS
+ */
 const dig="/usr/bin/dig +tcp";
-#const dig="/usr/bin/kdig +tls";
 
-const io2mgmt="rest"; #ioc2rpz management interface: rest or dns
-const io2mgmt_verifyssl=false; #Verify SSL. If there is a self signed certificate - set to false.
+/**
+ * ioc2rpz management interface type
+ * Options: 'rest' for REST API, 'dns' for DNS-based management
+ */
+const io2mgmt="rest";
+
+/**
+ * Whether to verify SSL certificates for management connections
+ * Set to false for self-signed certificates
+ */
+const io2mgmt_verifyssl=false;
+
+/**
+ * Port number for REST management interface
+ */
 const rest_mgmt_port=8443;
 
+/**
+ * Application version number (YYYYMMDDNN format)
+ * @var int
+ */
 $io2ver=2022121101;
 
+/**
+ * Filters an array to return only numeric values
+ * Used to sanitize arrays of IDs before database queries
+ * 
+ * @param array $array Input array containing mixed values
+ * @return array Array containing only numeric values
+ */
 function filterIntArr($array){
   $result = [];
   foreach ($array as $a) {if (is_numeric($a)) $result[]=$a;};
   return $result;
 };
 
-
+/**
+ * Extracts group IDs from an array of prefixed group identifiers
+ * Group IDs are prefixed with 'gr_' (e.g., 'gr_123' returns '123')
+ * 
+ * @param array $array Input array containing group identifiers
+ * @return array Array of extracted numeric group IDs
+ */
 function getGroupsId($array){
   $result = [];
   foreach ($array as $a) {if (preg_match('/^gr_(\d+)$/',$a,$m)) $result[]=$m[1];};
   return $result;
 };
 
+/**
+ * Placeholder function for database validation
+ * Reserved for future implementation of database integrity checks
+ */
 function checkDB(){
 
 };
 
-
+/**
+ * Opens a database connection
+ * Configures SQLite with WAL journal mode for better concurrency
+ * 
+ * @return SQLite3 Database connection handle
+ */
 function DB_open()
 {
   switch (DB){
@@ -47,6 +116,12 @@ function DB_open()
   return $db;
 }
 
+/**
+ * Closes a database connection
+ * 
+ * @param SQLite3 $db Database connection handle to close
+ * @return void
+ */
 function DB_close($db)
 {
   switch (DB){
@@ -56,6 +131,13 @@ function DB_close($db)
   }
 }
 
+/**
+ * Executes a SELECT query and returns a result set
+ * 
+ * @param SQLite3 $db Database connection handle
+ * @param string $sql SQL SELECT query to execute
+ * @return SQLite3Result Query result set for iteration
+ */
 function DB_select($db,$sql){
   switch (DB){
     case "sqlite":
@@ -65,6 +147,14 @@ function DB_select($db,$sql){
   return $result;
 };
 
+/**
+ * Escapes a string for safe use in SQL queries
+ * Prevents SQL injection attacks
+ * 
+ * @param SQLite3 $db Database connection handle
+ * @param string $text String to escape
+ * @return string Escaped string safe for SQL queries
+ */
 function DB_escape($db,$text){
   switch (DB){
     case "sqlite":
@@ -74,6 +164,12 @@ function DB_escape($db,$text){
   return $result;
 };
 
+/**
+ * Converts a value to a database boolean (0 or 1)
+ * 
+ * @param mixed $val Value to convert (string "1" becomes 1, else 0)
+ * @return int 1 for true, 0 for false
+ */
 function DB_boolval($val){
   switch (DB){
     case "sqlite":
@@ -83,8 +179,13 @@ function DB_boolval($val){
   return $result;
 };
 
-
-
+/**
+ * Executes a SELECT query and returns all results as an array
+ * 
+ * @param SQLite3 $db Database connection handle
+ * @param string $sql SQL SELECT query to execute
+ * @return array Array of associative arrays, one per row
+ */
 function DB_selectArray($db,$sql){
   switch (DB){
     case "sqlite":
@@ -99,7 +200,12 @@ function DB_selectArray($db,$sql){
   return $data;
 };
 
-
+/**
+ * Fetches the next row from a result set as an associative array
+ * 
+ * @param SQLite3Result $result Query result set
+ * @return array|false Associative array of column values, or false if no more rows
+ */
 function DB_fetchArray($result){
   switch (DB){
     case "sqlite":
@@ -109,6 +215,13 @@ function DB_fetchArray($result){
   return $data;
 };
 
+/**
+ * Executes a non-SELECT SQL statement (INSERT, UPDATE, DELETE)
+ * 
+ * @param SQLite3 $db Database connection handle
+ * @param string $sql SQL statement to execute
+ * @return bool True on success, false on failure
+ */
 function DB_execute($db,$sql){
   switch (DB){
     case "sqlite":
@@ -118,6 +231,21 @@ function DB_execute($db,$sql){
   return $result;
 };
 
+/**
+ * Generates ioc2rpz server configuration file content
+ * 
+ * Creates an Erlang-format configuration file for ioc2rpz server including:
+ * - Server settings (NS, email, TSIG keys, management IPs)
+ * - SSL certificate configuration
+ * - TSIG keys for zone transfers
+ * - Whitelists and sources
+ * - RPZ zone definitions
+ * 
+ * @param SQLite3 $db Database connection handle
+ * @param int $USERID User ID for filtering records
+ * @param int $SrvId Server row ID to generate config for
+ * @return array Associative array with 'filename' and 'cfg' keys
+ */
 function genConfig($db,$USERID,$SrvId){
   //srv
   $row=DB_selectArray($db,"select * from servers where user_id=$USERID and rowid=$SrvId;")[0];
@@ -130,11 +258,11 @@ function genConfig($db,$USERID,$SrvId){
   $subres_gr=DB_selectArray($db,"select group_name from servers_tsig_groups left join tkeys_groups on tkeys_groups.rowid=servers_tsig_groups.tsig_group_id where servers_tsig_groups.user_id=$USERID and servers_tsig_groups.server_id=$SrvId");
 	if ($subres_gr) $groups=",{groups,[\"".implode('","',array_column($subres_gr,'group_name'))."\"]}"; else $groups="";
 
-  $cfg.="{srv,{\"${row['ns']}\",\"".str_replace("@",".",$row['email'])."\",[\"".implode('","',array_column($subres,'name'))."\"$groups],[\"".implode('","',array_column($subres1,'mgmt_ip'))."\"]}}.\n";
+  $cfg.="{srv,{\"".erlEscape($row['ns'])."\",\"".str_replace("@",".",erlEscape($row['email']))."\",[\"".implode('","',array_map('erlEscape',array_column($subres,'name')))."\"$groups],[\"".implode('","',array_map('erlEscape',array_column($subres1,'mgmt_ip')))."\"]}}.\\n";
 
   if ($row['certfile']!="" and $row['keyfile']!="") {
     $cfg.="\n% cert record: certfile, keyfile, cacertfile\n";
-    $cfg.="{cert,{\"${row['certfile']}\",\"${row['keyfile']}\",\"${row['cacertfile']}\"}}.\n";
+    $cfg.="{cert,{\"".erlEscape($row['certfile'])."\",\"".erlEscape($row['keyfile'])."\",\"".erlEscape($row['cacertfile'])."\"}}.\n";
   };
 
   if ($row['custom_config']!="") {
@@ -148,7 +276,7 @@ function genConfig($db,$USERID,$SrvId){
   foreach($row as $item){
 		$subres_gr=DB_selectArray($db,"select group_name from tkeys_tsig_groups left join tkeys_groups on tkeys_groups.rowid=tkeys_tsig_groups.tsig_group_id where tkeys_tsig_groups.user_id=$USERID and tkeys_tsig_groups.tsig_id=${item['rowid']}");
 		if ($subres_gr) $groups=",[\"".implode('","',array_column($subres_gr,'group_name'))."\"]"; else $groups="";
-		$cfg.="{key,{\"${item['name']}\",\"${item['alg']}\",\"${item['tkey']}\"$groups}}.\n";
+		$cfg.="{key,{\"".erlEscape($item['name'])."\",\"".erlEscape($item['alg'])."\",\"".erlEscape($item['tkey'])."\"$groups}}.\n";
 	};
 
   //whitelists
@@ -181,16 +309,77 @@ function genConfig($db,$USERID,$SrvId){
   return $response;
 };
 
+/**
+ * Escapes special characters for Erlang string format
+ * Reserved for future implementation of quote escaping
+ * 
+ * @param string $str String to escape
+ * @return string Escaped string safe for Erlang format
+ */
 function erlEscape($str){
-  //TODO escape quotes
+  // Escape backslashes first, then double-quotes for Erlang string literals
+  $str = str_replace('\\', '\\\\', $str);
+  $str = str_replace('"', '\\"', $str);
   return $str;
 };
 
+/**
+ * Validates local RPZ records format
+ * Reserved for future implementation of record validation
+ * 
+ * @param string $str Local records string to validate
+ * @return string Validated records string
+ */
 function erlChLRecords($str){
-  //TODO check local RPZ records
-  return $str;
+  // Validate and sanitize custom local RPZ records
+  // Only allow known record types with validated values
+  if (empty($str)) return 'nxdomain';
+  $decoded = json_decode($str);
+  if ($decoded === null) return 'nxdomain';
+  $validated = [];
+  foreach(explode(PHP_EOL, $decoded) as $item){
+    $item = trim($item);
+    if (empty($item)) continue;
+    $lr = explode("=", $item, 2);
+    if (count($lr) !== 2) continue;
+    $type = trim($lr[0]);
+    $val = trim($lr[1]);
+    switch($type){
+      case 'local_a':
+        if (filter_var($val, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) $validated[] = "$type=$val";
+        break;
+      case 'local_aaaa':
+        if (filter_var($val, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) $validated[] = "$type=$val";
+        break;
+      case 'redirect_ip':
+        if (filter_var($val, FILTER_VALIDATE_IP)) $validated[] = "$type=$val";
+        break;
+      case 'local_cname':
+      case 'redirect_domain':
+        if (filter_var($val, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME)) $validated[] = "$type=$val";
+        break;
+      case 'local_txt':
+        // Sanitize: remove quotes and control characters
+        $val = preg_replace('/["\x00-\x1f]/', '', $val);
+        if (!empty($val)) $validated[] = "$type=$val";
+        break;
+      default:
+        // Reject unknown record types
+        break;
+    }
+  }
+  return empty($validated) ? 'nxdomain' : json_encode(implode(PHP_EOL, $validated));
 };
 
+/**
+ * Converts RPZ action to Erlang format
+ * 
+ * Handles standard actions (nxdomain, nodata, passthru, drop, tcp-only)
+ * and custom local record actions (local_a, local_aaaa, local_cname, etc.)
+ * 
+ * @param string $str Action string or JSON-encoded custom actions
+ * @return string Erlang-formatted action string or tuple list
+ */
 function erlAction($str){
   switch($str){
     case "nxdomain":
@@ -221,7 +410,8 @@ function erlAction($str){
             if(filter_var($lr[1], FILTER_VALIDATE_DOMAIN)) $lstr.="$cmm{\"${lr[0]}\",\"${lr[1]}\"}";$cmm=",";
             break;
           case "local_txt":
-            $lstr.="$cmm{\"${lr[0]}\",\"${lr[1]}\"}";$cmm=",";
+            $sanitized = preg_replace('/["\x00-\x1f\\\\]/', '', $lr[1]);
+            if (!empty($sanitized)) { $lstr.="$cmm{\"${lr[0]}\",\"$sanitized\"}";$cmm=","; }
             break;
           default:
             break;

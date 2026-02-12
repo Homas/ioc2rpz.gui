@@ -2,15 +2,29 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { resolve } from 'path'
 
+// Check if building in dev mode (enables Vue devtools)
+const isDevMode = process.env.BUILD_MODE === 'dev'
+
 export default defineConfig({
   plugins: [vue()],
   
   root: 'www',
   
+  // Enable Vue devtools in dev mode
+  define: {
+    __VUE_PROD_DEVTOOLS__: isDevMode,
+    __VUE_OPTIONS_API__: true,
+    __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: isDevMode
+  },
+  
   build: {
     outDir: 'dist',
     emptyOutDir: true,
     manifest: true,
+    // Disable minification in dev mode for easier debugging
+    minify: isDevMode ? false : 'esbuild',
+    // Generate source maps in dev mode
+    sourcemap: isDevMode,
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'www/src/main.js'),

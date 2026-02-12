@@ -13,11 +13,22 @@
 #limitations under the License.
 
 #ioc2rpz.gui container
+#
+# Build modes:
+#   Production (default): docker build -t ioc2rpz-gui .
+#   Development:          docker build --build-arg BUILD_MODE=dev -t ioc2rpz-gui-dev .
+#
+# Dev mode enables:
+#   - Vue devtools support in browser
+#   - Source maps for debugging
+#   - Non-minified JavaScript
 
 # =============================================================================
 # Stage 1: Build frontend assets with Node.js and Vite
 # =============================================================================
 FROM node:18-alpine AS builder
+
+ARG BUILD_MODE=prod
 
 WORKDIR /build
 
@@ -32,14 +43,15 @@ COPY vite.config.js ./
 COPY www/src ./www/src
 COPY www/js ./www/js
 
-# Build production assets
-RUN npm run build
+# Build assets - BUILD_MODE env var controls Vue devtools and minification
+RUN BUILD_MODE=${BUILD_MODE} npm run build
 
 # =============================================================================
 # Stage 2: Final runtime image
 # =============================================================================
 FROM alpine:latest
 LABEL maintainer="Vadim Pavlov <ioc2rpz@gmail.com>"
+
 WORKDIR /opt/ioc2rpz.gui
 
 RUN mkdir -p /run/apache2 /etc/apache2/ssl /opt/ioc2rpz.gui/www /opt/ioc2rpz.gui/www/js /opt/ioc2rpz.gui/www/css /opt/ioc2rpz.gui/www/webfonts /opt/ioc2rpz.gui/www/dist /opt/ioc2rpz.gui/img /opt/ioc2rpz.gui/www/io2cfg \
@@ -51,19 +63,6 @@ RUN mkdir -p /run/apache2 /etc/apache2/ssl /opt/ioc2rpz.gui/www /opt/ioc2rpz.gui
     ln -sf /proc/self/fd/1 /var/log/apache2/ssl_error.log && \
     ln -sf /proc/self/fd/1 /var/log/apache2/ssl_request.log && \
     rm -rf /var/cache/apk/* /tmp/* /var/tmp/*
-
-
-
-#/etc/apache2/conf.d/mpm.conf
-#<IfModule mpm_prefork_module>
-#StartServers             1
-#MinSpareServers          1
-#MaxSpareServers          0
-#MaxRequestWorkers      250
-#MaxConnectionsPerChild   0
-#</IfModule>
-
-### Validate SSL
 
 RUN sed -i -e "s/\(.*ServerTokens\).*/\1 Prod/"  /etc/apache2/httpd.conf && echo -e "TraceEnable Off\n"  >> /etc/apache2/httpd.conf && sed -i -e "s/^.*\(expose_php =\).*/\1 Off/" /etc/php83/php.ini && sed -i -e "s/^\(SSLProxyProtocol.*\)/#\1/" -e "s/^\(SSLProxyCipherSuite.*\)/#\1/" -e "s/^\(SSLProtocol\).*/SSLProtocol -all +TLSv1.2 +TLSv1.3/" -e "s/^\(SSLCipherSuite\).*/\1 TLSv1.3 TLS_AES_256_GCM_SHA384:TLS_AES_128_GCM_SHA256\n\1 SSL ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA256\nSSLOpenSSLConfCmd Curves X25519:secp521r1:secp384r1:prime256v1/" -e "/<VirtualHost _default_:443>/ a Header always set Strict-Transport-Security \"max-age=63072000; includeSubDomains\"" /etc/apache2/conf.d/ssl.conf
 
@@ -89,9 +88,15 @@ RUN unzip /tmp/fontawesome-free-5.12.1-web.zip -d /tmp && \
     find /opt/ioc2rpz.gui/www/dist -type d -exec chmod 755 {} \; && \
     rm -rf /tmp/*
 
-
 VOLUME ["/opt/ioc2rpz.gui/export-cfg", "/opt/ioc2rpz.gui/www/io2cfg", "/etc/apache2/ssl"]
 
+# Create non-root user for running the application
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup && \
+    chown -R appuser:appgroup /opt/ioc2rpz.gui && \
+    chown -R appuser:appgroup /run/apache2
 
 EXPOSE 80/tcp 443/tcp
+# Note: The run script handles privilege dropping for Apache.
+# Apache binds to ports 80/443 which requires root, so the entrypoint
+# script starts as root and Apache drops privileges to appuser after binding.
 CMD ["/bin/bash", "/opt/ioc2rpz.gui/scripts/run_ioc2rpz.gui.sh"]

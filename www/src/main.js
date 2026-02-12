@@ -1,8 +1,20 @@
 /**
  * Main application entry point for ioc2rpz.gui
  * 
- * This file imports Vue 3, bootstrap-vue-next, and Axios as npm packages
- * and initializes the main application using the exported appConfig from io2.js.
+ * This file initializes the Vue 3 application with:
+ * - Bootstrap-vue-next for UI components
+ * - Axios for HTTP requests with CSRF token injection
+ * - Event bus integration for modal and table control
+ * - Global helper function exposure for template usage
+ * 
+ * Architecture:
+ * - Imports appConfig from io2.js containing Vue component definition
+ * - Creates Vue 3 app using createApp() instead of Vue 2's new Vue()
+ * - Manages modal visibility state via reactive modalVisibility object
+ * - Sets up event bus listeners for cross-component communication
+ * 
+ * @module main
+ * @package ioc2rpz.gui
  */
 
 // Import Vue 3 and plugins
@@ -24,6 +36,7 @@ import {
   sleep,
   downloadAsPlainText,
   copyToClipboardID,
+  getLocationOrigin,
   checkHostIPNet,
   checkHostIP,
   checkIP,
@@ -41,13 +54,62 @@ import {
   ImportIOC2RPZ
 } from '../js/io2.js'
 
-// Make axios available globally for compatibility with existing code
+/**
+ * Make axios available globally for compatibility with existing code
+ * @global
+ */
 window.axios = axios
 
-// Expose helper functions to global scope for use in templates
-// These functions are called from inline event handlers in PHP templates
+/**
+ * Axios request interceptor for CSRF token injection
+ * 
+ * Automatically adds CSRF token to all state-changing requests (POST, PUT, DELETE, PATCH).
+ * The token is retrieved from window.csrfToken which is set by PHP.
+ * 
+ * Handles different data formats:
+ * - FormData: Appends csrf_token field
+ * - Object: Adds csrf_token property
+ * - JSON string: Parses, adds token, re-stringifies
+ * - No data: Creates object with csrf_token
+ */
+axios.interceptors.request.use(function (config) {
+  // Add CSRF token to POST, PUT, DELETE, PATCH requests
+  if (['post', 'put', 'delete', 'patch'].includes(config.method.toLowerCase())) {
+    // Get CSRF token from global variable set by PHP
+    const csrfToken = window.csrfToken || '';
+    
+    if (config.data instanceof FormData) {
+      config.data.append('csrf_token', csrfToken);
+    } else if (typeof config.data === 'object' && config.data !== null) {
+      config.data.csrf_token = csrfToken;
+    } else if (typeof config.data === 'string') {
+      // Handle JSON string data
+      try {
+        const data = JSON.parse(config.data);
+        data.csrf_token = csrfToken;
+        config.data = JSON.stringify(data);
+      } catch (e) {
+        // If not JSON, append as query parameter
+        config.data = config.data + '&csrf_token=' + encodeURIComponent(csrfToken);
+      }
+    } else {
+      // No data, create object with CSRF token
+      config.data = { csrf_token: csrfToken };
+    }
+  }
+  return config;
+}, function (error) {
+  return Promise.reject(error);
+});
+
+/**
+ * Expose helper functions to global scope for use in templates
+ * These functions are called from inline event handlers in PHP templates
+ * @global
+ */
 window.sleep = sleep
 window.downloadAsPlainText = downloadAsPlainText
+window.getLocationOrigin = getLocationOrigin
 window.copyToClipboardID = copyToClipboardID
 window.checkHostIPNet = checkHostIPNet
 window.checkHostIP = checkHostIP
@@ -60,26 +122,40 @@ window.checkHostNameNum = checkHostNameNum
 window.checkHostNameOnly = checkHostNameOnly
 window.checkSourceURL = checkSourceURL
 
-// Expose Vue-instance dependent functions to global scope
+/**
+ * Expose Vue-instance dependent functions to global scope
+ * These require access to the Vue app instance
+ * @global
+ */
 window.update_window_size = update_window_size
 window.toggleUpdates = toggleUpdates
 window.splitRpiDNSList = splitRpiDNSList
 window.ImportIOC2RPZ = ImportIOC2RPZ
 
-// Expose event bus functions globally for use in templates and other scripts
+/**
+ * Expose event bus functions globally for use in templates and other scripts
+ * @global
+ */
 window.showModal = showModal
 window.hideModal = hideModal
 window.refreshTable = refreshTable
 
 /**
  * Modal visibility state management
- * In bootstrap-vue-next, modals are controlled via v-model (boolean refs)
- * This object tracks visibility state for all modals by their ID
+ * 
+ * In bootstrap-vue-next, modals are controlled via v-model (boolean refs).
+ * This reactive object tracks visibility state for all modals by their ID.
+ * 
+ * @type {Object.<string, boolean>}
+ * @example
+ * modalVisibility.mConfEditSrv = true; // Shows the server edit modal
  */
 const modalVisibility = reactive({})
 
 /**
  * Get or create a modal visibility ref
+ * Creates the visibility state if it doesn't exist (defaults to false/hidden)
+ * 
  * @param {string} modalId - The modal ID
  * @returns {boolean} The current visibility state
  */
@@ -91,7 +167,9 @@ function getModalVisibility(modalId) {
 }
 
 /**
- * Set modal visibility
+ * Set modal visibility state
+ * Updates the reactive state which triggers Vue to show/hide the modal
+ * 
  * @param {string} modalId - The modal ID
  * @param {boolean} visible - Whether the modal should be visible
  */
@@ -99,12 +177,26 @@ function setModalVisibility(modalId, visible) {
   modalVisibility[modalId] = visible
 }
 
-// Expose modal visibility functions globally
+/**
+ * Expose modal visibility functions globally
+ * @global
+ */
 window.getModalVisibility = getModalVisibility
 window.setModalVisibility = setModalVisibility
 window.modalVisibility = modalVisibility
 
-// Function to initialize Vue 3 app
+/**
+ * Initialize the Vue 3 application
+ * 
+ * This function:
+ * 1. Finds the #app element in the DOM
+ * 2. Converts appConfig data to Vue 3 reactive format
+ * 3. Creates the Vue 3 app with bootstrap-vue-next
+ * 4. Sets up event bus listeners for modal and table control
+ * 5. Mounts the app to the DOM
+ * 
+ * The app instance is stored in window.io2gui_app for global access.
+ */
 function initApp() {
   const appElement = document.getElementById('app')
   if (appElement) {

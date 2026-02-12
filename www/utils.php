@@ -1,12 +1,30 @@
 <?php
-  require 'io2auth.php';
+/**
+ * ioc2rpz.gui - Utilities Page
+ * 
+ * This file provides the utilities interface for:
+ * - Importing ioc2rpz server configurations
+ * - Exporting configurations to ISC Bind format
+ * - Exporting configurations to PowerDNS format
+ * - Exporting configurations to Infoblox CSV format
+ * - Database backup and restore (planned features)
+ * 
+ * Requires authentication via io2auth.php.
+ * 
+ * @package ioc2rpz.gui
+ * @author Vadim Pavlov
+ * @copyright 2018-2026
+ * @license MIT
+ */
+
+require 'io2auth.php';
 ?>
 
 <div>
     <b-card-group columns>
       <b-card header="Import configuration" title="Import ioc2rpz">
           <p class="card-text">Import ioc2rpz server configuration</p>
-          <b-button v-b-tooltip.hover title="Import ioc2rpz configuration" variant="outline-secondary" size="sm" @click.stop="$emit('bv::show::modal', 'mImportConfig')"><i class="fa fa-download"> Import</i></b-button>
+          <b-button v-b-tooltip.hover title="Import ioc2rpz configuration" variant="outline-secondary" size="sm" @click.stop="showModalById('mImportConfig')"><i class="fa fa-download"> Import</i></b-button>
       </b-card>
       <b-card header="ISC Bind configuration" title="Export ISC Bind">
           <p class="card-text">Export ISC Bind configuration</p>

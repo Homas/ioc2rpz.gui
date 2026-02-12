@@ -1,8 +1,16 @@
 /**
  * Auth application entry point for ioc2rpz.gui
  * 
- * This file imports Vue 3, bootstrap-vue-next, and Axios as npm packages
- * and initializes the authentication application.
+ * This file initializes the Vue 3 authentication application for:
+ * - User login form
+ * - Initial administrator creation
+ * - Password validation feedback
+ * 
+ * The auth app is separate from the main app and only loads on the login page.
+ * It uses bootstrap-vue-next for UI components and axios for API calls.
+ * 
+ * @module auth
+ * @package ioc2rpz.gui
  */
 
 // Import Vue 3 and plugins
@@ -14,13 +22,21 @@ import axios from 'axios'
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue-next/dist/bootstrap-vue-next.css'
 
-// Make axios available globally for compatibility with existing code
+/**
+ * Make axios available globally for compatibility with existing code
+ * @global
+ */
 window.axios = axios
 
 // Import the auth app configuration from io2auth.js
 import { authAppConfig } from '../js/io2auth.js'
 
-// Function to initialize Vue 3 app
+/**
+ * Initialize the Vue 3 authentication app
+ * 
+ * Creates a minimal Vue app for the login/registration page.
+ * The app instance is stored in window.io2auth_app for debugging.
+ */
 function initApp() {
   const appElement = document.getElementById('app')
   if (appElement) {

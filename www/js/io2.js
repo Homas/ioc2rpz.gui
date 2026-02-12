@@ -7,6 +7,9 @@
  * - Vue app configuration (appConfig) for use with main.js
  * 
  * ES Module format for Vite bundling
+ * 
+ * @module io2
+ * @package ioc2rpz.gui
  */
 
 // Import event bus functions for Vue 3 compatibility
@@ -17,10 +20,26 @@ import { showModal, refreshTable } from '../src/eventBus.js'
 // Helper Functions (standalone, no Vue dependency)
 // ============================================
 
+/**
+ * Pauses execution for a specified duration
+ * Useful for adding delays between async operations
+ * 
+ * @param {number} ms - Milliseconds to sleep
+ * @returns {Promise<void>} Promise that resolves after the delay
+ * @example
+ * await sleep(1000); // Wait 1 second
+ */
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+/**
+ * Downloads data as a plain text file
+ * Creates a temporary anchor element to trigger browser download
+ * 
+ * @param {string} fileName - Name for the downloaded file
+ * @param {string} Data - Text content to download
+ */
 function downloadAsPlainText(fileName, Data) {
   var dataStr = "data:text/plain;base64," + btoa(Data);
   var downloadAnchorNode = document.createElement('a');
@@ -31,49 +50,151 @@ function downloadAsPlainText(fileName, Data) {
   downloadAnchorNode.remove();
 }
 
+/**
+ * Copies the content of an input element to clipboard
+ * Uses the deprecated execCommand API (still widely supported)
+ * 
+ * @param {string} id - DOM element ID to copy from
+ */
 function copyToClipboardID(id) {
-  document.getElementById(id).select();
-  document.execCommand('copy');
+  var el = document.getElementById(id);
+  if (el && navigator.clipboard) {
+    navigator.clipboard.writeText(el.value);
+  } else if (el) {
+    el.select();
+    document.execCommand('copy');
+  }
 }
 
+/**
+ * Gets the current page's origin (protocol + host + port)
+ * 
+ * @returns {string} The window location origin
+ */
+function getLocationOrigin() {
+  return window.location.origin;
+}
+
+/**
+ * Validates if a string is a valid host, IP address, or network CIDR
+ * 
+ * @param {string} V - Value to validate
+ * @returns {boolean} True if valid hostname, IPv4, IPv4/CIDR, IPv6, or hostname
+ */
 function checkHostIPNet(V) {
   return checkIPv4(V) || checkIPv4Net(V) || checkIPv6(V) || checkHostName(V);
 }
 
+/**
+ * Validates if a string is a valid host or IP address (no CIDR)
+ * 
+ * @param {string} V - Value to validate
+ * @returns {boolean} True if valid hostname, IPv4, or IPv6
+ */
 function checkHostIP(V) {
   return checkIPv4(V) || checkIPv6(V) || checkHostName(V);
 }
 
+/**
+ * Validates if a string is a valid IP address (IPv4 or IPv6)
+ * 
+ * @param {string} IP - IP address to validate
+ * @returns {boolean} True if valid IPv4 or IPv6 address
+ */
 function checkIP(IP) {
   return checkIPv4(IP) || checkIPv6(IP);
 }
 
+/**
+ * Validates if a string is a valid IPv4 address
+ * 
+ * @param {string} IP - IP address to validate
+ * @returns {boolean} True if valid IPv4 address (0.0.0.0 - 255.255.255.255)
+ */
 function checkIPv4(IP) {
   return /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(IP);
 }
 
+/**
+ * Validates if a string is a valid IPv4 network in CIDR notation
+ * 
+ * @param {string} IP - Network to validate (e.g., "192.168.1.0/24")
+ * @returns {boolean} True if valid IPv4/CIDR notation
+ */
 function checkIPv4Net(IP) {
   return /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\/([0-9]|[1-2][0-9]|3[0-2])$/.test(IP);
 }
 
+/**
+ * Validates if a string is a valid IPv6 address
+ * Supports full, compressed, and mixed notation with optional CIDR
+ * 
+ * @param {string} IP - IPv6 address to validate
+ * @returns {boolean} True if valid IPv6 address
+ */
 function checkIPv6(IP) {
   return /^(([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))(\/[0-9]+)?$/.test(IP);
 }
 
+/**
+ * Validates if a string is a valid fully qualified domain name (FQDN)
+ * Must be 4-253 characters with valid labels and TLD
+ * 
+ * @param {string} HN - Hostname to validate
+ * @returns {boolean} True if valid FQDN
+ */
 function checkHostName(HN) {
   return /(?=^.{4,253}$)(^((?!-)[a-zA-Z0-9-]{0,62}[a-zA-Z0-9]\.)+[a-zA-Z]{2,63}$)/.test(HN);
 }
 
+/**
+ * Validates if a string is a valid hostname with numeric TLD allowed
+ * Similar to checkHostName but allows numeric TLDs (e.g., for RPZ zones)
+ * 
+ * @param {string} HN - Hostname to validate
+ * @returns {boolean} True if valid hostname with alphanumeric TLD
+ */
 function checkHostNameNum(HN) {
   return /(?=^.{4,253}$)(^((?!-)[a-zA-Z0-9-]{0,62}[a-zA-Z0-9]\.)+[a-zA-Z0-9]{2,63}$)/.test(HN);
 }
 
+/**
+ * Validates if a string is a valid hostname (without requiring TLD)
+ * Used for local hostnames and short names
+ * 
+ * @param {string} HN - Hostname to validate
+ * @returns {boolean} True if valid hostname format
+ */
 function checkHostNameOnly(HN) {
   return /(?=^.{4,253}$)(^((?!-)[a-zA-Z0-9-]{0,62}[a-zA-Z0-9]\.?)+$)/.test(HN);
 }
 
+/**
+ * Validates if a string is a valid source URL
+ * Accepts http://, https://, ftp://, file:, and shell: protocols
+ * 
+ * @param {string} HN - URL to validate
+ * @returns {boolean} True if URL starts with valid protocol
+ */
 function checkSourceURL(HN) {
   return /^(http:\/\/|https:\/\/|ftp:\/\/|file:|shell:)/.test(HN);
+}
+
+/**
+ * Escapes HTML special characters to prevent XSS attacks
+ * @param {string} str - The string to escape
+ * @returns {string} - The escaped string safe for HTML insertion
+ */
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  const htmlEscapes = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  };
+  return String(str).replace(/[&<>"']/g, char => htmlEscapes[char]);
 }
 
 // Export helper functions for use in main.js and templates
@@ -81,6 +202,7 @@ export {
   sleep,
   downloadAsPlainText,
   copyToClipboardID,
+  getLocationOrigin,
   checkHostIPNet,
   checkHostIP,
   checkIP,
@@ -90,7 +212,8 @@ export {
   checkHostName,
   checkHostNameNum,
   checkHostNameOnly,
-  checkSourceURL
+  checkSourceURL,
+  escapeHtml
 };
 
 // ============================================
@@ -100,6 +223,8 @@ export {
 
 /**
  * Updates window size related properties on the Vue instance
+ * Called on window resize to adjust UI elements
+ * 
  * @param {Object} obj - Vue instance or component with $refs
  */
 export function update_window_size(obj) {
@@ -113,9 +238,11 @@ export function update_window_size(obj) {
 
 /**
  * Toggles the publish updates state
+ * Stores state in localStorage for persistence across sessions
+ * 
  * @param {*} srv - Server parameter (unused but kept for API compatibility)
  * @param {Object} obj - Vue instance
- * @param {boolean} state - New state for publishUpdates
+ * @param {boolean} state - New state for publishUpdates flag
  */
 export function toggleUpdates(srv, obj, state) {
   window.localStorage.publishUpdates = state;
@@ -124,6 +251,8 @@ export function toggleUpdates(srv, obj, state) {
 
 /**
  * Splits the RpiDNS list into chunks for dashboard display
+ * Creates rows of cards based on available container width
+ * 
  * @param {Object} obj - Vue instance with RpiDNSList and $refs.RpiDNSCards
  */
 export function splitRpiDNSList(obj) {
@@ -137,8 +266,22 @@ export function splitRpiDNSList(obj) {
 
 /**
  * Imports IOC2RPZ configuration from text
+ * 
+ * Parses Erlang-format configuration and creates corresponding records:
+ * - TSIG keys
+ * - Sources
+ * - Whitelists
+ * - RPZ zones
+ * - Server configuration
+ * 
+ * Supports three import modes:
+ * - 0: Add new only (skip existing)
+ * - 1: Update existing
+ * - 2: Add with prefix if exists
+ * 
  * @param {Object} vm - Vue instance
  * @param {string} txt - Configuration text to import
+ * @returns {Promise<void>}
  */
 export async function ImportIOC2RPZ(vm, txt) {
   var SrvId;
@@ -157,9 +300,14 @@ export async function ImportIOC2RPZ(vm, txt) {
   if (whitelists.data) whitelists.data.forEach(function(el) { WLAll[el['name']] = el['rowid'] });
   if (rpzs.data) rpzs.data.forEach(function(el) { RpzAll[el['name']] = el['rowid'] });
 
+  var skippedIncludes = [];
   for (let line of txt.split(/\r|\n/)) {
     var l = line.trim();
     var m;
+    if (m = l.match(/^\{include,"([^"]+)"\}\.$/)) {
+      skippedIncludes.push(m[1]);
+      continue;
+    }
     if (m = l.match(/^{srv,{"([^"]+)","([^"]+)",\[([^\]]*)\],\[([^\]]*)\]}}\.(\t* *| *\t*%.*)$/)) {
       Srv['ns'] = m[1]; Srv['email'] = m[2]; Srv['tkeys'] = [];
       m[3].split(/,|\s|"/g).filter(String).forEach(function(el) { Srv['tkeys'].push(el); });
@@ -184,7 +332,7 @@ export async function ImportIOC2RPZ(vm, txt) {
       if (vm.ftImpAction == 1 || (vm.ftImpAction == 2 && (!TKeysAll[m[1]] || (!TKeysAll[vm.ftImpPrefix + m[1]] && vm.ftImpPrefix))) || (vm.ftImpAction == 0 && (!TKeysAll[vm.ftImpPrefix + m[1]]))) {
         vm.ftKeyId = (TKeysAll[vm.ftImpPrefix + m[1]] && vm.ftImpAction == 1) ? TKeysAll[vm.ftImpPrefix + m[1]] : -1;
         vm.ftKeyName = vm.ftImpAction != 2 ? vm.ftImpPrefix + m[1] : (TKeysAll[m[1]] && vm.ftImpAction == 2) ? vm.ftImpPrefix + m[1] : m[1];
-        vm.ftKeyAlg = m[2]; vm.ftKey = m[3]; vm.ftKeyMGMT = Srv['tkeys'].includes(m[1]) ? 1 : 0;
+        vm.ftKeyAlg = m[2]; vm.ftKey = m[3]; vm.ftKeyMGMT = (Srv['tkeys'] && Srv['tkeys'].includes(m[1])) ? 1 : 0;
         TKeys[vm.ftKeyName] = vm.ftKeyName; TKeys[m[1]] = vm.ftKeyName;
         await vm.tblMgmtTKeyRecord(ev, 'tkeys');
       } else {
@@ -305,6 +453,10 @@ export async function ImportIOC2RPZ(vm, txt) {
       vm.tblMgmtRPZRecord(ev, 'rpzs');
     }
   }
+
+  if (skippedIncludes.length > 0) {
+    vm.showInfo('Import completed. Skipped include statements: ' + skippedIncludes.join(', '), 5);
+  }
 }
 
 
@@ -315,20 +467,42 @@ export async function ImportIOC2RPZ(vm, txt) {
 
 /**
  * Vue app configuration object
- * Contains el, data, mounted, computed, and methods properties
- * Used by main.js to create the Vue instance: new Vue(appConfig)
+ * 
+ * Contains the complete Vue component definition for the main application:
+ * - el: Mount point selector
+ * - data: Reactive state for all UI components
+ * - mounted: Lifecycle hook for initialization
+ * - computed: Computed properties (currently empty)
+ * - methods: All component methods for CRUD operations and UI interactions
+ * 
+ * Used by main.js to create the Vue instance: createApp(appConfig)
+ * 
+ * @type {Object}
  */
 export const appConfig = {
   el: "#app",
+  
+  /**
+   * Component reactive data
+   * Contains all state variables for the application
+   */
   data: {
+    /** Toggle state for sidebar menu */
     toggleMenu: 0,
+    /** Current active tab index */
     cfgTab: 0,
+    /** Current window inner width for responsive layout */
     windowInnerWidth: 800,
+    /** Height of log display area */
     logs_height: 150,
+    /** Number of log entries per page */
     logs_pp: 5,
 
-    // Tab index to table name mapping for Vue 3 compatibility
-    // (replaces $children access which is removed in Vue 3)
+    /**
+     * Tab index to table name mapping for Vue 3 compatibility
+     * Replaces $children access which is removed in Vue 3
+     * @type {Object.<number, string|null>}
+     */
     tabTableMap: {
       0: 'servers',
       1: null,  // RpiDNS - no table
@@ -341,6 +515,10 @@ export const appConfig = {
       8: 'users'
     },
 
+    /**
+     * Column definitions for servers table
+     * @type {Array.<Object>}
+     */
     servers_fields: [
       { key: 'name', label: 'Name', sortable: true },
       { key: 'ip', label: 'MGMT IP/FQDN', sortable: true },
@@ -471,20 +649,25 @@ export const appConfig = {
 
     // RpiDNS
     RpiDNSList: [], RpiDNSListDash: [],
-    addRpiDNSName: "", addRpiDNSComment: "", addRpiDNSModel: null, addRpiDNSServer: null,
+    addRpiDNSName: "", addRpiDNSComment: "", addRpiDNSModel: { type: 'container', max: 100000000 }, addRpiDNSServer: { type: 'bind', max: 0 },
     addRpiDNSOptions: [
+      { id: 'container', value: { type: 'container', max: 100000000 }, text: 'Container' },
+/*
       { id: null, value: null, text: 'Select your hardware/VM', disabled: true },
       { id: 'pizero', value: { type: 'pizero', max: 500000 }, text: 'Raspbian on Pi Zero/Zero W' },
       { id: 'pi123', value: { type: 'pi123', max: 500000 }, text: 'Raspbian on Pi 1/2/3' },
       { id: 'pi4-1g', value: { type: 'pi4-1g', max: 2500000 }, text: 'Raspbian on Pi 4 with 1Gb/2Gb' },
       { id: 'pi4-4g', value: { type: 'pi4-4g', max: 5000000 }, text: 'Raspbian on Pi 4 with 4Gb' },
       { id: 'ubuntu18', value: { type: 'ubuntu18', max: 100000000 }, text: 'Ubuntu 18.x', disabled: true }
-    ],
+*/
+      ],
     addRpiDNSServerOptions: [
-      { id: null, value: null, text: 'Select DNS server', disabled: true },
       { id: 'bind', value: { type: 'bind', max: 0 }, text: 'ISC Bind' },
+  /*
+      { id: null, value: null, text: 'Select DNS server', disabled: true },
       { id: 'powerdns', value: { type: 'powerdns', max: 500000 }, text: 'PowerDNS', disabled: true },
       { id: 'pidns', value: { type: 'pidns', max: 500000 }, text: 'piDNS', disabled: true }
+  */
     ],
     addRpiDNSFeedAction: [
       { id: 'passthrunolog', value: 'passthru log no', text: 'Passthru - No log', type: "allow" },
@@ -505,9 +688,14 @@ export const appConfig = {
     addRpiDNSRedirect: "", addRpiDNSRedirectURL: "",
     addRpiDNSType: "", addRpiDNSTypeIPNet: "",
     addRpiDNSLogs: "", addRpiDNSLogsURL: "",
-    addRpiDNSCheckConf: true, RpiDNSLabel: "Add RpiDNS", RpiDNSBttn: "Add", addRpiDNSid: 0
+    addRpiDNSCheckConf: true, RpiDNSLabel: "Add RpiDNS", RpiDNSBttn: "Add", addRpiDNSid: 0,
+    locationOrigin: window.location.origin
   },
 
+  /**
+   * Vue lifecycle hook - called after component is mounted
+   * Initializes window size tracking, loads saved preferences, and fetches RpiDNS list
+   */
   mounted: function() {
     if (window.location.hash) {
       var a = window.location.hash.split(/#|\//).filter(String);
@@ -531,11 +719,21 @@ export const appConfig = {
     this.refreshRpiDNS();
   },
 
+  /**
+   * Computed properties (currently empty, can be extended as needed)
+   */
   computed: {
     // Empty computed section - can be extended as needed
   },
 
+  /**
+   * Component methods for all UI interactions and CRUD operations
+   */
   methods: {
+    /**
+     * Fetches and refreshes the RpiDNS device list from the server
+     * Parses configuration JSON and populates display names
+     */
     refreshRpiDNS: function() {
       let obj = this;
       axios.get('/io2data.php/rpidns').then(function(response) {
@@ -544,8 +742,17 @@ export const appConfig = {
         } else if (response.data.status == "success") {
           obj.$root.RpiDNSList = [];
           response.data.data.forEach(function(El) {
-            El.dns_name = obj.addRpiDNSServerOptions.find(item => { return item.id === El.dns }).text;
-            El.model_name = obj.addRpiDNSOptions.find(item => { return item.id === El.model }).text;
+            // Parse rpz if it's a string
+            if (typeof El.rpz === 'string') {
+              try { El.rpz = JSON.parse(El.rpz); } catch(e) { El.rpz = []; }
+            }
+            if (!Array.isArray(El.rpz)) El.rpz = [];
+            
+            // Safely get dns_name and model_name with fallbacks
+            let dnsOption = obj.addRpiDNSServerOptions.find(item => { return item.id === El.dns });
+            El.dns_name = dnsOption ? dnsOption.text : El.dns || 'Unknown';
+            let modelOption = obj.addRpiDNSOptions.find(item => { return item.id === El.model });
+            El.model_name = modelOption ? modelOption.text : El.model || 'Unknown';
             obj.$root.RpiDNSList.push(El);
           });
           splitRpiDNSList(obj);
@@ -557,12 +764,24 @@ export const appConfig = {
       });
     },
 
+    /**
+     * Opens the Add RpiDNS modal dialog
+     * Clears form fields and sets mode to "Add"
+     * 
+     * @param {number} id - Unused parameter (kept for API consistency)
+     */
     rpidns_add: function(id) {
       this.clear_rpidns_modal();
       this.RpiDNSLabel = "Add RpiDNS"; this.RpiDNSBttn = "Add"; this.addRpiDNSid = 0;
       showModal('mAddRpiDNS');
     },
 
+    /**
+     * Opens the Edit RpiDNS modal dialog with existing device data
+     * Populates form fields from the selected device configuration
+     * 
+     * @param {number} id - RpiDNS device ID to edit
+     */
     rpidns_edit: function(id) {
       this.clear_rpidns_modal();
       this.addRpiDNSid = id; this.RpiDNSLabel = "Edit RpiDNS"; this.RpiDNSBttn = "Save";
@@ -579,11 +798,21 @@ export const appConfig = {
       this.addRpiDNSLogsURL = El.logging_host === undefined ? "" : El.logging_host;
       this.addRpiDNSType = El.dns_type === undefined ? "primary" : El.dns_type;
       this.addRpiDNSTypeIPNet = El.dns_ipnet === undefined ? "" : El.dns_ipnet;
-      El.rpz.forEach(function(item) { if (obj.$refs.io2tbl_rpzs.localItems.filter(e => e.name === item.feed).length > 0) { obj.ftRpiDNSRPZAction[item.feed] = item.action; obj.ftRpiDNSRPZ.push(item.feed); } });
+      El.rpz.forEach(function(item) { 
+        obj.ftRpiDNSRPZAction[item.feed] = item.action; 
+        obj.ftRpiDNSRPZ.push(item.feed); 
+      });
       this.addRpiDNSComment = El.comment;
       showModal('mAddRpiDNS');
     },
 
+    /**
+     * Validates a hostname or IP address field
+     * Returns null for empty fields, true/false for validation result
+     * 
+     * @param {string} vrbl - Name of the data property to validate
+     * @returns {boolean|null} Validation state for bootstrap-vue form feedback
+     */
     validateHostnameIP: function(vrbl) {
       return this.$data[vrbl].length == 0 ? null : checkHostIP(this.$data[vrbl]);
     },
@@ -605,12 +834,17 @@ export const appConfig = {
     },
 
     clear_rpidns_modal: function() {
-      this.addRpiDNSName = ""; this.addRpiDNSModel = null;
+      this.addRpiDNSName = ""; this.addRpiDNSModel = { type: 'container', max: 100000000 };
       this.addRpiDNSServer = { type: 'bind', max: 0 };
       this.addRpiDNSCheckConf = true; this.ftRpiDNSRPZ = []; this.ftRpiDNSRPZAction = {};
       var obj = this;
-      if (obj.$refs.io2tbl_rpzs && obj.$refs.io2tbl_rpzs.localItems) {
-        obj.$refs.io2tbl_rpzs.localItems.forEach(function(item) { obj.ftRpiDNSRPZAction[item.name] = ((item.type == "v" || item.type == "w") ? "passthru log no" : "cname"); });
+      // In bootstrap-vue-next, use items() method instead of localItems
+      const tableRef = obj.$refs.io2tbl_rpzs;
+      const tableItems = tableRef && typeof tableRef.items === 'function' 
+        ? tableRef.items() 
+        : (tableRef && tableRef.localItems) || [];
+      if (tableItems.length > 0) {
+        tableItems.forEach(function(item) { obj.ftRpiDNSRPZAction[item.name] = ((item.type == "v" || item.type == "w") ? "passthru log no" : "cname"); });
       }
       this.addRpiDNSComment = ""; this.addRpiDNSRulesCount = 0;
       this.addRpiDNSRedirect = "default"; this.addRpiDNSRedirectURL = "";
@@ -623,7 +857,12 @@ export const appConfig = {
         let doc = this;
         var data, promise;
         let rpzfeeds = [];
-        this.ftRpiDNSRPZ.forEach(function(item) { rpzfeeds.push({ "feed": item, "action": doc.ftRpiDNSRPZAction[item] }); });
+        let missingAction = false;
+        this.ftRpiDNSRPZ.forEach(function(item) {
+          if (!doc.ftRpiDNSRPZAction[item]) { missingAction = true; }
+          rpzfeeds.push({ "feed": item, "action": doc.ftRpiDNSRPZAction[item] || "" });
+        });
+        if (missingAction) { event.preventDefault(); this.showInfo('Please select an action for all selected RPZ feeds', 3); return; }
         data = { id: this.addRpiDNSid, name: this.addRpiDNSName, comment: this.addRpiDNSComment, model: this.addRpiDNSModel.type, dns: this.addRpiDNSServer.type, updconf: this.addRpiDNSCheckConf, rpz: JSON.stringify(rpzfeeds), redirect: this.addRpiDNSRedirect, redirect_cname: this.addRpiDNSRedirectURL, logging: this.addRpiDNSLogs, logging_host: this.addRpiDNSLogsURL, dns_type: this.addRpiDNSType, dns_ipnet: this.addRpiDNSTypeIPNet };
         if (this.RpiDNSBttn == "Add") promise = axios.post('/io2data.php/rpidns', data); else promise = axios.put('/io2data.php/rpidns', data);
         promise.then((data) => {
@@ -642,21 +881,11 @@ export const appConfig = {
     },
 
     rpidns_delete: function(rpidns_id) {
-      this.$bvModal.msgBoxConfirm('You are about to delete selected RpiDNS. This action is irreversible!', {
-        title: 'Please confirm the action', size: 'md', buttonSize: 'md', okVariant: 'danger',
-        okTitle: 'YES', cancelTitle: 'NO', footerClass: 'p-2', bodyClass: 'text-center',
-        hideHeaderClose: false, centered: true
-      }).then(value => {
-        if (value) {
-          let doc = this;
-          var data = { id: rpidns_id };
-          let promise = axios.delete('/io2data.php/rpidns', { data });
-          promise.then((data) => {
-            if (data.data[0].status == "success") { doc.refreshRpiDNS(); }
-            else { doc.showInfo(data.data[0].description, 3); }
-          }).catch(error => { doc.showInfo('Unknown error!!!', 3); });
-        }
-      });
+      var el = this.$root || this;
+      el.deleteRec = rpidns_id;
+      el.deleteTbl = 'rpidns';
+      el.modalMSG = '<b>You are about to delete selected RpiDNS. This action is irreversible!</b>';
+      showModal('mConfDel');
     },
 
     addRpiDNSFeedActionComp: function(type) {
@@ -764,14 +993,15 @@ export const appConfig = {
           showModal('mTGroups'); break;
         case "add tkeys":
           this.$root.ftKeyId = -1; this.$root.genRandom('tkeyName'); this.$root.genRandom('tkey');
-          this.$root.ftKeyAlg = 'md5'; this.$root.ftKeyMGMT = 0; this.$root.editRow = {};
+          this.$root.ftKeyAlg = 'md5'; this.$root.ftKeyMGMT = false; this.$root.editRow = {};
           this.$root.get_lists('tkeys_groups_list', 'ftTKeysAllGroups'); this.$root.ftTKeysGroups = [];
           showModal('mConfEditTSIG'); break;
         case "info tkeys": case "edit tkeys": case "clone tkeys":
           this.$root.ftKeyId = action == "clone" ? -1 : row.item.rowid;
           this.$root.ftKeyName = action == "clone" ? row.item.name + "_clone" : row.item.name;
           this.$root.ftKey = row.item.tkey; this.$root.ftKeyAlg = row.item.alg;
-          this.$root.ftKeyMGMT = row.item.mgmt; this.$root.editRow = row.item;
+          this.$root.ftKeyMGMT = (row.item.mgmt == 1); 
+          this.$root.editRow = row.item;
           this.$root.get_lists('tkeys_groups_list', 'ftTKeysAllGroups');
           var tkey_groups = [];
           row.item.tkey_groups.forEach(function(el) { tkey_groups.push(el.rowid); });
@@ -782,14 +1012,19 @@ export const appConfig = {
           this.$root.ftSrcREGEX = ''; this.$root.ftSrcType = table; this.$root.ftSrcURLIXFR = '';
           this.$root.ftSrcMaxIOC = '0'; this.$root.ftSrcHotCacheAXFR = '900'; this.$root.ftSrcHotCacheIXFR = '0';
           this.$root.ftSrcTitle = (table == "sources") ? "Source" : "Whitelist";
-          this.$root.editRow = {}; this.$root.ftSrcIoCType = 'mixed'; this.$root.ftSrcKeepInCache = 0;
-          showModal('mConfEditSources'); break;
-        case "info whitelists": case "edit whitelists": case "clone whitelists":
+          this.$root.editRow = {}; this.$root.ftSrcIoCType = 'mixed'; 
+          this.$root.ftSrcKeepInCache = false;
+          showModal('mConfEditSources'); 
+          break;
+        case "info whitelists": 
+        case "edit whitelists": 
+        case "clone whitelists":
         case "info sources": case "edit sources": case "clone sources":
           this.$root.ftSrcId = action == "clone" ? -1 : row.item.rowid;
           this.$root.ftSrcName = action == "clone" ? row.item.name + "_clone" : row.item.name;
           this.$root.ftSrcURL = row.item.url; this.$root.ftSrcREGEX = row.item.regex;
-          this.$root.ftSrcIoCType = row.item.ioc_type; this.$root.ftSrcKeepInCache = row.item.keep_in_cache;
+          this.$root.ftSrcIoCType = row.item.ioc_type; 
+          this.$root.ftSrcKeepInCache = (row.item.keep_in_cache == 1);
           this.$root.ftSrcType = table;
           this.$root.ftSrcURLIXFR = (table == "sources") ? row.item.url_ixfr : '';
           this.$root.ftSrcMaxIOC = `${row.item.max_ioc}`;
@@ -797,7 +1032,8 @@ export const appConfig = {
           this.$root.ftSrcHotCacheIXFR = `${row.item.hotcacheixfr_time}`;
           this.$root.ftSrcTitle = (table == "sources") ? "Source" : "Whitelist";
           this.$root.editRow = row.item;
-          showModal('mConfEditSources'); break;
+          showModal('mConfEditSources'); 
+          break;
         case "add servers":
           this.$root.ftSrvId = -1; this.$root.ftSrvName = ''; this.$root.ftSrvIP = '';
           this.$root.ftSrvPubIP = ''; this.$root.ftSrvNS = ''; this.$root.ftSrvEmail = '';
@@ -848,14 +1084,14 @@ export const appConfig = {
           this.$root.ftRPZSOA_Refresh = '86400'; this.$root.ftRPZSOA_UpdRetry = '3600';
           this.$root.ftRPZSOA_Exp = '2592000'; this.$root.ftRPZSOA_NXTTL = '7200';
           this.$root.ftRPZAXFR = '604800'; this.$root.ftRPZIXFR = '86400';
-          this.$root.ftRPZCache = 1; this.$root.ftRPZWildcard = 1;
+          this.$root.ftRPZCache = true; this.$root.ftRPZWildcard = true;
           this.$root.get_lists('rpz_servers', 'ftRPZSrvsAll'); this.$root.ftRPZSrvs = [];
           this.$root.get_lists('rpz_tkeys', 'ftRPZTKeysAll'); this.$root.ftRPZTKeys = [];
           this.$root.get_lists('rpz_sources', 'ftRPZSrcAll'); this.$root.ftRPZSrc = [];
           this.$root.get_lists('rpz_whitelists', 'ftRPZWLAll'); this.$root.ftRPZWL = [];
           this.$root.ftRPZAction = "nxdomain"; this.$root.ftRPZActionCustom = "";
           this.$root.ftRPZIOCType = "mixed"; this.$root.ftRPZNotify = "";
-          this.$root.ftRPZDisabled = 0; this.$root.editRow = {};
+          this.$root.ftRPZDisabled = false; this.$root.editRow = {};
           showModal('mConfEditRPZ'); break;
         case "info rpzs": case "edit rpzs": case "clone rpzs":
           this.$root.RPZtabI = 0;
@@ -868,10 +1104,12 @@ export const appConfig = {
           this.$root.ftRPZSOA_NXTTL = `${row.item.soa_nx_ttl}`;
           this.$root.ftRPZAXFR = `${row.item.axfr_update}`;
           this.$root.ftRPZIXFR = `${row.item.ixfr_update}`;
-          this.$root.ftRPZCache = row.item.cache; this.$root.ftRPZWildcard = row.item.wildcard;
+          this.$root.ftRPZCache = (row.item.cache == 1); 
+          this.$root.ftRPZWildcard = (row.item.wildcard == 1);
           this.$root.ftRPZAction = row.item.action;
           this.$root.ftRPZActionCustom = row.item.actioncustom ? JSON.parse(row.item.actioncustom) : "";
-          this.$root.ftRPZIOCType = row.item.ioc_type; this.$root.ftRPZDisabled = row.item.disabled;
+          this.$root.ftRPZIOCType = row.item.ioc_type; 
+          this.$root.ftRPZDisabled = (row.item.disabled == 1);
           let vm = this;
           var RPZNotify = '';
           row.item.notify.forEach(function(el) { RPZNotify += el.notify + ' '; });
@@ -913,7 +1151,7 @@ export const appConfig = {
 
     requestDelete: function(table, row) {
       this.$root.deleteRec = row.item.rowid; this.$root.deleteTbl = table;
-      this.$root.modalMSG = '<b>Do you want to delete ' + row.item.name + '?</b>';
+      this.$root.modalMSG = '<b>Do you want to delete ' + escapeHtml(row.item.name) + '?</b>';
       showModal('mConfDel');
     },
 
@@ -1032,7 +1270,7 @@ export const appConfig = {
     },
 
     validateHostnameOnly: function(vrbl) {
-      return (this.$data[vrbl].length > 5 && checkHostNameOnly(this.$data[vrbl])) ? true : this.$data[vrbl].length == 0 ? null : false;
+      return (this.$data[vrbl].length > 2 && checkHostNameOnly(this.$data[vrbl])) ? true : this.$data[vrbl].length == 0 ? null : false;
     },
 
     formatHostname: function(val, e) {
@@ -1195,6 +1433,14 @@ export const appConfig = {
 
     tblDeleteRecord: function(table, rowid) {
       var el = this;
+      if (table == 'rpidns') {
+        axios.delete('/io2data.php/rpidns', { data: { id: rowid } }).then(function(response) {
+          if (/DOCTYPE html/.test(response.data)) { window.location.reload(true); }
+          else if (response.data[0] && response.data[0].status == "success") { el.refreshRpiDNS(); }
+          else { el.showInfo((response.data[0] && response.data[0].description) || 'Error deleting RpiDNS', 3); }
+        }).catch(function(error) { el.showInfo('Error deleting RpiDNS', 3); });
+        return;
+      }
       if (table != 'users') toggleUpdates(0, this, true);
       axios.delete('/io2data.php/' + table + '?rowid=' + JSON.stringify(rowid)).then(function(response) {
         if (/DOCTYPE html/.test(response.data)) { window.location.reload(true); }
@@ -1218,7 +1464,7 @@ export const appConfig = {
 
     showInfo: function(msg, time) {
       var self = this;
-      this.msgInfoMSG = msg; this.mInfoMSGvis = true;
+      this.msgInfoMSG = escapeHtml(msg); this.mInfoMSGvis = true;
       setTimeout(function() { self.mInfoMSGvis = false; }, time * 1000);
     },
 
@@ -1241,8 +1487,17 @@ export const appConfig = {
     alert: function(txt) { alert(txt); },
 
     copyToClipboard(ref) {
-      this.$refs[ref].$el.select();
-      document.execCommand('copy');
+      var el = this.$refs[ref].$el || this.$refs[ref];
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(el.value);
+      } else {
+        el.select();
+        document.execCommand('copy');
+      }
+    },
+
+    copyToClipboardID(id) {
+      copyToClipboardID(id);
     },
 
     genRandom(type) {
