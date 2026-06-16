@@ -10,17 +10,17 @@
   },
   "dependencies": {
     "@popperjs/core": "^2.11.8",
-    "axios": "^1.13.5",
+    "axios": "1.16.0",
     "bootstrap": "^5.3.3",
     "bootstrap-vue-next": "^0.17.3",
     "mitt": "^3.0.1",
     "vue": "^3.4.21"
   },
   "devDependencies": {
-    "@vitejs/plugin-vue": "^5.0.4",
-    "vite": "^5.0.12"
+    "@vitejs/plugin-vue": "^6.0.7",
+    "vite": "^8.0.16"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": "^20.19.0 || >=22.12.0"
   }
 }

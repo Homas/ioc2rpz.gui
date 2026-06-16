@@ -26,7 +26,7 @@
 # =============================================================================
 # Stage 1: Build frontend assets with Node.js and Vite
 # =============================================================================
-FROM node:18-alpine AS builder
+FROM node:22-alpine AS builder
 
 ARG BUILD_MODE=prod
 
@@ -36,7 +36,15 @@ WORKDIR /build
 COPY package.json package-lock.json ./
 
 # Install dependencies
-RUN npm ci
+# Vite 8 (Rolldown) pulls large native binary packages. On Docker Desktop the
+# network stack can stall under npm's default connection concurrency, causing
+# ETIMEDOUT. Limit concurrent sockets and raise timeouts/retries for a reliable build.
+RUN npm ci --no-audit --no-fund \
+    --maxsockets=3 \
+    --fetch-timeout=600000 \
+    --fetch-retries=5 \
+    --fetch-retry-mintimeout=20000 \
+    --fetch-retry-maxtimeout=120000
 
 # Copy source files needed for build
 COPY vite.config.js ./

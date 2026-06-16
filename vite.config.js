@@ -21,8 +21,9 @@ export default defineConfig({
     outDir: 'dist',
     emptyOutDir: true,
     manifest: true,
-    // Disable minification in dev mode for easier debugging
-    minify: isDevMode ? false : 'esbuild',
+    // Disable minification in dev mode for easier debugging.
+    // Vite 8 (Rolldown) uses the Oxc minifier; 'esbuild' is no longer bundled.
+    minify: isDevMode ? false : 'oxc',
     // Generate source maps in dev mode
     sourcemap: isDevMode,
     rollupOptions: {
