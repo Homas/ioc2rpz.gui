@@ -573,6 +573,17 @@ function validateTkeyFields($data) {
  * @return array ['valid' => bool, 'error' => string|null]
  */
 function validateSourceFields($data) {
+    // DEBUG: log raw incoming source/IXFR values and validation outcomes.
+    // Remove once the "Invalid IXFR URL" issue is resolved.
+    error_log('[io2 DEBUG] validateSourceFields'
+        . ' name=' . var_export($data['tSrcName'] ?? null, true)
+        . ' url=' . var_export($data['tSrcURL'] ?? null, true)
+        . ' ixfr=' . var_export($data['tSrcURLIXFR'] ?? null, true)
+        . ' ixfr_len=' . (isset($data['tSrcURLIXFR']) ? strlen($data['tSrcURLIXFR']) : -1)
+        . ' ixfr_hex=' . (isset($data['tSrcURLIXFR']) ? bin2hex($data['tSrcURLIXFR']) : '')
+        . ' srcUrlValid=' . var_export(validateSourceUrl($data['tSrcURL'] ?? ''), true)
+        . ' ixfrValid=' . var_export(validateIxfrUrl($data['tSrcURLIXFR'] ?? ''), true));
+
     if (!validateName($data['tSrcName'] ?? '')) {
         return ['valid' => false, 'error' => 'Invalid source name'];
     }

@@ -1,4 +1,7 @@
 #ioc2rpz.gui change log
+## 2.0.1.0 2026-07-03
+- Fixed backend source/IXFR URL validation that rejected valid sources. The strict http/https-only check introduced in the pre-release now accepts ftp/file/shell source URLs and IXFR meta keywords ([:AXFR:], [:FTimestamp:], [:ToTimestamp:]), matching the frontend.
+
 ## 2.0.0.0 2026-01-23
 - Migration to vue3 with vite
 
