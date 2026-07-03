@@ -464,7 +464,9 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
       //save ioc2rpz configuration and reconfigure service
       //support local file via local script. Here just set a relevant field in DB.
       //support S3. Upload file to S3 and send reconfugure signal
-      $sql="update servers set publish_upd=1, cfg_updated=0 where ".($REQUEST['SrvId'] == 'all'?" disabled=0  and cfg_updated=1 and mgmt=1":" rowid=".intval($REQUEST['SrvId']));
+      $SrvId = $REQUEST['SrvId'] ?? '';
+      if ($SrvId === '') { $response='{"status":"failed","reason":"Missing SrvId"}'; break; }
+      $sql="update servers set publish_upd=1, cfg_updated=0 where ".($SrvId == 'all'?" disabled=0  and cfg_updated=1 and mgmt=1":" rowid=".intval($SrvId));
       if (DB_execute($db,$sql)) $response='{"status":"ok"}'; else $response='{"status":"failed", "reason":"Database operation failed"}';
 
       break;

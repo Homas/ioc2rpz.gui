@@ -33,6 +33,10 @@ function getRequest(){
     $Data=$_REQUEST;
   }else{
     $Data=json_decode($rawRequest,true);
+    if (!is_array($Data)) $Data=[];
+    // Merge query-string parameters (e.g. ?SrvId=1) so they are available
+    // alongside the JSON body. Body values take precedence on conflict.
+    $Data=array_merge($_GET, $Data);
   };
   $Data['method'] = $_SERVER['REQUEST_METHOD'];
   $Data['req'] = explode("/", substr(@$_SERVER['PATH_INFO'], 1))[0];
