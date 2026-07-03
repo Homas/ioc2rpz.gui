@@ -406,6 +406,43 @@ function validateUrl($url) {
 }
 
 /**
+ * Validates a source URL.
+ * ioc2rpz sources support http/https/ftp URLs as well as local files
+ * ("file:" prefix) and shell commands ("shell:" prefix).
+ * Empty string is allowed (optional field).
+ *
+ * @param string $url The URL to validate
+ * @return bool True if valid or empty
+ */
+function validateSourceUrl($url) {
+    if ($url === '' || $url === null) return true;
+    if (strlen($url) > MAX_URL_LENGTH) return false;
+    return (bool)preg_match('#^(https?://|ftp://|file:|shell:)#', $url);
+}
+
+/**
+ * Validates an IXFR (incremental transfer) URL.
+ * In addition to regular source URLs, IXFR paths support meta keywords such
+ * as "[:AXFR:]", "[:FTimestamp:]" and "[:ToTimestamp:]" that ioc2rpz expands
+ * at runtime. Empty string is allowed (optional field).
+ *
+ * @param string $url The URL to validate
+ * @return bool True if valid or empty
+ */
+function validateIxfrUrl($url) {
+    if ($url === '' || $url === null) return true;
+    if (strlen($url) > MAX_URL_LENGTH) return false;
+    // Regular source URL (http/https/ftp/file/shell) is accepted as-is.
+    if (validateSourceUrl($url)) return true;
+    // Meta URL starting with [:AXFR:] optionally followed by query/anchor and
+    // [:FTimestamp:]/[:ToTimestamp:] keywords (mirrors the frontend regex).
+    return (bool)preg_match(
+        '/^\[:AXFR:\]((\?|\&)[;&a-zA-Z0-9%_.~+=-]*)?(\[:FTimestamp:\]|\[:ToTimestamp:\])?(\#[-a-zA-Z0-9_]*)?(\[:FTimestamp:\]|\[:ToTimestamp:\])?$/',
+        $url
+    );
+}
+
+/**
  * Validates a TSIG key algorithm against allowed values.
  *
  * @param string $alg The algorithm name
@@ -539,10 +576,10 @@ function validateSourceFields($data) {
     if (!validateName($data['tSrcName'] ?? '')) {
         return ['valid' => false, 'error' => 'Invalid source name'];
     }
-    if (!empty($data['tSrcURL']) && !validateUrl($data['tSrcURL'])) {
+    if (!empty($data['tSrcURL']) && !validateSourceUrl($data['tSrcURL'])) {
         return ['valid' => false, 'error' => 'Invalid source URL'];
     }
-    if (!empty($data['tSrcURLIXFR']) && !validateUrl($data['tSrcURLIXFR'])) {
+    if (!empty($data['tSrcURLIXFR']) && !validateIxfrUrl($data['tSrcURLIXFR'])) {
         return ['valid' => false, 'error' => 'Invalid IXFR URL'];
     }
     if (!validateStringLength($data['tSrcREGEX'] ?? '', MAX_REGEX_LENGTH)) {

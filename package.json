@@ -1,6 +1,6 @@
 {
   "name": "ioc2rpz-gui",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "ioc2rpz.gui - Web management interface for ioc2rpz DNS security server",
   "type": "module",
   "scripts": {
