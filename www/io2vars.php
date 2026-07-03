@@ -258,7 +258,7 @@ function genConfig($db,$USERID,$SrvId){
   $subres_gr=DB_selectArray($db,"select group_name from servers_tsig_groups left join tkeys_groups on tkeys_groups.rowid=servers_tsig_groups.tsig_group_id where servers_tsig_groups.user_id=$USERID and servers_tsig_groups.server_id=$SrvId");
 	if ($subres_gr) $groups=",{groups,[\"".implode('","',array_column($subres_gr,'group_name'))."\"]}"; else $groups="";
 
-  $cfg.="{srv,{\"".erlEscape($row['ns'])."\",\"".str_replace("@",".",erlEscape($row['email']))."\",[\"".implode('","',array_map('erlEscape',array_column($subres,'name')))."\"$groups],[\"".implode('","',array_map('erlEscape',array_column($subres1,'mgmt_ip')))."\"]}}.\\n";
+  $cfg.="{srv,{\"".erlEscape($row['ns'])."\",\"".str_replace("@",".",erlEscape($row['email']))."\",[\"".implode('","',array_map('erlEscape',array_column($subres,'name')))."\"$groups],[\"".implode('","',array_map('erlEscape',array_column($subres1,'mgmt_ip')))."\"]}}.\n";
 
   if ($row['certfile']!="" and $row['keyfile']!="") {
     $cfg.="\n% cert record: certfile, keyfile, cacertfile\n";
