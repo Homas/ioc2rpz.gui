@@ -317,9 +317,11 @@ function genConfig($db,$USERID,$SrvId){
  * @return string Escaped string safe for Erlang format
  */
 function erlEscape($str){
-  // Escape backslashes first, then double-quotes for Erlang string literals
-  $str = str_replace('\\', '\\\\', $str);
-  $str = str_replace('"', '\\"', $str);
+  // The stored values (regexes, URLs, keys, etc.) are already kept in the
+  // exact form ioc2rpz expects in the generated config, so they must be
+  // written verbatim. Re-escaping backslashes/quotes here doubles the escape
+  // characters and corrupts regex patterns, so this is intentionally a
+  // pass-through.
   return $str;
 };
 

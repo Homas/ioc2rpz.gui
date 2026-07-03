@@ -3,6 +3,7 @@
 - Fixed backend source/IXFR URL validation that rejected valid sources. The strict http/https-only check introduced in the pre-release now accepts ftp/file/shell source URLs and IXFR meta keywords ([:AXFR:], [:FTimestamp:], [:ToTimestamp:]), matching the frontend.
 - Fixed publish/reconfigure ("publish_upd") failing with an "Undefined array key SrvId" warning. Query-string parameters (e.g. ?SrvId=1) are now merged into the request alongside the JSON body, and the handler rejects requests with a missing SrvId.
 - Fixed generated server configuration being rejected by ioc2rpz with "syntax error before: '.'". The srv record was terminated with a literal "\n" (backslash-n) instead of a real newline, mashing it together with following records. Now emits a proper newline like all other records.
+- Fixed doubled escape characters in generated config (e.g. regex "\." became "\\."). erlEscape() was changed in the pre-release to escape backslashes/quotes, but stored values are already in the exact form ioc2rpz expects and must be written verbatim. Reverted erlEscape() to a pass-through.
 
 ## 2.0.0.0 2026-01-23
 - Migration to vue3 with vite
