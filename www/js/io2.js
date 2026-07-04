@@ -1793,18 +1793,20 @@ export const appConfig = {
         if (/DOCTYPE html/.test(response.data)) { window.location.reload(true); return; }
         obj.$root.ftLookupInProgress = false;
         var data = response.data;
-        if (Array.isArray(data)) {
-          // Successful response: list of feed objects (possibly empty).
-          if (data.length === 0) {
-            obj.$root.ftLookupNotFound = true; // Req 8.5
-          } else {
-            obj.$root.ftLookupResults = data; // Req 8.4, 9.1-9.4
-          }
-        } else if (data && data.status === 'failed') {
-          // Classified failure (Req 8.6): never surface credentials.
+        // Classified proxy failure (Req 8.6): never surface credentials.
+        if (data && data.status === 'failed') {
           obj.$root.ftLookupError = obj.iocLookupErrorMessage(data);
-        } else {
+          return;
+        }
+        // Extract the feed list from either the bare-array shape or the real
+        // ioc2rpz shape { ioc, tkey, data: [ { ioc, feeds: [...] } ] }.
+        var feeds = obj.extractLookupFeeds(data);
+        if (feeds === null) {
           obj.$root.ftLookupError = 'Received an unexpected response from the management interface.';
+        } else if (feeds.length === 0) {
+          obj.$root.ftLookupNotFound = true; // Req 8.5
+        } else {
+          obj.$root.ftLookupResults = feeds; // Req 8.4, 9.1-9.4
         }
       }).catch(function(error) {
         // Network/transport failure reaching the proxy itself.
@@ -1823,6 +1825,50 @@ export const appConfig = {
      * @param {{error: string, code?: number, reason?: string}} data
      * @returns {string}
      */
+    /**
+     * Normalize a management-interface lookup response into a flat array of
+     * feed view-models, or null when the shape is unrecognized.
+     *
+     * Handles both the bare-array shape (a list of feed objects) and the real
+     * ioc2rpz shape:
+     *   { "ioc": "...", "tkey": "...", "data": [ { "ioc": "...", "feeds": [...] } ] }
+     * The per-indicator `feeds` arrays are flattened together. Each feed entry
+     * may be an object (with feed name / type / sources) or a bare string
+     * (a feed/zone name), so both are normalized to { feed, type, sources }.
+     *
+     * @param {*} data - parsed response body from the proxy
+     * @returns {Array<{feed:string,type:string,sources:*}>|null}
+     */
+    extractLookupFeeds: function(data) {
+      var raw = null;
+      if (Array.isArray(data)) {
+        raw = data;
+      } else if (data && Array.isArray(data.data)) {
+        raw = [];
+        data.data.forEach(function(entry) {
+          if (entry && Array.isArray(entry.feeds)) {
+            entry.feeds.forEach(function(f) { raw.push(f); });
+          } else if (Array.isArray(entry)) {
+            entry.forEach(function(f) { raw.push(f); });
+          }
+        });
+      } else if (data && Array.isArray(data.feeds)) {
+        raw = data.feeds;
+      }
+      if (raw === null) return null;
+      return raw.map(function(f) {
+        if (f && typeof f === 'object') {
+          return {
+            feed: f.feed || f.zone || f.name || f.rpz || '',
+            type: f.type || f.ioc_type || '',
+            sources: f.sources
+          };
+        }
+        // Bare string feed/zone name (attribution unavailable / disabled).
+        return { feed: String(f), type: '', sources: undefined };
+      });
+    },
+
     iocLookupErrorMessage: function(data) {
       switch (data.error) {
         case 'connection':
