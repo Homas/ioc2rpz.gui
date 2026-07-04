@@ -410,6 +410,33 @@ function validateUrl($url) {
 }
 
 /**
+ * Validates the server configuration file name / location (the `tSrvURL`
+ * field). This is NOT a web URL: for local storage it is a plain file name
+ * such as "ioc2rpz.conf", and for scp/S3 source types it is a path/location
+ * (e.g. "user@host:/path/ioc2rpz.conf" or "s3://bucket/key?versionId=...").
+ *
+ * The character set mirrors the frontend "File Name" field (formatURLAT:
+ * letters, digits and @ / = : ? # . - _ &), which is what allows scp and S3
+ * locations to be entered. Path traversal ("..") is rejected as a
+ * defense-in-depth measure since this value can reference a file on disk.
+ * Empty string is allowed (the caller only invokes this when non-empty).
+ *
+ * @param string $url The configuration file name / location
+ * @return bool True if valid or empty
+ */
+function validateServerConfigFile($url) {
+    if ($url === '' || $url === null) return true;
+    if (strlen($url) > MAX_URL_LENGTH) return false;
+    // Reject path traversal.
+    if (strpos($url, '..') !== false) return false;
+    // Allow only the same safe characters the frontend permits (letters,
+    // digits and @ / = : ? # . - _ &), covering local file names as well as
+    // scp and S3 locations. Note: no shell metacharacters (space, ; | ` $ etc.)
+    // are permitted.
+    return (bool)preg_match('#^[A-Za-z0-9@/=:?\#.&_-]+$#', $url);
+}
+
+/**
  * Validates a source URL.
  * ioc2rpz sources support http/https/ftp URLs as well as local files
  * ("file:" prefix) and shell commands ("shell:" prefix).
@@ -542,8 +569,12 @@ function validateServerFields($data) {
     if (!empty($data['tSrvEmail']) && !validateEmail($data['tSrvEmail'])) {
         return ['valid' => false, 'error' => 'Invalid email address'];
     }
-    if (!empty($data['tSrvURL']) && !validateUrl($data['tSrvURL'])) {
-        return ['valid' => false, 'error' => 'Invalid URL'];
+    // tSrvURL is the server's configuration file name / location (e.g.
+    // "ioc2rpz.conf"), NOT an http(s) URL. Validate it as a file name/path
+    // (mirrors the frontend "File Name" field, validateNameAT), not with
+    // validateUrl which requires an http/https scheme.
+    if (!empty($data['tSrvURL']) && !validateServerConfigFile($data['tSrvURL'])) {
+        return ['valid' => false, 'error' => 'Invalid configuration file name'];
     }
     // Validate management IPs array
     $mgmtIps = json_decode($data['tSrvMGMTIP'] ?? '[]', true);
