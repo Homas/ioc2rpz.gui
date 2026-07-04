@@ -697,12 +697,18 @@ insert into rpidns(user_id, name, rpidns_uuid, commentary, configuration) values
       $keyName=$keyRow[0]['tname'];
       $keySecret=$keyRow[0]['tsecret'];
 
-      // --- Issue GET https://<addr>:<port>/api/v1/ioc/<urlencoded ioc>?tkey=<keyname> ---
+      // --- Issue GET https://<addr>:<port>/api/v1/ioc/<urlencoded ioc>?tkey= (empty tkey) ---
       // URL construction and outcome classification live in io2fun.php as pure,
       // testable helpers (buildIocLookupUrl / classifyIocLookupResult). The TSIG
       // key name/secret are used only inside CURLOPT_USERPWD; classification is
       // credential-free by construction.
-      $url=buildIocLookupUrl($mgmtAddr, rest_mgmt_port, $ioc, $keyName);
+      // NOTE: the management key authenticates the request (basic auth, below);
+      // it is deliberately NOT passed as the `tkey` query parameter. `tkey`
+      // scopes which feeds the server returns, and a management key is not a
+      // per-zone transfer key -- passing it would filter out every feed. An
+      // empty tkey returns all feeds the indicator appears in (see
+      // buildIocLookupUrl()).
+      $url=buildIocLookupUrl($mgmtAddr, rest_mgmt_port, $ioc);
       $curl=curl_init($url);
       curl_setopt($curl, CURLOPT_HTTPGET, true);
       curl_setopt($curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);

@@ -677,26 +677,36 @@ function validateGroupName($name) {
 /**
  * Builds the management REST API URL for a single-indicator lookup.
  *
- * Produces exactly the shape required by the ioc2rpz management interface
- * (Req 8.3):
+ * Produces the shape required by the ioc2rpz management interface (Req 8.3):
  *
- *   https://<addr>:<port>/api/v1/ioc/<url-encoded ioc>?tkey=<url-encoded keyName>
+ *   https://<addr>:<port>/api/v1/ioc/<url-encoded ioc>?tkey=
  *
- * The indicator and TSIG key name are individually rawurlencode()'d so that any
- * character in either value is transmitted safely in the path / query string.
- * The TSIG *secret* is never part of the URL (it travels only in the HTTP basic
- * auth header) and is therefore not a parameter of this function.
+ * IMPORTANT — the `tkey` query parameter is intentionally left EMPTY.
+ *
+ * On the server, `tkey` is NOT an authentication token; authentication is
+ * performed independently via HTTP basic auth (the management key name/secret
+ * in CURLOPT_USERPWD). Instead, `tkey` scopes which feeds are returned: the
+ * server's `get_tkey_zones/1` only includes a feed if the supplied `tkey` is
+ * one of that zone's transfer/access keys (`akeys`), matches one of its key
+ * groups, OR is empty. A *management* key is not a per-zone transfer key, so
+ * passing the management key name here filters out every feed and the response
+ * comes back with empty `feeds` arrays ("not found in any feed").
+ *
+ * An empty `tkey` resolves to the server's all-zones case, so an authenticated
+ * operator sees every feed the indicator appears in — matching the behaviour of
+ * the public ioc2rpz lookup site. The indicator is rawurlencode()'d so any
+ * character is transmitted safely in the path. The TSIG key name/secret are
+ * never part of the URL (they travel only in the HTTP basic auth header).
  *
  * @param string $addr    Management address (host or IP) of the target server.
  * @param int|string $port Management REST port (rest_mgmt_port).
  * @param string $ioc     The indicator being looked up.
- * @param string $keyName The management TSIG key name (public identifier).
  * @return string The fully-formed request URL.
  */
-function buildIocLookupUrl($addr, $port, $ioc, $keyName) {
+function buildIocLookupUrl($addr, $port, $ioc) {
     return "https://" . $addr . ":" . $port .
         "/api/v1/ioc/" . rawurlencode($ioc) .
-        "?tkey=" . rawurlencode($keyName);
+        "?tkey=";
 }
 
 /**
