@@ -270,6 +270,47 @@ function validateIpOrCidr($ip) {
 }
 
 /**
+ * Validates a management IP entry (the `tSrvMGMTIP` list).
+ *
+ * These are operator-entered entries for the server's management ACL. On the
+ * ioc2rpz server the ACL check is a plain exact string comparison
+ * (`lists:member(ip_to_str(PeerIP), ACL)`, where `ip_to_str` is
+ * `inet_parse:ntoa`), so an ACL entry is effectively an opaque string that is
+ * matched verbatim -- not something the server re-parses as an IP. The GUI
+ * therefore should not impose stricter canonicalisation than the operator's
+ * intent; historically this field accepted arbitrary values, and PHP's
+ * FILTER_VALIDATE_IP is stricter than the GUI's own frontend check (which
+ * accepts non-canonical forms such as ":::172.18.0.1"). Enforcing
+ * FILTER_VALIDATE_IP here made otherwise-editable server records un-saveable.
+ *
+ * The one hard requirement is injection safety: these values are written into
+ * the generated ioc2rpz.conf as quoted Erlang strings inside the server ACL,
+ * so an entry must not be able to break out of that quoted string or inject
+ * shell/config syntax. Restricting the character set to IP/CIDR characters
+ * (hex digits, dot, colon and an optional numeric /prefix) guarantees there is
+ * no way to include a quote, backslash, whitespace or shell metacharacter,
+ * while still accepting every value the server's own ip_to_str can emit.
+ *
+ * Note: a non-canonical entry like ":::172.18.0.1" is accepted but will never
+ * match a real peer (ntoa never emits it); that is a data-quality choice left
+ * to the operator, not something the GUI blocks.
+ *
+ * Empty string is allowed (optional field).
+ *
+ * @param string $ip The management IP entry to validate
+ * @return bool True if valid or empty
+ */
+function validateMgmtIp($ip) {
+    if ($ip === '' || $ip === null) return true;
+    // Canonical IP / CIDR is always accepted.
+    if (validateIpOrCidr($ip)) return true;
+    // Otherwise accept only IP-shaped, injection-safe tokens. Length-bound to a
+    // sane IP size to avoid unbounded values.
+    if (strlen($ip) > 45) return false;
+    return (bool)preg_match('#^[0-9A-Fa-f:.]+(/\d{1,3})?$#', $ip);
+}
+
+/**
  * Validates a syslog host (hostname or IP, optionally with port).
  * Empty string is allowed (optional field).
  *
@@ -580,7 +621,7 @@ function validateServerFields($data) {
     $mgmtIps = json_decode($data['tSrvMGMTIP'] ?? '[]', true);
     if (is_array($mgmtIps)) {
         foreach ($mgmtIps as $ip) {
-            if (!validateIpOrCidr($ip)) {
+            if (!validateMgmtIp($ip)) {
                 return ['valid' => false, 'error' => 'Invalid management IP: ' . substr($ip, 0, 45)];
             }
         }
