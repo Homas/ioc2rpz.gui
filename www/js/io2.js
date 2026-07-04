@@ -1840,32 +1840,41 @@ export const appConfig = {
      * @returns {Array<{feed:string,type:string,sources:*}>|null}
      */
     extractLookupFeeds: function(data) {
+      // Collect { matchedIoc, feed } pairs. `matchedIoc` is the specific
+      // indicator (from each data[].ioc) that matched this feed. A single
+      // query can match through more than one indicator -- e.g. the exact name
+      // and a wildcard parent -- so the same feed can legitimately appear under
+      // different matched indicators. Carrying matchedIoc lets the view group
+      // the results and explain those repeats instead of looking duplicated.
       var raw = null;
       if (Array.isArray(data)) {
-        raw = data;
+        raw = data.map(function(f) { return { matchedIoc: '', feed: f }; });
       } else if (data && Array.isArray(data.data)) {
         raw = [];
         data.data.forEach(function(entry) {
+          var mi = (entry && entry.ioc != null) ? String(entry.ioc) : '';
           if (entry && Array.isArray(entry.feeds)) {
-            entry.feeds.forEach(function(f) { raw.push(f); });
+            entry.feeds.forEach(function(f) { raw.push({ matchedIoc: mi, feed: f }); });
           } else if (Array.isArray(entry)) {
-            entry.forEach(function(f) { raw.push(f); });
+            entry.forEach(function(f) { raw.push({ matchedIoc: mi, feed: f }); });
           }
         });
       } else if (data && Array.isArray(data.feeds)) {
-        raw = data.feeds;
+        raw = data.feeds.map(function(f) { return { matchedIoc: '', feed: f }; });
       }
       if (raw === null) return null;
-      return raw.map(function(f) {
+      return raw.map(function(item) {
+        var f = item.feed;
         if (f && typeof f === 'object') {
           return {
+            matchedIoc: item.matchedIoc,
             feed: f.feed || f.zone || f.name || f.rpz || '',
             type: f.type || f.ioc_type || '',
             sources: f.sources
           };
         }
         // Bare string feed/zone name (attribution unavailable / disabled).
-        return { feed: String(f), type: '', sources: undefined };
+        return { matchedIoc: item.matchedIoc, feed: String(f), type: '', sources: undefined };
       });
     },
 

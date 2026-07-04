@@ -1017,15 +1017,24 @@ local_cname=www.example.com
           <b-row v-if="ftLookupResults.length > 0">
             <b-col :sm="12" class="form_row text-start">
               <b-list-group>
-                <b-list-group-item v-for="(feed, idx) in ftLookupResults" :key="idx">
-                  <div><strong>{{ feed.feed }}</strong><span v-if="feed.type"> &mdash; {{ feed.type }}</span></div>
-                  <div class="mt-1">
-                    <template v-if="renderSources(feed.sources).kind === 'badges'">
-                      <b-badge v-for="(b, bi) in renderSources(feed.sources).badges" :key="bi" variant="secondary" class="me-1">{{ b.text }}</b-badge>
-                    </template>
-                    <span v-else-if="renderSources(feed.sources).kind === 'unavailable'" class="text-muted"><em>attribution unavailable</em></span>
-                  </div>
-                </b-list-group-item>
+                <template v-for="(feed, idx) in ftLookupResults" :key="idx">
+                  <!-- Group header: the specific indicator that matched these feeds.
+                       Shown when the matched indicator changes (e.g. an exact name
+                       vs. a wildcard parent), which is why the same feed can appear
+                       more than once. -->
+                  <b-list-group-item v-if="feed.matchedIoc && (idx === 0 || ftLookupResults[idx - 1].matchedIoc !== feed.matchedIoc)" variant="light" class="py-1">
+                    <small class="text-muted">Matched indicator:</small> <strong>{{ feed.matchedIoc }}</strong>
+                  </b-list-group-item>
+                  <b-list-group-item>
+                    <div><strong>{{ feed.feed }}</strong><span v-if="feed.type"> &mdash; {{ feed.type }}</span></div>
+                    <div class="mt-1">
+                      <template v-if="renderSources(feed.sources).kind === 'badges'">
+                        <b-badge v-for="(b, bi) in renderSources(feed.sources).badges" :key="bi" variant="secondary" class="me-1">{{ b.text }}</b-badge>
+                      </template>
+                      <span v-else-if="renderSources(feed.sources).kind === 'unavailable'" class="text-muted"><em>attribution unavailable</em></span>
+                    </div>
+                  </b-list-group-item>
+                </template>
               </b-list-group>
             </b-col>
           </b-row>
