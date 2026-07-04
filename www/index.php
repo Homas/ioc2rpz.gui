@@ -648,6 +648,14 @@
             </b-col>
           </b-row>
           <b-row>
+            <b-col :sm="6" class="form_row text-start align-self-center">
+              <label for="fSrvTrackDefault" class="mb-0">Source attribution (global default)</label>
+            </b-col>
+            <b-col :sm="6" class="form_row text-start">
+              <b-form-select id="fSrvTrackDefault" v-model="ftSrvTrackDefault" :options="Srv_TrackDefault_Options" :disabled="infoWindow" ref="formSrvTrackDefault" v-b-tooltip.hover title="Source attribution (global default)" />
+            </b-col>
+          </b-row>
+          <b-row>
             <b-col :sm="12" class="form_row text-start"><b-form-checkbox :false-value="0" :true-value="1" :disabled="infoWindow"  v-model="ftSrvDisabled">Disabled</b-form-checkbox></b-col>
           </b-row>
           <!-- keys, notify_list -->
@@ -730,6 +738,24 @@ local_cname=www.example.com
                 </b-col>
                 <b-col :sm="4" class="text-start">
                   <b-form-checkbox :false-value="0" :true-value="1" :disabled="infoWindow"  v-model="ftRPZWildcard">Generate wildcard rules</b-form-checkbox>
+                </b-col>
+              </b-row>
+              <b-row class="form_row">
+                <b-col :sm="4" class="text-start align-self-center">
+                  <label for="fRPZTrackSources" class="mb-0">Track sources</label>
+                </b-col>
+                <b-col :sm="4" class="text-start">
+                  <b-form-select id="fRPZTrackSources" v-model="ftRPZTrackSources" :options="RPZ_TrackSources_Options" :disabled="infoWindow" ref="formRPZTrackSources" v-b-tooltip.hover title="Track sources" />
+                </b-col>
+                <b-col :sm="4" class="text-start align-self-center">
+                  <span v-if="ftRPZTrackSources === 'Inherit'" class="text-muted" id="fRPZTrackSourcesInherited">Inherited: {{ effectiveTracking }}</span>
+                </b-col>
+              </b-row>
+              <b-row class="form_row">
+                <b-col :sm="12" class="text-start">
+                  <small v-if="trackingEnabling" class="text-muted d-block" id="fRPZTrackSourcesRebuildHint">Enabling tracking on a feed whose cache is true triggers a one-time full zone (AXFR) rebuild.</small>
+                  <small class="text-muted d-block" id="fRPZTrackSourcesCacheHint">Attribution requires cache = true.</small>
+                  <small v-if="trackingEnabling && !(ftRPZCache === 1 || ftRPZCache === true || ftRPZCache === 'true')" class="text-warning d-block" id="fRPZTrackSourcesUnavailableNotice">Attribution will not be produced until cache = true.</small>
                 </b-col>
               </b-row>
               <b-row class="form_row">
@@ -949,6 +975,61 @@ local_cname=www.example.com
 
         </div>
 
+      </span>
+    </b-modal>
+
+ <!-- IOC lookup (source attribution) -->
+    <b-modal centered size="lg" title="IOC lookup" id="mIocLookup" v-model="modalVisibility.mIocLookup" ref="refIocLookup" body-class="pt-0 pb-0" ok-only ok-title="Close" v-cloak>
+      <span class='text-center'>
+        <div>
+          <b-row>
+            <b-col :sm="7" class="form_row text-start">
+              <b-form-input v-model.trim="ftLookupIoc" maxlength="2048" ref="formLookupIoc"
+                :state="ftLookupSubmitted ? (ftLookupIoc.length >= 1 && ftLookupIoc.length <= 2048) : null"
+                placeholder="Enter an indicator (1-2048 chars)" v-b-tooltip.hover title="Indicator to look up" @keyup.enter="iocLookup()" />
+            </b-col>
+            <b-col :sm="3" class="form_row text-start">
+              <b-form-select v-model="ftLookupServer" :options="ftLookupServersAll" ref="formLookupServer"
+                :state="ftLookupSubmitted ? (ftLookupServer !== '' && ftLookupServer !== null) : null" v-b-tooltip.hover title="Target server">
+                <template #first><b-form-select-option :value="''" disabled>Select server</b-form-select-option></template>
+              </b-form-select>
+            </b-col>
+            <b-col :sm="2" class="form_row text-start">
+              <b-button variant="outline-secondary" block :disabled="ftLookupInProgress" @click.stop="iocLookup()"><i class="fa fa-search"> Lookup</i></b-button>
+            </b-col>
+          </b-row>
+
+          <!-- Field-specific / classified error message (never contains credentials) -->
+          <b-row v-if="ftLookupError != ''">
+            <b-col :sm="12" class="form_row text-start">
+              <b-alert :model-value="true" variant="danger" class="mb-0">{{ ftLookupError }}</b-alert>
+            </b-col>
+          </b-row>
+
+          <!-- Empty result set: indicator not found in any feed (Req 8.5) -->
+          <b-row v-if="ftLookupNotFound">
+            <b-col :sm="12" class="form_row text-start">
+              <b-alert :model-value="true" variant="info" class="mb-0">The indicator was not found in any feed.</b-alert>
+            </b-col>
+          </b-row>
+
+          <!-- Feed results: name, type, and sources rendered via renderSources (Req 8.4, 9.1-9.4, 10.2) -->
+          <b-row v-if="ftLookupResults.length > 0">
+            <b-col :sm="12" class="form_row text-start">
+              <b-list-group>
+                <b-list-group-item v-for="(feed, idx) in ftLookupResults" :key="idx">
+                  <div><strong>{{ feed.feed }}</strong><span v-if="feed.type"> &mdash; {{ feed.type }}</span></div>
+                  <div class="mt-1">
+                    <template v-if="renderSources(feed.sources).kind === 'badges'">
+                      <b-badge v-for="(b, bi) in renderSources(feed.sources).badges" :key="bi" variant="secondary" class="me-1">{{ b.text }}</b-badge>
+                    </template>
+                    <span v-else-if="renderSources(feed.sources).kind === 'unavailable'" class="text-muted"><em>attribution unavailable</em></span>
+                  </div>
+                </b-list-group-item>
+              </b-list-group>
+            </b-col>
+          </b-row>
+        </div>
       </span>
     </b-modal>
 

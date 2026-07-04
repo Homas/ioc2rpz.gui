@@ -258,7 +258,7 @@ function genConfig($db,$USERID,$SrvId){
   $subres_gr=DB_selectArray($db,"select group_name from servers_tsig_groups left join tkeys_groups on tkeys_groups.rowid=servers_tsig_groups.tsig_group_id where servers_tsig_groups.user_id=$USERID and servers_tsig_groups.server_id=$SrvId");
 	if ($subres_gr) $groups=",{groups,[\"".implode('","',array_column($subres_gr,'group_name'))."\"]}"; else $groups="";
 
-  $cfg.="{srv,{\"".erlEscape($row['ns'])."\",\"".str_replace("@",".",erlEscape($row['email']))."\",[\"".implode('","',array_map('erlEscape',array_column($subres,'name')))."\"$groups],[\"".implode('","',array_map('erlEscape',array_column($subres1,'mgmt_ip')))."\"]}}.\n";
+  $cfg.="{srv,{\"".erlEscape($row['ns'])."\",\"".str_replace("@",".",erlEscape($row['email']))."\",[\"".implode('","',array_map('erlEscape',array_column($subres,'name')))."\"$groups],[\"".implode('","',array_map('erlEscape',array_column($subres1,'mgmt_ip')))."\"]".erlSrvTrackSources($row['track_default'])."}}.\n";
 
   if ($row['certfile']!="" and $row['keyfile']!="") {
     $cfg.="\n% cert record: certfile, keyfile, cacertfile\n";
@@ -302,7 +302,7 @@ function genConfig($db,$USERID,$SrvId){
     $subres_wl=DB_selectArray($db,"select name from rpzs_whitelists left join whitelists on whitelists.rowid=rpzs_whitelists.whitelist_id where rpzs_whitelists.user_id=$USERID and rpz_id=${item['rowid']}");
     $subres_notify=DB_selectArray($db,"select notify from rpzs_notify where user_id=$USERID and rpz_id=${item['rowid']}");
 
-    $cfg.="{rpz,{\"${item['name']}\",${item['soa_refresh']},${item['soa_update_retry']},${item['soa_expiration']},${item['soa_nx_ttl']},\"".($item['cache']?"true":"false")."\",\"".($item['wildcard']?"true":"false")."\",".erlAction($item['action']).",[\"".implode('","',array_column($subres_tkeys,'name'))."\"$groups],\"${item['ioc_type']}\",${item['axfr_update']},${item['ixfr_update']},[\"".implode('","',array_column($subres_srcs,'name'))."\"],[".(empty($subres_notify)?"":"\"".implode('","',array_column($subres_notify,'notify'))."\"")."],[".(empty($subres_wl)?"":"\"".implode('","',array_column($subres_wl,'name'))."\"")."]}}.\n";
+    $cfg.="{rpz,{\"${item['name']}\",${item['soa_refresh']},${item['soa_update_retry']},${item['soa_expiration']},${item['soa_nx_ttl']},\"".($item['cache']?"true":"false")."\",\"".($item['wildcard']?"true":"false")."\",".erlAction($item['action']).",[\"".implode('","',array_column($subres_tkeys,'name'))."\"$groups],\"${item['ioc_type']}\",${item['axfr_update']},${item['ixfr_update']},[\"".implode('","',array_column($subres_srcs,'name'))."\"],[".(empty($subres_notify)?"":"\"".implode('","',array_column($subres_notify,'notify'))."\"")."],[".(empty($subres_wl)?"":"\"".implode('","',array_column($subres_wl,'name'))."\"")."]".erlRpzTrackSources($item['track_sources'])."}}.\n";
   };
 
   $response['cfg']=$cfg;
@@ -423,6 +423,51 @@ function erlAction($str){
       break;
   };
   return $result;
+};
+
+/**
+ * Emits the optional srv-tuple TrackSources element (Global_Track_Default).
+ *
+ * Source attribution is off by default, and an `off` default is represented by
+ * the ABSENCE of the 5th srv-tuple element rather than an emitted `off` atom.
+ * This keeps a legacy (off) server serializing to the exact 4-field tuple.
+ * Only `auto` and `on` produce a trailing element; every other value
+ * (`off`, absent, null, or arbitrary junk) yields an empty string.
+ *
+ * The emitted atom is a bare, unquoted, lowercase Erlang atom prefixed with a
+ * comma so it can be appended directly before the closing `}}` of the srv tuple.
+ *
+ * @param string|null $value Persisted track_default value
+ * @return string `",auto"` / `",on"` for those values, otherwise `""`
+ */
+function erlSrvTrackSources($value){
+  if ($value === "auto") return ",auto";
+  if ($value === "on")   return ",on";
+  // off, absent, null, or invalid => no trailing element (legacy 4-field tuple)
+  return "";
+};
+
+/**
+ * Emits the optional rpz-tuple TrackSources element (Feed_Track_Setting).
+ *
+ * An `Inherit` (or absent) feed setting is represented by the ABSENCE of the
+ * 16th rpz-tuple element, so a legacy feed serializes to the exact 15-field
+ * tuple. Only `auto`, `true`, and `false` produce a trailing element; every
+ * other value (`Inherit`, absent, null, or arbitrary junk) yields an empty
+ * string and never an invalid TrackSources atom.
+ *
+ * The emitted atom is a bare, unquoted, lowercase Erlang atom prefixed with a
+ * comma so it can be appended directly before the closing `}}` of the rpz tuple.
+ *
+ * @param string|null $value Persisted track_sources value
+ * @return string `",auto"` / `",true"` / `",false"` for those values, otherwise `""`
+ */
+function erlRpzTrackSources($value){
+  if ($value === "auto")  return ",auto";
+  if ($value === "true")  return ",true";
+  if ($value === "false") return ",false";
+  // Inherit, absent, null, or invalid => no trailing element (legacy 15-field tuple)
+  return "";
 };
 
 ?>

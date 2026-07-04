@@ -5,7 +5,7 @@
 define("IO2PATH", "/opt/ioc2rpz.gui"); #/opt/ioc2rpz.gui
 require IO2PATH."/www/io2vars.php";
 
-define("DBVersion", 2);
+define("DBVersion", 3);
 
 function upgradeSQLiteDB($DBF){
   $db = new SQLite3($DBF);
@@ -26,6 +26,9 @@ function upgradeSQLiteDB($DBF){
         $sql.="alter table whitelists ADD column keep_in_cache integer default 0;";
         $sql.="alter table sources ADD column ioc_type text default 'mixed';";
         $sql.="alter table sources ADD column keep_in_cache integer default 0;";
+      case 2:
+        $sql.="alter table servers add column track_default text default 'off';";
+        $sql.="alter table rpzs add column track_sources text default 'Inherit';";
       default:
         $sql.="PRAGMA user_version=".DBVersion.";";
   };

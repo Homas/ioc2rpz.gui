@@ -265,6 +265,64 @@ export function splitRpiDNSList(obj) {
 }
 
 /**
+ * Counts the top-level, comma-separated fields inside the body of an Erlang
+ * tuple (the content between `{tag,{` and the closing `}}`).
+ *
+ * Commas nested inside double-quoted strings, `[...]` lists, or `{...}` tuples
+ * are ignored, so only the arity of the outermost tuple is counted. An empty
+ * or whitespace-only body yields 0.
+ *
+ * Used by the config reader to report an accurate field count when a srv/rpz
+ * tuple matches neither the legacy nor the attribution-aware arity.
+ *
+ * @param {string} body - inner content of the tuple (without the wrapping braces)
+ * @returns {number} number of top-level fields
+ */
+export function countErlTupleFields(body) {
+  if (body == null) return 0;
+  body = String(body);
+  var depth = 0, inStr = false, commas = 0, hasContent = false;
+  for (var i = 0; i < body.length; i++) {
+    var c = body[i];
+    if (c === '"') { inStr = !inStr; hasContent = true; }
+    else if (inStr) { continue; }
+    else if (c === '[' || c === '{') { depth++; hasContent = true; }
+    else if (c === ']' || c === '}') { if (depth > 0) depth--; }
+    else if (c === ',' && depth === 0) { commas++; }
+    else if (!/\s/.test(c)) { hasContent = true; }
+  }
+  return hasContent ? commas + 1 : 0;
+}
+
+/**
+ * Builds a stable, testable view model for a feed object's `sources` field.
+ *
+ * This is a *total* function: it never throws for any input shape and always
+ * returns a model with a `kind` discriminator the lookup view can render:
+ *
+ *  - non-empty array  ⇒ { kind: 'badges', badges: [{ text }, ...] }
+ *      one badge per element, preserving order and duplicates; each element is
+ *      coerced with String() so badge text is always a string (Req 9.1).
+ *  - empty array `[]` ⇒ { kind: 'unavailable' }
+ *      a single "attribution unavailable" indication, no badges (Req 9.2).
+ *  - `null`           ⇒ { kind: 'unavailable' } (Req 9.3).
+ *  - absent (undefined) or any unexpected non-array/non-null value (number,
+ *    string, object, boolean, ...) ⇒ { kind: 'none' }
+ *      no sources indication and no error (Req 9.4, 10.2).
+ *
+ * @param {*} sources - the feed object's `sources` field (array | null | undefined | other)
+ * @returns {{kind: 'badges', badges: Array<{text: string}>} | {kind: 'unavailable'} | {kind: 'none'}}
+ */
+export function renderSources(sources) {
+  if (Array.isArray(sources)) {
+    if (sources.length === 0) return { kind: 'unavailable' };
+    return { kind: 'badges', badges: sources.map(function (s) { return { text: String(s) }; }) };
+  }
+  if (sources === null) return { kind: 'unavailable' };
+  return { kind: 'none' };
+}
+
+/**
  * Imports IOC2RPZ configuration from text
  * 
  * Parses Erlang-format configuration and creates corresponding records:
@@ -301,6 +359,8 @@ export async function ImportIOC2RPZ(vm, txt) {
   if (rpzs.data) rpzs.data.forEach(function(el) { RpzAll[el['name']] = el['rowid'] });
 
   var skippedIncludes = [];
+  var parseErrors = [];
+  var srvSuppressed = false;
   for (let line of txt.split(/\r|\n/)) {
     var l = line.trim();
     var m;
@@ -308,12 +368,44 @@ export async function ImportIOC2RPZ(vm, txt) {
       skippedIncludes.push(m[1]);
       continue;
     }
-    if (m = l.match(/^{srv,{"([^"]+)","([^"]+)",\[([^\]]*)\],\[([^\]]*)\]}}\.(\t* *| *\t*%.*)$/)) {
-      Srv['ns'] = m[1]; Srv['email'] = m[2]; Srv['tkeys'] = [];
-      m[3].split(/,|\s|"/g).filter(String).forEach(function(el) { Srv['tkeys'].push(el); });
-      Srv['mgmt'] = m[4].replace(/"/g, '');
+    if (m = l.match(/^{srv,{"([^"]+)","([^"]+)",\[([^\]]*)\],\[([^\]]*)\](?:,([^,}\]]+))?}}\.(\t* *| *\t*%.*)$/)) {
+      // Optional 5th atom (Global_Track_Default). Absent => off; a value outside
+      // {off, auto, on} is a parse error and suppresses the server record.
+      var srvTrack = 'off';
+      if (m[5] !== undefined) {
+        if (['off', 'auto', 'on'].includes(m[5])) {
+          srvTrack = m[5];
+        } else {
+          parseErrors.push('Invalid source attribution default "' + m[5] + '" in srv tuple: ' + l);
+          srvSuppressed = true;
+        }
+      }
+      if (!srvSuppressed) {
+        Srv['ns'] = m[1]; Srv['email'] = m[2]; Srv['tkeys'] = [];
+        m[3].split(/,|\s|"/g).filter(String).forEach(function(el) { Srv['tkeys'].push(el); });
+        Srv['mgmt'] = m[4].replace(/"/g, '');
+        Srv['track_default'] = srvTrack;
+      }
+    } else if (/^{srv,{/.test(l)) {
+      // Looks like a srv tuple but matched neither the 4- nor 5-field arity.
+      var srvBody = l.match(/^{srv,{(.*)}}\./);
+      var srvFieldCount = srvBody ? countErlTupleFields(srvBody[1]) : 0;
+      parseErrors.push('Invalid srv tuple: expected 4 or 5 fields, found ' + srvFieldCount + ': ' + l);
+      srvSuppressed = true;
     }
-    if (m = l.match(/^{rpz,{"([^"]+)",([0-9]+),([0-9]+),([0-9]+),([0-9]+),"([^"]+)","([^"]+)","?([^"]+|\[[^\]]*\])"?,\[([^\]]*)\],"([^"]+)",([0-9]+),([0-9]+),\[([^\]]*)\],\[([^\]]*)\],\[([^\]]*)\]}}\.(\t* *| *\t*%.*)$/)) {
+    if (m = l.match(/^{rpz,{"([^"]+)",([0-9]+),([0-9]+),([0-9]+),([0-9]+),"([^"]+)","([^"]+)","?([^"]+|\[[^\]]*\])"?,\[([^\]]*)\],"([^"]+)",([0-9]+),([0-9]+),\[([^\]]*)\],\[([^\]]*)\],\[([^\]]*)\](?:,([^,}\]]+))?}}\.(\t* *| *\t*%.*)$/)) {
+      // Optional 16th atom (Feed_Track_Setting) appended after the Whitelist element.
+      // Absent => Inherit; a value outside {auto, true, false} is a parse error and
+      // suppresses the feed record.
+      var rpzTrack = 'Inherit';
+      if (m[16] !== undefined) {
+        if (['auto', 'true', 'false'].includes(m[16])) {
+          rpzTrack = m[16];
+        } else {
+          parseErrors.push('Invalid track sources value "' + m[16] + '" in rpz tuple: ' + l);
+          continue;
+        }
+      }
       Rpz[m[1]] = [];
       Rpz[m[1]]['tkeys'] = [];
       if (m[9]) m[9].split(/,|\s|"/g).filter(String).forEach(function(el) { Rpz[m[1]]['tkeys'].push(el); });
@@ -327,6 +419,12 @@ export async function ImportIOC2RPZ(vm, txt) {
       Rpz[m[1]]['cache'] = m[6] == "true" ? 1 : 0; Rpz[m[1]]['wildcards'] = m[7] == "true" ? 1 : 0;
       Rpz[m[1]]['action'] = m[8]; Rpz[m[1]]['ioc_type'] = m[10];
       Rpz[m[1]]['AXFR_time'] = m[11]; Rpz[m[1]]['IXFR_time'] = m[12];
+      Rpz[m[1]]['track_sources'] = rpzTrack;
+    } else if (/^{rpz,{/.test(l)) {
+      // Looks like an rpz tuple but matched neither the 15- nor 16-field arity.
+      var rpzBody = l.match(/^{rpz,{(.*)}}\./);
+      var rpzFieldCount = rpzBody ? countErlTupleFields(rpzBody[1]) : 0;
+      parseErrors.push('Invalid rpz tuple: expected 15 or 16 fields, found ' + rpzFieldCount + ': ' + l);
     }
     if (m = l.match(/^{key,{"([^"]+)","([^"]+)","([^"]+)"}}\.(\t* *| *\t*%.*)$/)) {
       if (vm.ftImpAction == 1 || (vm.ftImpAction == 2 && (!TKeysAll[m[1]] || (!TKeysAll[vm.ftImpPrefix + m[1]] && vm.ftImpPrefix))) || (vm.ftImpAction == 0 && (!TKeysAll[vm.ftImpPrefix + m[1]]))) {
@@ -399,10 +497,11 @@ export async function ImportIOC2RPZ(vm, txt) {
   if (sources.data) sources.data.forEach(function(el) { SrcAll[el['name']] = el['rowid'] });
   if (whitelists.data) whitelists.data.forEach(function(el) { WLAll[el['name']] = el['rowid'] });
 
-  if (Srv.length > 0) {
+  if (Srv.length > 0 && !srvSuppressed) {
     vm.ftSrvId = -1; vm.ftSrvName = vm.ftImpServName;
     vm.ftSrvNS = Srv['ns']; vm.ftSrvEmail = Srv['email'].replace('.', '@');
     vm.ftSrvMGMTIP = Srv['mgmt'];
+    vm.ftSrvTrackDefault = Srv['track_default'] || 'off';
     if (Srv['tkeys']) Srv['tkeys'].forEach(function(el) {
       if (TKeys[el] && TKeysAll[TKeys[el]]) vm.ftSrvTKeys.push(TKeysAll[TKeys[el]]);
     });
@@ -437,6 +536,7 @@ export async function ImportIOC2RPZ(vm, txt) {
       vm.ftRPZIOCType = Rpz[RpzName]['ioc_type'];
       vm.ftRPZAXFR = Rpz[RpzName]['AXFR_time'];
       vm.ftRPZIXFR = Rpz[RpzName]['IXFR_time'];
+      vm.ftRPZTrackSources = Rpz[RpzName]['track_sources'] || 'Inherit';
       vm.ftRPZTKeys = [];
       if (Rpz[RpzName]['tkeys']) Rpz[RpzName]['tkeys'].forEach(function(el) {
         if (TKeys[el] && TKeysAll[TKeys[el]]) vm.ftRPZTKeys.push(TKeysAll[TKeys[el]]);
@@ -456,6 +556,10 @@ export async function ImportIOC2RPZ(vm, txt) {
 
   if (skippedIncludes.length > 0) {
     vm.showInfo('Import completed. Skipped include statements: ' + skippedIncludes.join(', '), 5);
+  }
+
+  if (parseErrors.length > 0) {
+    vm.showInfo('Import parse errors: ' + parseErrors.join('; '), 5);
   }
 }
 
@@ -597,7 +701,14 @@ export const appConfig = {
     ftSrvId: 0, ftSrvName: '', ftSrvPubIP: '', ftSrvIP: '', ftSrvNS: '', ftSrvEmail: '',
     ftSrvMGMT: 0, ftSrvMGMTIP: '', ftSrvTKeys: [], ftSrvTKeysAll: [], ftSrvDisabled: 0,
     ftSrvSType: 0, ftSrvURL: "", ftCertFile: "", ftKeyFile: "", ftCACertFile: "", ftCustomConfig: "",
+    ftSrvTrackDefault: 'off',
     servers_filter: "",
+
+    Srv_TrackDefault_Options: [
+      { value: 'off', text: 'off' },
+      { value: 'auto', text: 'auto' },
+      { value: 'on', text: 'on' }
+    ],
 
     // RPZs
     ftRPZId: 0, ftRPZName: '', ftRPZSrvs: [], ftRPZSrvsAll: [],
@@ -607,6 +718,14 @@ export const appConfig = {
     ftRPZCache: 0, ftRPZWildcard: 0,
     ftRPZAction: "nxdomain", ftRPZActionCustom: "",
     ftRPZIOCType: "mixed", ftRPZAXFR: '', ftRPZIXFR: '', ftRPZDisabled: 0,
+    ftRPZTrackSources: 'Inherit',
+
+    RPZ_TrackSources_Options: [
+      { value: 'Inherit', text: 'Inherit' },
+      { value: 'auto', text: 'auto' },
+      { value: 'true', text: 'true' },
+      { value: 'false', text: 'false' }
+    ],
 
     RPZ_Act_Options: [
       { value: 'nxdomain', text: 'NXDomain' },
@@ -646,6 +765,11 @@ export const appConfig = {
     // Export
     ftExRPZ: [], ftExRPZAll: [], ftExFormat: '',
     rpzExportSAll: false, rpzExportIBView: 'default', rpzExportIBMember: 'infoblox.localdomain',
+
+    // IOC lookup (source attribution)
+    ftLookupIoc: '', ftLookupServer: '', ftLookupServersAll: [],
+    ftLookupResults: [], ftLookupError: '', ftLookupNotFound: false,
+    ftLookupSubmitted: false, ftLookupInProgress: false,
 
     // RpiDNS
     RpiDNSList: [], RpiDNSListDash: [],
@@ -723,7 +847,60 @@ export const appConfig = {
    * Computed properties (currently empty, can be extended as needed)
    */
   computed: {
-    // Empty computed section - can be extended as needed
+    /**
+     * Resolve the effective source-tracking state for the RPZ (feed) being edited.
+     *
+     * Resolution rule (Req 3.2, 3.3):
+     *  - When the per-feed "Track sources" control (ftRPZTrackSources) is one of
+     *    auto/true/false, use it directly, mapping true->on, false->off, auto->auto.
+     *  - Otherwise (Inherit or any unexpected value), fall back to the selected
+     *    server's global default when it is one of off/auto/on.
+     *  - Otherwise, off.
+     * The returned value is always exactly one of off/auto/on (the server vocabulary).
+     *
+     * The global default is taken from the first selected server (ftRPZSrvs[0]) when
+     * that server's track_default is present in the loaded server list (ftRPZSrvsAll).
+     * The rpz_servers list currently exposes only {value, text}, so track_default is
+     * generally not available in the editor; in that case the global default is off.
+     */
+    effectiveTracking: function() {
+      var feed = this.ftRPZTrackSources;
+      if (feed === 'auto') return 'auto';
+      if (feed === 'true') return 'on';
+      if (feed === 'false') return 'off';
+
+      // Feed setting is Inherit (or unexpected): resolve from the global default.
+      var globalDefault = 'off';
+      if (Array.isArray(this.ftRPZSrvs) && this.ftRPZSrvs.length > 0 && Array.isArray(this.ftRPZSrvsAll)) {
+        var firstId = this.ftRPZSrvs[0];
+        var srv = this.ftRPZSrvsAll.find(function(el) { return el && el.value == firstId; });
+        if (srv && typeof srv.track_default !== 'undefined' && srv.track_default !== null) {
+          globalDefault = srv.track_default;
+        }
+      }
+      if (globalDefault === 'off' || globalDefault === 'auto' || globalDefault === 'on') return globalDefault;
+      return 'off';
+    },
+
+    /**
+     * Whether source tracking is "enabling" for the RPZ (feed) being edited.
+     *
+     * Tracking is enabling (Req 4.1, 4.3, 4.4) when:
+     *  - the per-feed "Track sources" control (ftRPZTrackSources) is auto or true, OR
+     *  - the control is Inherit and the resolved effectiveTracking is auto or on.
+     * When the control is false, or Inherit resolving to off, tracking is not enabling.
+     *
+     * Drives the AXFR_Rebuild hint and the "will not be produced until cache = true"
+     * notice, both of which must be hidden when tracking resolves to off/false.
+     */
+    trackingEnabling: function() {
+      var feed = this.ftRPZTrackSources;
+      if (feed === 'auto' || feed === 'true') return true;
+      if (feed === 'false') return false;
+      // Inherit (or unexpected): enabling only when effective tracking is auto or on.
+      var eff = this.effectiveTracking;
+      return eff === 'auto' || eff === 'on';
+    }
   },
 
   /**
@@ -1041,7 +1218,7 @@ export const appConfig = {
           this.$root.ftSrvSType = 0; this.$root.ftSrvURL = "";
           this.$root.ftCertFile = ""; this.$root.ftKeyFile = "";
           this.$root.ftCACertFile = ""; this.$root.ftCustomConfig = "";
-          this.$root.ftSrvDisabled = 0;
+          this.$root.ftSrvDisabled = 0; this.$root.ftSrvTrackDefault = 'off';
           this.$root.get_lists('tkeys_mgmt', 'ftSrvTKeysAll'); this.$root.editRow = {};
           showModal('mConfEditSrv'); break;
         case "info servers": case "edit servers": case "clone servers":
@@ -1053,6 +1230,7 @@ export const appConfig = {
           this.$root.ftSrvURL = row.item.URL; this.$root.ftCertFile = row.item.certfile;
           this.$root.ftKeyFile = row.item.keyfile; this.$root.ftCACertFile = row.item.cacertfile;
           this.$root.ftCustomConfig = row.item.custom_config; this.$root.ftSrvDisabled = row.item.disabled;
+          this.$root.ftSrvTrackDefault = row.item.track_default || 'off';
           var IPs = '';
           row.item.mgmt_ips.forEach(function(el) { IPs += el.mgmt_ip + ' '; });
           this.$root.ftSrvMGMTIP = IPs.trim();
@@ -1091,6 +1269,7 @@ export const appConfig = {
           this.$root.get_lists('rpz_whitelists', 'ftRPZWLAll'); this.$root.ftRPZWL = [];
           this.$root.ftRPZAction = "nxdomain"; this.$root.ftRPZActionCustom = "";
           this.$root.ftRPZIOCType = "mixed"; this.$root.ftRPZNotify = "";
+          this.$root.ftRPZTrackSources = 'Inherit';
           this.$root.ftRPZDisabled = false; this.$root.editRow = {};
           showModal('mConfEditRPZ'); break;
         case "info rpzs": case "edit rpzs": case "clone rpzs":
@@ -1109,6 +1288,7 @@ export const appConfig = {
           this.$root.ftRPZAction = row.item.action;
           this.$root.ftRPZActionCustom = row.item.actioncustom ? JSON.parse(row.item.actioncustom) : "";
           this.$root.ftRPZIOCType = row.item.ioc_type; 
+          this.$root.ftRPZTrackSources = row.item.track_sources || 'Inherit';
           this.$root.ftRPZDisabled = (row.item.disabled == 1);
           let vm = this;
           var RPZNotify = '';
@@ -1386,8 +1566,8 @@ export const appConfig = {
     tblMgmtSrvRecord: function(ev, table) {
       if (this.validateName('ftSrvName') && (this.validateIP('ftSrvPubIP') || this.validateIP('ftSrvPubIP') == null) && (this.validateIP('ftSrvIP') || this.validateIP('ftSrvIP') == null) && this.validateHostname('ftSrvNS') && this.validateEmail('ftSrvEmail') && (this.validateIPList('ftSrvMGMTIP') || this.validateIP('ftSrvMGMTIP') == null)) {
         var obj = this;
-        if (this.ftSrvName != this.editRow.name || this.ftSrvIP != this.editRow.ip || this.ftSrvPubIP != this.editRow.pub_ip || this.ftSrvNS != this.editRow.ns || this.ftSrvEmail != this.editRow.email || this.ftSrvMGMT != this.editRow.mgmt || this.ftSrvSType != this.editRow.stype || this.ftSrvURL != this.editRow.URL || this.ftSrvMGMTIP != this.editRow.mgmt_ips_str || this.ftSrvTKeys != this.editRow.tkeys_arr || this.ftCertFile != this.editRow.certfile || this.ftKeyFile != this.editRow.keyfile || this.ftCACertFile != this.editRow.cacertfile || this.ftCustomConfig != this.editRow.custom_config) toggleUpdates(0, this, true);
-        let data = { tSrvId: this.ftSrvId, tSrvName: this.ftSrvName, tSrvIP: this.ftSrvIP, tSrvPubIP: this.ftSrvPubIP, tSrvNS: this.ftSrvNS, tSrvEmail: this.ftSrvEmail, tSrvMGMT: this.ftSrvMGMT, tSrvMGMTIP: JSON.stringify(this.ftSrvMGMTIP.split(/,|\s/g).filter(String)), tSrvTKeys: JSON.stringify(this.ftSrvTKeys), tSrvDisabled: this.ftSrvDisabled, tSrvSType: this.ftSrvSType, tSrvURL: this.ftSrvURL, tCertFile: this.ftCertFile, tKeyFile: this.ftKeyFile, tCACertFile: this.ftCACertFile, tCustomConfig: this.ftCustomConfig };
+        if (this.ftSrvName != this.editRow.name || this.ftSrvIP != this.editRow.ip || this.ftSrvPubIP != this.editRow.pub_ip || this.ftSrvNS != this.editRow.ns || this.ftSrvEmail != this.editRow.email || this.ftSrvMGMT != this.editRow.mgmt || this.ftSrvSType != this.editRow.stype || this.ftSrvURL != this.editRow.URL || this.ftSrvMGMTIP != this.editRow.mgmt_ips_str || this.ftSrvTKeys != this.editRow.tkeys_arr || this.ftCertFile != this.editRow.certfile || this.ftKeyFile != this.editRow.keyfile || this.ftCACertFile != this.editRow.cacertfile || this.ftCustomConfig != this.editRow.custom_config || this.ftSrvTrackDefault != (this.editRow.track_default || 'off')) toggleUpdates(0, this, true);
+        let data = { tSrvId: this.ftSrvId, tSrvName: this.ftSrvName, tSrvIP: this.ftSrvIP, tSrvPubIP: this.ftSrvPubIP, tSrvNS: this.ftSrvNS, tSrvEmail: this.ftSrvEmail, tSrvMGMT: this.ftSrvMGMT, tSrvMGMTIP: JSON.stringify(this.ftSrvMGMTIP.split(/,|\s/g).filter(String)), tSrvTKeys: JSON.stringify(this.ftSrvTKeys), tSrvDisabled: this.ftSrvDisabled, tSrvSType: this.ftSrvSType, tSrvURL: this.ftSrvURL, tCertFile: this.ftCertFile, tKeyFile: this.ftKeyFile, tCACertFile: this.ftCACertFile, tCustomConfig: this.ftCustomConfig, tSrvTrackDefault: this.ftSrvTrackDefault };
         if (this.ftSrvId == -1) {
           axios.post('/io2data.php/' + table, data).then((data) => { if (/DOCTYPE html/.test(data.data)) { window.location.reload(true); } else obj.mgmtTableOk(data, obj, table); }).catch(function(error) { obj.mgmtTableError(error, obj, table); });
         } else {
@@ -1410,8 +1590,8 @@ export const appConfig = {
     tblMgmtRPZRecord: function(ev, table) {
       if (this.validateHostnameNum('ftRPZName') && (this.validateIPList('ftRPZNotify') || this.validateIPList('ftRPZNotify') == null) && ((this.validateCustomAction(this.ftRPZActionCustom) && this.ftRPZAction === 'local') || this.ftRPZAction != 'local') && this.validateInt('ftRPZSOA_Refresh') && this.validateInt('ftRPZSOA_UpdRetry') && this.validateInt('ftRPZSOA_Exp') && this.validateInt('ftRPZSOA_NXTTL') && this.validateInt('ftRPZAXFR') && this.validateInt('ftRPZIXFR')) {
         var obj = this;
-        if (this.ftRPZName != this.editRow.name || this.ftRPZSOA_Refresh != this.editRow.soa_refresh || this.ftRPZSOA_UpdRetry != this.editRow.soa_update_retry || this.ftRPZSOA_Exp != this.editRow.soa_expiration || this.ftRPZSOA_NXTTL != this.editRow.soa_nx_ttl || this.ftRPZAXFR != this.editRow.axfr_update || this.ftRPZIXFR != this.editRow.ixfr_update || this.ftRPZCache != this.editRow.cache || this.ftRPZWildcard != this.editRow.wildcard || this.ftRPZAction != this.editRow.action || this.ftRPZIOCType != this.editRow.ioc_type || this.editRow.notify_str != this.ftRPZNotify || this.editRow.servers_arr != this.ftRPZSrvs || this.editRow.tkeys_arr != this.ftRPZTKeys || this.editRow.sources_arr != this.ftRPZSrc || this.editRow.whitelists_arr != this.ftRPZWL || this.ftRPZActionCustom != this.editRow.actioncustom || this.ftRPZDisabled != this.editRow.disabled) toggleUpdates(0, this, true);
-        let data = { tRPZId: this.ftRPZId, tRPZName: this.ftRPZName, tRPZSOA_Refresh: this.ftRPZSOA_Refresh, tRPZSOA_UpdRetry: this.ftRPZSOA_UpdRetry, tRPZSOA_Exp: this.ftRPZSOA_Exp, tRPZSOA_NXTTL: this.ftRPZSOA_NXTTL, tRPZCache: this.ftRPZCache, tRPZWildcard: this.ftRPZWildcard, tRPZNotify: JSON.stringify(this.ftRPZNotify.split(/,|\s/g).filter(String)), tRPZSrvs: JSON.stringify(this.ftRPZSrvs), tRPZIOCType: this.ftRPZIOCType, tRPZAXFR: this.ftRPZAXFR, tRPZIXFR: this.ftRPZIXFR, tRPZDisabled: this.ftRPZDisabled, tRPZTKeys: JSON.stringify(this.ftRPZTKeys), tRPZWL: JSON.stringify(this.ftRPZWL), tRPZSrc: JSON.stringify(this.ftRPZSrc), tRPZAction: this.ftRPZAction, tRPZActionCustom: JSON.stringify(this.ftRPZActionCustom) };
+        if (this.ftRPZName != this.editRow.name || this.ftRPZSOA_Refresh != this.editRow.soa_refresh || this.ftRPZSOA_UpdRetry != this.editRow.soa_update_retry || this.ftRPZSOA_Exp != this.editRow.soa_expiration || this.ftRPZSOA_NXTTL != this.editRow.soa_nx_ttl || this.ftRPZAXFR != this.editRow.axfr_update || this.ftRPZIXFR != this.editRow.ixfr_update || this.ftRPZCache != this.editRow.cache || this.ftRPZWildcard != this.editRow.wildcard || this.ftRPZAction != this.editRow.action || this.ftRPZIOCType != this.editRow.ioc_type || this.editRow.notify_str != this.ftRPZNotify || this.editRow.servers_arr != this.ftRPZSrvs || this.editRow.tkeys_arr != this.ftRPZTKeys || this.editRow.sources_arr != this.ftRPZSrc || this.editRow.whitelists_arr != this.ftRPZWL || this.ftRPZActionCustom != this.editRow.actioncustom || this.ftRPZDisabled != this.editRow.disabled || this.ftRPZTrackSources != (this.editRow.track_sources || 'Inherit')) toggleUpdates(0, this, true);
+        let data = { tRPZId: this.ftRPZId, tRPZName: this.ftRPZName, tRPZSOA_Refresh: this.ftRPZSOA_Refresh, tRPZSOA_UpdRetry: this.ftRPZSOA_UpdRetry, tRPZSOA_Exp: this.ftRPZSOA_Exp, tRPZSOA_NXTTL: this.ftRPZSOA_NXTTL, tRPZCache: this.ftRPZCache, tRPZWildcard: this.ftRPZWildcard, tRPZNotify: JSON.stringify(this.ftRPZNotify.split(/,|\s/g).filter(String)), tRPZSrvs: JSON.stringify(this.ftRPZSrvs), tRPZIOCType: this.ftRPZIOCType, tRPZAXFR: this.ftRPZAXFR, tRPZIXFR: this.ftRPZIXFR, tRPZDisabled: this.ftRPZDisabled, tRPZTKeys: JSON.stringify(this.ftRPZTKeys), tRPZWL: JSON.stringify(this.ftRPZWL), tRPZSrc: JSON.stringify(this.ftRPZSrc), tRPZAction: this.ftRPZAction, tRPZActionCustom: JSON.stringify(this.ftRPZActionCustom), tRPZTrackSources: this.ftRPZTrackSources };
         if (this.ftRPZId == -1) {
           axios.post('/io2data.php/' + table, data).then((data) => { if (/DOCTYPE html/.test(data.data)) { window.location.reload(true); } else obj.mgmtTableOk(data, obj, table); }).catch(function(error) { obj.mgmtTableError(error, obj, table); });
         } else {
@@ -1526,6 +1706,138 @@ export const appConfig = {
 
     signOut: function() {
       axios.post('/io2auth.php/logout').then(function(response) { window.location.reload(true); });
+    },
+
+    /**
+     * Template wrapper for the pure `renderSources` helper.
+     *
+     * Exposes the module-scope `renderSources` (see top of io2.js) to the
+     * IOC lookup markup so the view can render one badge per source
+     * (kind === 'badges'), an "attribution unavailable" indication
+     * (kind === 'unavailable'), or nothing (kind === 'none').
+     *
+     * @param {*} sources - the feed object's `sources` field
+     * @returns {{kind: string, badges?: Array<{text: string}>}}
+     */
+    renderSources: function(sources) {
+      return renderSources(sources);
+    },
+
+    /**
+     * Open the IOC lookup modal and (re)load the server list.
+     *
+     * Resets any previous result/error state so the view opens clean, then
+     * loads the selectable servers into ftLookupServersAll via get_lists
+     * (the `rpz_servers` endpoint returns [{value: rowid, text: name}]).
+     */
+    iocLookupShowModal: function() {
+      this.$root.ftLookupIoc = '';
+      this.$root.ftLookupServer = '';
+      this.$root.ftLookupResults = [];
+      this.$root.ftLookupError = '';
+      this.$root.ftLookupNotFound = false;
+      this.$root.ftLookupSubmitted = false;
+      this.$root.ftLookupInProgress = false;
+      this.$root.get_lists('rpz_servers', 'ftLookupServersAll');
+      showModal('mIocLookup');
+    },
+
+    /**
+     * Look up a single indicator against the selected server's management
+     * interface (through the backend Mgmt_Proxy) and render the result.
+     *
+     * Client-side guard (Req 8.2): if the indicator is empty (length 0) or
+     * longer than 2048 characters, or no server is selected, set a
+     * field-specific error message and DO NOT call the proxy.
+     *
+     * On a successful proxy response:
+     *  - an array of feed objects ⇒ render each feed (name/type/sources);
+     *    an empty array ⇒ show the "not found in any feed" message (Req 8.5).
+     *  - a {status:"failed", error:...} object ⇒ map the classified error
+     *    (connection/server/timeout/validation) to a user message that never
+     *    reveals credentials (Req 8.6).
+     *
+     * @param {Event} [ev] - optional DOM event (prevented on a guard failure)
+     */
+    iocLookup: function(ev) {
+      var obj = this;
+      var ioc = (this.$root.ftLookupIoc == null) ? '' : String(this.$root.ftLookupIoc);
+      var server = this.$root.ftLookupServer;
+
+      // Reset previous results/state before validating a new submission.
+      this.$root.ftLookupResults = [];
+      this.$root.ftLookupNotFound = false;
+      this.$root.ftLookupError = '';
+
+      // --- Client-side guard (Req 8.1, 8.2): no proxy call on invalid input ---
+      if (ioc.length === 0) {
+        this.$root.ftLookupError = 'Please enter an indicator to look up.';
+        if (ev != null) ev.preventDefault();
+        return;
+      }
+      if (ioc.length > 2048) {
+        this.$root.ftLookupError = 'The indicator must be 2048 characters or fewer.';
+        if (ev != null) ev.preventDefault();
+        return;
+      }
+      if (server === '' || server === null || typeof server === 'undefined') {
+        this.$root.ftLookupError = 'Please select a target server.';
+        if (ev != null) ev.preventDefault();
+        return;
+      }
+
+      this.$root.ftLookupSubmitted = true;
+      this.$root.ftLookupInProgress = true;
+
+      axios.get('/io2data.php/ioc_lookup?ioc=' + encodeURIComponent(ioc) + '&server=' + encodeURIComponent(server)).then(function(response) {
+        if (/DOCTYPE html/.test(response.data)) { window.location.reload(true); return; }
+        obj.$root.ftLookupInProgress = false;
+        var data = response.data;
+        if (Array.isArray(data)) {
+          // Successful response: list of feed objects (possibly empty).
+          if (data.length === 0) {
+            obj.$root.ftLookupNotFound = true; // Req 8.5
+          } else {
+            obj.$root.ftLookupResults = data; // Req 8.4, 9.1-9.4
+          }
+        } else if (data && data.status === 'failed') {
+          // Classified failure (Req 8.6): never surface credentials.
+          obj.$root.ftLookupError = obj.iocLookupErrorMessage(data);
+        } else {
+          obj.$root.ftLookupError = 'Received an unexpected response from the management interface.';
+        }
+      }).catch(function(error) {
+        // Network/transport failure reaching the proxy itself.
+        obj.$root.ftLookupInProgress = false;
+        obj.$root.ftLookupError = 'Could not connect to the management interface.';
+      });
+    },
+
+    /**
+     * Map a classified proxy failure payload to a user-facing message.
+     *
+     * The backend classifies failures as connection/server/timeout/validation
+     * and never includes the TSIG name/secret, so the message is safe to show
+     * as-is (Req 8.6).
+     *
+     * @param {{error: string, code?: number, reason?: string}} data
+     * @returns {string}
+     */
+    iocLookupErrorMessage: function(data) {
+      switch (data.error) {
+        case 'connection':
+          return 'Could not connect to the management interface.';
+        case 'timeout':
+          return 'The request timed out.';
+        case 'server':
+          return 'The management interface returned an error' + (data.code ? ' (code ' + data.code + ')' : '') + '.';
+        case 'validation':
+          if (data.reason === 'server') return 'Please select a valid target server.';
+          if (data.reason === 'ioc') return 'The indicator is invalid or too long.';
+          return 'The lookup request was rejected as invalid.';
+        default:
+          return 'The lookup failed.';
+      }
     },
 
     exportShowModal: function(format) {

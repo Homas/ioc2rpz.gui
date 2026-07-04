@@ -78,8 +78,10 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
       if (!$v['valid']) { $response='{"status":"failed","reason":"'.addslashes($v['error']).'"}'; break; }
       $tkeys=DB_selectArray($db,"select rowid from tkeys where rowid in (".implode(",",filterIntArr(json_decode($REQUEST['tSrvTKeys']))).")");
       $tkeys_groups=DB_selectArray($db,"select rowid from tkeys_groups where rowid in (".implode(",",getGroupsId(json_decode($REQUEST['tSrvTKeys']))).")");
+      // Validated tSrvTrackDefault (validateServerFields guarantees off/auto/on); absent/empty defaults to 'off'
+      $trackDefault = (isset($REQUEST['tSrvTrackDefault']) && $REQUEST['tSrvTrackDefault'] !== '') ? $REQUEST['tSrvTrackDefault'] : 'off';
       $sql="insert into servers values($USERID,'".DB_escape($db,$REQUEST['tSrvName'])."','".DB_escape($db,$REQUEST['tSrvIP'])."','".DB_escape($db,$REQUEST['tSrvPubIP']).
-      "','".DB_escape($db,$REQUEST['tSrvNS'])."','".DB_escape($db,$REQUEST['tSrvEmail'])."',".DB_escape($db,$REQUEST['tSrvMGMT']).",".DB_boolval($REQUEST['tSrvDisabled']).",".intval($REQUEST['tSrvSType']).",'".DB_escape($db,$REQUEST['tSrvURL'])."',".DB_boolval($REQUEST['tSrvMGMT']).",0,'".DB_escape($db,$REQUEST['tCertFile'])."','".DB_escape($db,$REQUEST['tKeyFile'])."','".DB_escape($db,$REQUEST['tCACertFile'])."','".DB_escape($db,$REQUEST['tCustomConfig'])."')"; #certfile, keyfile, cacertfile, custom_config
+      "','".DB_escape($db,$REQUEST['tSrvNS'])."','".DB_escape($db,$REQUEST['tSrvEmail'])."',".DB_escape($db,$REQUEST['tSrvMGMT']).",".DB_boolval($REQUEST['tSrvDisabled']).",".intval($REQUEST['tSrvSType']).",'".DB_escape($db,$REQUEST['tSrvURL'])."',".DB_boolval($REQUEST['tSrvMGMT']).",0,'".DB_escape($db,$REQUEST['tCertFile'])."','".DB_escape($db,$REQUEST['tKeyFile'])."','".DB_escape($db,$REQUEST['tCACertFile'])."','".DB_escape($db,$REQUEST['tCustomConfig'])."','".DB_escape($db,$trackDefault)."')"; #certfile, keyfile, cacertfile, custom_config, track_default (validated value)
       if (DB_execute($db,$sql)) {
         //safest way to get id?
         $srvid=DB_selectArray($db,"select max(rowid) as rowid from servers where name='".DB_escape($db,$REQUEST['tSrvName'])."'")[0]['rowid'];
@@ -104,6 +106,8 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
       // Validate server fields
       $v = validateServerFields($REQUEST);
       if (!$v['valid']) { $response='{"status":"failed","reason":"'.addslashes($v['error']).'"}'; break; }
+      // Validated tSrvTrackDefault (validateServerFields guarantees off/auto/on); absent/empty defaults to 'off'
+      $trackDefault = (isset($REQUEST['tSrvTrackDefault']) && $REQUEST['tSrvTrackDefault'] !== '') ? $REQUEST['tSrvTrackDefault'] : 'off';
       $srvid=intval($REQUEST['tSrvId']);
       $tkeys_new=DB_selectArray($db,"select rowid from tkeys where rowid in (".implode(",",filterIntArr(json_decode($REQUEST['tSrvTKeys']))).")");
       $tkeys_old=DB_selectArray($db,"select rowid,tsig_id from servers_tsig where server_id=$srvid");
@@ -134,7 +138,7 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
         $sql.="insert into mgmt_ips values($srvid,$USERID,'".DB_escape($db,$ip)."');\n";
       };
       $sql.="update servers set name='".DB_escape($db,$REQUEST['tSrvName'])."', ip='".DB_escape($db,$REQUEST['tSrvIP'])."', pub_ip='".DB_escape($db,$REQUEST['tSrvPubIP']).
-      "', ns='".DB_escape($db,$REQUEST['tSrvNS'])."', email='".DB_escape($db,$REQUEST['tSrvEmail'])."', mgmt=".DB_boolval($REQUEST['tSrvMGMT']).", disabled=".DB_boolval($REQUEST['tSrvDisabled'])." ,stype=".intval($REQUEST['tSrvSType']).", URL='".DB_escape($db,$REQUEST['tSrvURL'])."', cfg_updated=".DB_boolval(1).", certfile='".DB_escape($db,$REQUEST['tCertFile'])."', keyfile='".DB_escape($db,$REQUEST['tKeyFile'])."', cacertfile='".DB_escape($db,$REQUEST['tCACertFile'])."', custom_config='".DB_escape($db,$REQUEST['tCustomConfig'])."' where rowid=$srvid";
+      "', ns='".DB_escape($db,$REQUEST['tSrvNS'])."', email='".DB_escape($db,$REQUEST['tSrvEmail'])."', mgmt=".DB_boolval($REQUEST['tSrvMGMT']).", disabled=".DB_boolval($REQUEST['tSrvDisabled'])." ,stype=".intval($REQUEST['tSrvSType']).", URL='".DB_escape($db,$REQUEST['tSrvURL'])."', cfg_updated=".DB_boolval(1).", certfile='".DB_escape($db,$REQUEST['tCertFile'])."', keyfile='".DB_escape($db,$REQUEST['tKeyFile'])."', cacertfile='".DB_escape($db,$REQUEST['tCACertFile'])."', custom_config='".DB_escape($db,$REQUEST['tCustomConfig'])."', track_default='".DB_escape($db,$trackDefault)."' where rowid=$srvid";
 
       if (DB_execute($db,$sql)) $response='{"status":"ok"}'; else $response='{"status":"failed", "reason":"Database operation failed"}';
       break;
@@ -322,6 +326,8 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
       $v = validateRpzFields($REQUEST);
       if (!$v['valid']) { $response='{"status":"failed","reason":"'.addslashes($v['error']).'"}'; break; }
 
+      // Validated tRPZTrackSources (validateRpzFields guarantees Inherit/auto/true/false); absent/empty defaults to 'Inherit'
+      $trackSources = (isset($REQUEST['tRPZTrackSources']) && $REQUEST['tRPZTrackSources'] !== '') ? $REQUEST['tRPZTrackSources'] : 'Inherit';
       $tkeys=DB_selectArray($db,"select rowid from tkeys where rowid in (".implode(",",filterIntArr(json_decode($REQUEST['tRPZTKeys']))).")");
       $tkeys_groups=DB_selectArray($db,"select rowid from tkeys_groups where rowid in (".implode(",",getGroupsId(json_decode($REQUEST['tRPZTKeys']))).")");
       $servers=DB_selectArray($db,"select rowid from servers where rowid in (".implode(",",filterIntArr(json_decode($REQUEST['tRPZSrvs']))).")");
@@ -333,7 +339,7 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
       $sql="insert into rpzs values($USERID,'".DB_escape($db,$REQUEST['tRPZName'])."',".intval($REQUEST['tRPZSOA_Refresh']).",".intval($REQUEST['tRPZSOA_UpdRetry']).",".
             intval($REQUEST['tRPZSOA_Exp']).",".intval($REQUEST['tRPZSOA_NXTTL']).",".DB_boolval($REQUEST['tRPZCache']).",".DB_boolval($REQUEST['tRPZWildcard']).",'".
             DB_escape($db,$action)."','".DB_escape($db,$REQUEST['tRPZIOCType'])."',".intval($REQUEST['tRPZAXFR']).",".intval($REQUEST['tRPZIXFR']).",".
-            DB_boolval($REQUEST['tRPZDisabled']).");";
+            DB_boolval($REQUEST['tRPZDisabled']).",'".DB_escape($db,$trackSources)."');"; #trailing track_sources (validated value)
       if (DB_execute($db,$sql)) {
         //safest way to get id?
         $rpzid=DB_selectArray($db,"select max(rowid) as rowid from rpzs where name='".DB_escape($db,$REQUEST['tRPZName'])."'")[0]['rowid'];
@@ -366,6 +372,8 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
       // Validate RPZ fields
       $v = validateRpzFields($REQUEST);
       if (!$v['valid']) { $response='{"status":"failed","reason":"'.addslashes($v['error']).'"}'; break; }
+      // Validated tRPZTrackSources (validateRpzFields guarantees Inherit/auto/true/false); absent/empty defaults to 'Inherit'
+      $trackSources = (isset($REQUEST['tRPZTrackSources']) && $REQUEST['tRPZTrackSources'] !== '') ? $REQUEST['tRPZTrackSources'] : 'Inherit';
       $rpzid=intval($REQUEST['tRPZId']);
       $tkeys_new=DB_selectArray($db,"select rowid from tkeys where rowid in (".implode(",",filterIntArr(json_decode($REQUEST['tRPZTKeys']))).")");
       $tkeys_old=DB_selectArray($db,"select rowid,tkey_id from rpzs_tkeys where rpz_id=$rpzid");
@@ -412,7 +420,7 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
             intval($REQUEST['tRPZSOA_UpdRetry']).",soa_expiration=".intval($REQUEST['tRPZSOA_Exp']).", soa_nx_ttl=".intval($REQUEST['tRPZSOA_NXTTL']).", cache=".
             DB_boolval($REQUEST['tRPZCache']).", wildcard=".DB_boolval($REQUEST['tRPZWildcard']).","."action='".DB_escape($db,$action)."',ioc_type='".
             DB_escape($db,$REQUEST['tRPZIOCType'])."',axfr_update=".intval($REQUEST['tRPZAXFR']).",ixfr_update=".intval($REQUEST['tRPZIXFR']).",disabled=".
-            DB_boolval($REQUEST['tRPZDisabled'])." where rowid=$rpzid";
+            DB_boolval($REQUEST['tRPZDisabled']).",track_sources='".DB_escape($db,$trackSources)."' where rowid=$rpzid";
 
       if (DB_execute($db,$sql)) $response='{"status":"ok"}'; else $response='{"status":"failed", "reason":"Database operation failed"}';
 
@@ -651,6 +659,67 @@ insert into rpidns(user_id, name, rpidns_uuid, commentary, configuration) values
 			$sql="delete from rpidns where rowid=".intval($REQUEST['id']);
 			if (DB_execute($db,$sql)) $response='[{"status":"success","description":"success"}]'; else $response='[{"status":"error","description":"Error"}]';
 
+      break;
+
+    case "GET ioc_lookup":
+      // Mgmt_Proxy: forward a single-indicator lookup to the selected server's
+      // management REST API. The TSIG key name/secret are used only inside
+      // CURLOPT_USERPWD and are NEVER placed into any response, error, or log.
+
+      // --- Server-side input validation (do NOT contact the mgmt interface on failure) ---
+      $ioc = isset($REQUEST['ioc']) ? $REQUEST['ioc'] : '';
+      if (!validateIocLength($ioc)) {
+        // Empty or over-length indicator (length outside [1,2048]): reject
+        // without contacting the management interface
+        $response='{"status":"failed","error":"validation","reason":"ioc"}';
+        break;
+      }
+      $srvId = (isset($REQUEST['server']) && ctype_digit((string)$REQUEST['server'])) ? intval($REQUEST['server']) : 0;
+      if ($srvId <= 0) {
+        $response='{"status":"failed","error":"validation","reason":"server"}';
+        break;
+      }
+
+      // --- Load the selected server's mgmt address and its management TSIG key (name + secret) ---
+      $srvRow=DB_selectArray($db,"select ip from servers where rowid=$srvId;");
+      if (empty($srvRow) || empty($srvRow[0]['ip'])) {
+        // Unknown server or no management address configured
+        $response='{"status":"failed","error":"validation","reason":"server"}';
+        break;
+      }
+      $mgmtAddr=$srvRow[0]['ip'];
+      $keyRow=DB_selectArray($db,"select tkeys.name as tname, tkeys.tkey as tsecret from servers_tsig left join tkeys on tkeys.rowid=servers_tsig.tsig_id where servers_tsig.server_id=$srvId and tkeys.mgmt=1 limit 1;");
+      if (empty($keyRow) || empty($keyRow[0]['tname'])) {
+        // No management TSIG credentials for this server
+        $response='{"status":"failed","error":"validation","reason":"server"}';
+        break;
+      }
+      $keyName=$keyRow[0]['tname'];
+      $keySecret=$keyRow[0]['tsecret'];
+
+      // --- Issue GET https://<addr>:<port>/api/v1/ioc/<urlencoded ioc>?tkey=<keyname> ---
+      // URL construction and outcome classification live in io2fun.php as pure,
+      // testable helpers (buildIocLookupUrl / classifyIocLookupResult). The TSIG
+      // key name/secret are used only inside CURLOPT_USERPWD; classification is
+      // credential-free by construction.
+      $url=buildIocLookupUrl($mgmtAddr, rest_mgmt_port, $ioc, $keyName);
+      $curl=curl_init($url);
+      curl_setopt($curl, CURLOPT_HTTPGET, true);
+      curl_setopt($curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+      curl_setopt($curl, CURLOPT_USERPWD, $keyName.":".$keySecret);
+      curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, io2mgmt_verifyssl);
+      curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, io2mgmt_verifyssl);
+      curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+      curl_setopt($curl, CURLOPT_TIMEOUT, 30);
+      $res=curl_exec($curl);
+      $errno=curl_errno($curl);
+      $httpcode=intval(curl_getinfo($curl, CURLINFO_HTTP_CODE));
+      curl_close($curl);
+      // Drop credentials from memory as soon as the request is done
+      unset($keyName, $keySecret);
+
+      // --- Classify the outcome (credentials are never included in any branch) ---
+      $response=classifyIocLookupResult($errno, $httpcode, $res);
       break;
 
     default:

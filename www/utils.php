@@ -26,6 +26,10 @@ require 'io2auth.php';
           <p class="card-text">Import ioc2rpz server configuration</p>
           <b-button v-b-tooltip.hover title="Import ioc2rpz configuration" variant="outline-secondary" size="sm" @click.stop="showModalById('mImportConfig')"><i class="fa fa-download"> Import</i></b-button>
       </b-card>
+      <b-card header="IOC lookup" title="IOC lookup">
+          <p class="card-text">Look up an indicator and see the feeds and sources that contain it</p>
+          <b-button v-b-tooltip.hover title="Look up an indicator against a server" variant="outline-secondary" size="sm" @click.stop="iocLookupShowModal()"><i class="fa fa-search"> IOC lookup</i></b-button>
+      </b-card>
       <b-card header="ISC Bind configuration" title="Export ISC Bind">
           <p class="card-text">Export ISC Bind configuration</p>
           <b-button v-b-tooltip.hover title="Export ISC Bind configuration" variant="outline-secondary" size="sm" @click.stop="exportShowModal('bind')"><i class="fa fa-upload"> Export ISC Bind</i></b-button>

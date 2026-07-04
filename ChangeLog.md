@@ -1,4 +1,7 @@
 #ioc2rpz.gui change log
+## 2.1.0.0 2026-07-04
+- Added source attribution management. Feeds now have a per-feed "Track sources" option and there is a server-wide "Source attribution (global default)" control. The optional TrackSources atoms are serialized in the generated configuration, and a new IOC lookup view displays attribution for matched indicators.
+
 ## 2.0.1.0 2026-07-03
 - Fixed backend source/IXFR URL validation that rejected valid sources. The strict http/https-only check introduced in the pre-release now accepts ftp/file/shell source URLs and IXFR meta keywords ([:AXFR:], [:FTimestamp:], [:ToTimestamp:]), matching the frontend.
 - Fixed publish/reconfigure ("publish_upd") failing with an "Undefined array key SrvId" warning. Query-string parameters (e.g. ?SrvId=1) are now merged into the request alongside the JSON body, and the handler rejects requests with a missing SrvId.

@@ -68,7 +68,7 @@ function initSQLiteDB($DBF){
 
   #create servers table, tkeys and mgmt_ips
   //stype 0 - local, 1  - sftp/scp, 2 - AWS S3
-  $sql="create table if not exists servers (user_id integer, name text, ip text, pub_ip text uniq, ns text, email text, mgmt integer, disabled integer, stype integer, URL text, cfg_updated integer, publish_upd integer, certfile text, keyfile text, cacertfile text, custom_config text,  foreign key(user_id) references users(rowid));".
+  $sql="create table if not exists servers (user_id integer, name text, ip text, pub_ip text uniq, ns text, email text, mgmt integer, disabled integer, stype integer, URL text, cfg_updated integer, publish_upd integer, certfile text, keyfile text, cacertfile text, custom_config text, track_default text default 'off', foreign key(user_id) references users(rowid));".
        "create table if not exists servers_tsig (server_id integer, user_id integer, tsig_id integer, foreign key(tsig_id) references tkeys(rowid), foreign key(user_id) references users(rowid), foreign key(server_id) references servers(rowid));\n".
 			 "create table if not exists servers_tsig_groups (server_id integer, user_id integer, tsig_group_id integer, foreign key(tsig_group_id) references tkeys_groups(rowid), foreign key(user_id) references users(rowid), foreign key(server_id) references servers(rowid));\n".
        "create table if not exists mgmt_ips (server_id integer, user_id integer, mgmt_ip text, foreign key(user_id) references users(rowid), foreign key(server_id) references servers(rowid));";
@@ -83,7 +83,7 @@ function initSQLiteDB($DBF){
   $db->exec($sql);
 
   #create rpzs table, servers, whitelists, sources, tkeys, notify
-  $sql="create table if not exists rpzs (user_id integer, name text, soa_refresh integer, soa_update_retry integer, soa_expiration integer, soa_nx_ttl integer, cache integer, wildcard integer, action text, ioc_type text, axfr_update integer, ixfr_update integer, disabled integer, foreign key(user_id) references users(rowid));".
+  $sql="create table if not exists rpzs (user_id integer, name text, soa_refresh integer, soa_update_retry integer, soa_expiration integer, soa_nx_ttl integer, cache integer, wildcard integer, action text, ioc_type text, axfr_update integer, ixfr_update integer, disabled integer, track_sources text default 'Inherit', foreign key(user_id) references users(rowid));".
        "create table if not exists rpzs_servers (rpz_id integer, user_id integer, server_id integer, foreign key(rpz_id) references rpzs(rowid), foreign key(user_id) references users(rowid), foreign key(server_id) references servers(rowid));".
        "create table if not exists rpzs_tkeys (rpz_id integer, user_id integer, tkey_id integer, foreign key(rpz_id) references rpzs(rowid), foreign key(user_id) references users(rowid), foreign key(tkey_id) references tkeys(rowid));".
        "create table if not exists rpzs_tkeys_groups (rpz_id integer, user_id integer, tkey_group_id integer, foreign key(rpz_id) references rpzs(rowid), foreign key(user_id) references users(rowid), foreign key(tkey_group_id) references tkeys_groups(rowid));".
@@ -108,7 +108,7 @@ function initSQLiteDB($DBF){
 
   $gw_ip=exec("ip route | grep default | awk '{print $3}'"); $gw_ip=$gw_ip?$gw_ip:"127.0.0.1";
 
-  $sql='insert into servers values(1,"server_1","'.$gw_ip.'","127.0.0.1","ns1.ioc2rpz.local","support@ioc2rpz.local",1,0,0,"ioc2rpz.conf",1,1,"./cfg/ioc2_server.pem","./cfg/ioc2_server.key","","");'.
+  $sql='insert into servers values(1,"server_1","'.$gw_ip.'","127.0.0.1","ns1.ioc2rpz.local","support@ioc2rpz.local",1,0,0,"ioc2rpz.conf",1,1,"./cfg/ioc2_server.pem","./cfg/ioc2_server.key","","","off");'.
        'insert into servers_tsig values(1,1,1);'.
        'insert into mgmt_ips values(1,1,"127.0.0.1");';
   $localIP = getHostByName(getHostName());
@@ -124,7 +124,7 @@ function initSQLiteDB($DBF){
        'insert into sources values(1,"notracking_domains","https://raw.githubusercontent.com/notracking/hosts-blocklists/master/domains.txt","[:AXFR:]","^address=\/([A-Za-z0-9\._\-]+[A-Za-z])\/0\.0\.0\.0$", NULL, 0, 900, 0, "mixed", 0);';
   $db->exec($sql);
 
-  $sql='insert into rpzs values(1,"notracking.ioc2rpz",86400,3600,2592000,7200,1,1,"nxdomain","mixed",604800,86400,0);'.
+  $sql='insert into rpzs values(1,"notracking.ioc2rpz",86400,3600,2592000,7200,1,1,"nxdomain","mixed",604800,86400,0,"Inherit");'.
        'insert into rpzs_servers values(1,1,1);'.
        'insert into rpzs_whitelists values(1,1,1);'.
        'insert into rpzs_sources values(1,1,1);'.

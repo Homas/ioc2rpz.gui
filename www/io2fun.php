@@ -502,6 +502,25 @@ function validateStringLength($str, $maxLen) {
 }
 
 /**
+ * Validates the length of an IOC lookup indicator against the closed interval
+ * [1, 2048] characters (Req 8.1, 8.7).
+ *
+ * This is the isolated, pure length-validation contract used by the
+ * `GET ioc_lookup` Mgmt_Proxy endpoint: the request may proceed to contact the
+ * management interface if and only if this returns true. An empty (or null)
+ * indicator, or one longer than 2048 characters, is rejected and MUST NOT
+ * result in any management-interface contact.
+ *
+ * @param string $ioc The submitted indicator string
+ * @return bool True iff 1 <= strlen($ioc) <= 2048
+ */
+function validateIocLength($ioc) {
+    if ($ioc === null) return false;
+    $len = strlen((string)$ioc);
+    return $len >= 1 && $len <= 2048;
+}
+
+/**
  * Validates server fields for POST/PUT operations.
  *
  * @param array $data Request data
@@ -547,6 +566,12 @@ function validateServerFields($data) {
     }
     if (!validateStringLength($data['tCustomConfig'] ?? '', MAX_CUSTOM_CONFIG_LENGTH)) {
         return ['valid' => false, 'error' => 'Custom config exceeds maximum length'];
+    }
+    // Validate source attribution default: absent/empty is valid (treated as 'off'),
+    // otherwise must be an exact, case-sensitive member of {off, auto, on}.
+    $trackDefault = $data['tSrvTrackDefault'] ?? '';
+    if ($trackDefault !== '' && !in_array($trackDefault, ['off', 'auto', 'on'], true)) {
+        return ['valid' => false, 'error' => 'Invalid source attribution default: ' . $trackDefault];
     }
     return ['valid' => true, 'error' => null];
 }
@@ -627,6 +652,12 @@ function validateRpzFields($data) {
     if (!empty($data['tRPZIOCType']) && !in_array($data['tRPZIOCType'], $allowedIocTypes)) {
         return ['valid' => false, 'error' => 'Invalid IOC type'];
     }
+    // Validate per-feed source tracking: absent/empty is valid (treated as 'Inherit'),
+    // otherwise must be an exact, case-sensitive member of {Inherit, auto, true, false}.
+    $trackSources = $data['tRPZTrackSources'] ?? '';
+    if ($trackSources !== '' && !in_array($trackSources, ['Inherit', 'auto', 'true', 'false'], true)) {
+        return ['valid' => false, 'error' => 'Invalid track sources value: ' . $trackSources];
+    }
     return ['valid' => true, 'error' => null];
 }
 
@@ -641,6 +672,77 @@ function validateGroupName($name) {
         return ['valid' => false, 'error' => 'Invalid group name'];
     }
     return ['valid' => true, 'error' => null];
+}
+
+/**
+ * Builds the management REST API URL for a single-indicator lookup.
+ *
+ * Produces exactly the shape required by the ioc2rpz management interface
+ * (Req 8.3):
+ *
+ *   https://<addr>:<port>/api/v1/ioc/<url-encoded ioc>?tkey=<url-encoded keyName>
+ *
+ * The indicator and TSIG key name are individually rawurlencode()'d so that any
+ * character in either value is transmitted safely in the path / query string.
+ * The TSIG *secret* is never part of the URL (it travels only in the HTTP basic
+ * auth header) and is therefore not a parameter of this function.
+ *
+ * @param string $addr    Management address (host or IP) of the target server.
+ * @param int|string $port Management REST port (rest_mgmt_port).
+ * @param string $ioc     The indicator being looked up.
+ * @param string $keyName The management TSIG key name (public identifier).
+ * @return string The fully-formed request URL.
+ */
+function buildIocLookupUrl($addr, $port, $ioc, $keyName) {
+    return "https://" . $addr . ":" . $port .
+        "/api/v1/ioc/" . rawurlencode($ioc) .
+        "?tkey=" . rawurlencode($keyName);
+}
+
+/**
+ * Classifies the outcome of a management-interface IOC lookup into the JSON
+ * response returned to the frontend (Req 8.6).
+ *
+ * The classification depends only on the transport error number, the HTTP
+ * status code, and the response body. It intentionally takes NO credential
+ * inputs (TSIG key name/secret), so no classification result can ever leak
+ * them. Error payloads carry only the classification and, at most, an HTTP
+ * status code.
+ *
+ * Classification rules (mirrors the Mgmt_Proxy contract):
+ *   - CURLE_OPERATION_TIMEDOUT                         => {"status":"failed","error":"timeout"}
+ *   - CURLE_COULDNT_CONNECT / CURLE_COULDNT_RESOLVE_HOST
+ *     (and any other non-zero transport error)         => {"status":"failed","error":"connection"}
+ *   - HTTP status >= 400                                => {"status":"failed","error":"server","code":<status>}
+ *   - success but body is not valid JSON                => {"status":"failed","error":"server","code":<status>}
+ *   - success with a JSON body                          => the parsed JSON, re-encoded (pass-through)
+ *
+ * @param int    $errno    curl error number (0 on transport success).
+ * @param int    $httpcode HTTP status code from the response.
+ * @param string $body     Raw response body.
+ * @return string A JSON-encoded response string.
+ */
+function classifyIocLookupResult($errno, $httpcode, $body) {
+    if ($errno === CURLE_OPERATION_TIMEDOUT) {
+        return '{"status":"failed","error":"timeout"}';
+    }
+    if ($errno === CURLE_COULDNT_CONNECT || $errno === CURLE_COULDNT_RESOLVE_HOST) {
+        return '{"status":"failed","error":"connection"}';
+    }
+    if ($errno !== 0) {
+        // Any other transport-level failure is classified as a connection failure.
+        return '{"status":"failed","error":"connection"}';
+    }
+    if ($httpcode >= 400) {
+        return '{"status":"failed","error":"server","code":' . intval($httpcode) . '}';
+    }
+    // Success: pass through the parsed JSON body (list of feed objects).
+    $parsed = json_decode($body, true);
+    if ($parsed === null && trim((string)$body) !== 'null') {
+        // Body was not valid JSON despite a success status.
+        return '{"status":"failed","error":"server","code":' . intval($httpcode) . '}';
+    }
+    return json_encode($parsed);
 }
 
 /**
