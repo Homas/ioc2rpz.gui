@@ -1,4 +1,11 @@
 #ioc2rpz.gui change log
+## 2.1.1.0 2026-07-07
+- Security: the IOC lookup endpoint now scopes the target server and its management TSIG credentials to the authenticated user (user_id). A session can no longer resolve another user's server or use its management key by supplying an arbitrary server rowid.
+- Fixed IOC lookup handling and result rendering (enhanced matched-indicator grouping, empty/not-found handling).
+- Fixed server management IP validation so operator-entered ACL entries are no longer incorrectly rejected.
+- Fixed server configuration file name validation (validated as a file name/location instead of an http/https URL).
+- Fixed feeds not being returned in the IOC lookup response.
+
 ## 2.1.0.0 2026-07-04
 - Added source attribution management. Feeds now have a per-feed "Track sources" option and there is a server-wide "Source attribution (global default)" control. The optional TrackSources atoms are serialized in the generated configuration, and a new IOC lookup view displays attribution for matched indicators.
 

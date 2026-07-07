@@ -681,14 +681,16 @@ insert into rpidns(user_id, name, rpidns_uuid, commentary, configuration) values
       }
 
       // --- Load the selected server's mgmt address and its management TSIG key (name + secret) ---
-      $srvRow=DB_selectArray($db,"select ip from servers where rowid=$srvId;");
+      // Scope by user_id so a session can only look up its own servers and use
+      // its own management credentials (no cross-user access via a guessed rowid).
+      $srvRow=DB_selectArray($db,"select ip from servers where rowid=$srvId and user_id=$USERID;");
       if (empty($srvRow) || empty($srvRow[0]['ip'])) {
-        // Unknown server or no management address configured
+        // Unknown server (or not owned by this user), or no management address configured
         $response='{"status":"failed","error":"validation","reason":"server"}';
         break;
       }
       $mgmtAddr=$srvRow[0]['ip'];
-      $keyRow=DB_selectArray($db,"select tkeys.name as tname, tkeys.tkey as tsecret from servers_tsig left join tkeys on tkeys.rowid=servers_tsig.tsig_id where servers_tsig.server_id=$srvId and tkeys.mgmt=1 limit 1;");
+      $keyRow=DB_selectArray($db,"select tkeys.name as tname, tkeys.tkey as tsecret from servers_tsig left join tkeys on tkeys.rowid=servers_tsig.tsig_id where servers_tsig.server_id=$srvId and servers_tsig.user_id=$USERID and tkeys.mgmt=1 limit 1;");
       if (empty($keyRow) || empty($keyRow[0]['tname'])) {
         // No management TSIG credentials for this server
         $response='{"status":"failed","error":"validation","reason":"server"}';
