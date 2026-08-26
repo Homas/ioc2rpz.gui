@@ -295,6 +295,236 @@ export function countErlTupleFields(body) {
 }
 
 /**
+ * Splits the body of an Erlang tuple into its top-level fields.
+ *
+ * Uses the same scanner rules as countErlTupleFields(): commas nested inside
+ * double-quoted strings, `[...]` lists, or `{...}` tuples do not split a field, so
+ * only the outermost tuple is split. Each returned field is trimmed. An empty or
+ * whitespace-only body yields an empty array, matching countErlTupleFields()
+ * returning 0 for the same input.
+ *
+ * The config reader needs the fields themselves (not just their count) because the
+ * srv and rpz tuples carry optional TRAILING elements - the `TrackSources` atom and
+ * `{rate_limit,[...]}` - which the server accepts in either order. Those cannot be
+ * captured positionally by a regex (a `{rate_limit,...}` tuple contains the very
+ * commas, braces and brackets a positional group has to exclude), so the reader
+ * matches the mandatory fields by shape and then classifies the remaining tokens by
+ * tag.
+ *
+ * @param {string} body - inner content of the tuple (without the wrapping braces)
+ * @returns {string[]} top-level fields, in order, each trimmed
+ */
+export function splitErlTupleFields(body) {
+  if (body == null) return [];
+  body = String(body);
+  if (!/\S/.test(body)) return [];
+  var fields = [], depth = 0, inStr = false, start = 0;
+  for (var i = 0; i < body.length; i++) {
+    var c = body[i];
+    if (c === '"') { inStr = !inStr; }
+    else if (inStr) { continue; }
+    else if (c === '[' || c === '{') { depth++; }
+    else if (c === ']' || c === '}') { if (depth > 0) depth--; }
+    else if (c === ',' && depth === 0) {
+      fields.push(body.slice(start, i).trim());
+      start = i + 1;
+    }
+  }
+  fields.push(body.slice(start).trim());
+  return fields;
+}
+
+/**
+ * Rate limit options the ioc2rpz server accepts, with the level each one is valid at
+ * and its legal range.
+ *
+ * `max_unknown_requests` is server-level only: it limits the aggregate {IP} bucket
+ * (unknown zone, unsupported qtype, wrong class), and a request counted there never
+ * resolved to a zone, so there is no zone config to read it from. The server logs and
+ * ignores it when it appears on an rpz record.
+ *
+ * `window` must be > 0. The maximums may be 0, which means "refuse every request in
+ * that bucket".
+ */
+export const RL_OPTIONS = {
+  window: { min: 1, srv: true, rpz: true },
+  max_requests: { min: 0, srv: true, rpz: true },
+  max_unknown_requests: { min: 0, srv: true, rpz: false }
+};
+
+/**
+ * ioc2rpz compile-time rate limit defaults (include/ioc2rpz.hrl).
+ *
+ * The last step of the resolution chain zone -> server -> built-in default. Shown in
+ * the editors as the inherited value; never written to a configuration file, because
+ * writing it would convert "inherit" into "explicitly set".
+ */
+export const RL_DEFAULTS = {
+  window: 60,                 // ?RATE_LIMIT_WINDOW (60000 ms)
+  max_requests: 6,            // ?MAX_REQUESTS_PER_WINDOW
+  max_unknown_requests: 1     // ?MAX_UNKNOWN_REQUESTS_PER_WINDOW
+};
+
+/**
+ * Parses a `{rate_limit,[{opt,N},...]}` tuple into an options object.
+ *
+ * Every option is independently optional, and an empty option list is accepted as
+ * "nothing set". Returns an error instead of a partial result when the element is
+ * malformed, names an unknown option, repeats an option, uses a non-integer value,
+ * places a server-only option on an rpz record, or carries an out-of-range value -
+ * because the server would log and ignore such a value and silently fall back to the
+ * next level, making a GUI-side round-trip lossy and the setting a no-op.
+ *
+ * @param {string} token - a single top-level tuple field, e.g. `{rate_limit,[{window,60}]}`
+ * @param {string} level - 'srv' or 'rpz', selecting which options are permitted
+ * @returns {{ok: true, opts: Object}|{ok: false, error: string}}
+ */
+export function parseErlRateLimit(token, level) {
+  var m = String(token == null ? '' : token).match(/^\{\s*rate_limit\s*,\s*\[([\s\S]*)\]\s*\}$/);
+  if (!m) {
+    return { ok: false, error: 'malformed rate_limit element "' + token + '"' };
+  }
+  var opts = {};
+  var items = splitErlTupleFields(m[1]);
+  for (var i = 0; i < items.length; i++) {
+    var im = items[i].match(/^\{\s*([a-z_]+)\s*,\s*(-?[0-9]+)\s*\}$/);
+    if (!im) {
+      return { ok: false, error: 'malformed rate_limit option "' + items[i] + '"' };
+    }
+    var name = im[1], value = parseInt(im[2], 10);
+    var spec = RL_OPTIONS[name];
+    if (!spec) {
+      return { ok: false, error: 'unknown rate_limit option "' + name + '"' };
+    }
+    if (!spec[level]) {
+      return { ok: false, error: 'rate_limit option "' + name + '" is not supported at the ' + level + ' level' };
+    }
+    if (Object.prototype.hasOwnProperty.call(opts, name)) {
+      return { ok: false, error: 'duplicate rate_limit option "' + name + '"' };
+    }
+    if (value < spec.min) {
+      return {
+        ok: false,
+        error: 'rate_limit option "' + name + '" value ' + value + ' is below the minimum of ' + spec.min
+      };
+    }
+    opts[name] = value;
+  }
+  return { ok: true, opts: opts };
+}
+
+/**
+ * Classifies the optional trailing elements of a srv or rpz tuple.
+ *
+ * The server parses these by tag rather than by position, so `{rate_limit,...}` and
+ * the `TrackSources` atom may appear in either order, or either one alone, or neither.
+ * A token starting with `{rate_limit` is the rate limit element; anything else is
+ * taken to be the TrackSources atom and validated against the level's vocabulary.
+ *
+ * @param {string[]} tokens - the trailing top-level fields, after the mandatory ones
+ * @param {string} level - 'srv' or 'rpz'
+ * @returns {{ok: true, track: string|null, rateLimit: Object|null}|{ok: false, error: string}}
+ */
+export function classifyErlTrailingElements(tokens, level) {
+  var validTrack = level === 'srv' ? ['off', 'auto', 'on'] : ['auto', 'true', 'false'];
+  var trackLabel = level === 'srv' ? 'source attribution default' : 'track sources value';
+  var track = null, rateLimit = null;
+  for (var i = 0; i < tokens.length; i++) {
+    var t = tokens[i];
+    if (/^\{\s*rate_limit\b/.test(t)) {
+      if (rateLimit !== null) {
+        return { ok: false, error: 'duplicate rate_limit element' };
+      }
+      var parsed = parseErlRateLimit(t, level);
+      if (!parsed.ok) return { ok: false, error: parsed.error };
+      rateLimit = parsed.opts;
+    } else {
+      if (track !== null) {
+        return { ok: false, error: 'duplicate ' + trackLabel + ' "' + t + '"' };
+      }
+      if (!validTrack.includes(t)) {
+        return { ok: false, error: 'Invalid ' + trackLabel + ' "' + t + '"' };
+      }
+      track = t;
+    }
+  }
+  return { ok: true, track: track, rateLimit: rateLimit };
+}
+
+/**
+ * Resolves one rate limit option through the chain zone -> server -> built-in default.
+ *
+ * Each option resolves independently, so a feed may set `max_requests` alone and
+ * still inherit `window` from the server. An absent value at a level means "inherit"
+ * and never masks the level below it.
+ *
+ * @param {*} zoneValue - the feed's value ('' / null / undefined means inherit)
+ * @param {*} srvValue - the server's value ('' / null / undefined means inherit)
+ * @param {string} option - one of the RL_OPTIONS keys
+ * @returns {{value: number, from: string}} resolved value and its origin
+ *          ('zone', 'server', or 'default')
+ */
+export function resolveRateLimit(zoneValue, srvValue, option) {
+  var spec = RL_OPTIONS[option] || { min: 0 };
+  var levels = [['zone', zoneValue], ['server', srvValue]];
+  for (var i = 0; i < levels.length; i++) {
+    var from = levels[i][0], raw = levels[i][1];
+    if (raw === null || raw === undefined || raw === '') continue;
+    if (typeof raw === 'string' && !/^\s*-?[0-9]+\s*$/.test(raw)) continue;
+    var n = typeof raw === 'number' ? raw : parseInt(raw, 10);
+    if (!Number.isInteger(n) || n < spec.min) continue;
+    return { value: n, from: from };
+  }
+  return { value: RL_DEFAULTS[option], from: 'default' };
+}
+
+/**
+ * Renders a resolved rate limit as the inherited-state hint shown next to an empty
+ * input, naming both the value and where it came from so the operator can tell an
+ * inherited server setting from the ioc2rpz built-in default.
+ *
+ * Mirrors the existing `Inherited: {{ effectiveTracking }}` indicator, adding the
+ * origin because the rate limits resolve through one more level than attribution.
+ *
+ * @param {{value: number, from: string}} resolved - output of resolveRateLimit()
+ * @returns {string} e.g. `"Inherited: 60 (server)"`
+ */
+/**
+ * Binds a stored rate limit column to its form input value.
+ *
+ * NULL / undefined / '' all mean "inherit" and bind to the empty string. Everything
+ * else binds to its string form - notably 0, which is a legitimate stored value
+ * meaning "refuse every request in that bucket" and must NOT collapse to empty (a
+ * `|| ''` fallback would silently turn an explicit 0 into inherit).
+ *
+ * @param {*} value Stored column value
+ * @returns {string} the input value ('' means inherit)
+ */
+export function rlToInput(value) {
+  if (value === null || value === undefined || value === '') return '';
+  return String(value);
+}
+
+/**
+ * Renders a resolved rate limit as the inherited-state hint shown next to an empty
+ * input, naming both the value and where it came from so the operator can tell an
+ * inherited server setting from the ioc2rpz built-in default.
+ *
+ * Mirrors the existing `Inherited: {{ effectiveTracking }}` indicator, adding the
+ * origin because the rate limits resolve through one more level than attribution.
+ *
+ * @param {{value: number, from: string}} resolved - output of resolveRateLimit()
+ * @returns {string} e.g. `"Inherited: 60 (server)"`
+ */
+export function rateLimitHint(resolved) {
+  if (!resolved) return '';
+  var origin = resolved.from === 'server' ? 'server'
+    : resolved.from === 'zone' ? 'this feed'
+    : 'built-in default';
+  return 'Inherited: ' + resolved.value + ' (' + origin + ')';
+}
+
+/**
  * Builds a stable, testable view model for a feed object's `sources` field.
  *
  * This is a *total* function: it never throws for any input shape and always
@@ -368,63 +598,106 @@ export async function ImportIOC2RPZ(vm, txt) {
       skippedIncludes.push(m[1]);
       continue;
     }
-    if (m = l.match(/^{srv,{"([^"]+)","([^"]+)",\[([^\]]*)\],\[([^\]]*)\](?:,([^,}\]]+))?}}\.(\t* *| *\t*%.*)$/)) {
-      // Optional 5th atom (Global_Track_Default). Absent => off; a value outside
-      // {off, auto, on} is a parse error and suppresses the server record.
-      var srvTrack = 'off';
-      if (m[5] !== undefined) {
-        if (['off', 'auto', 'on'].includes(m[5])) {
-          srvTrack = m[5];
-        } else {
-          parseErrors.push('Invalid source attribution default "' + m[5] + '" in srv tuple: ' + l);
+    if (/^{srv,{/.test(l)) {
+      // The srv tuple has 4 mandatory fields followed by up to 2 optional TRAILING
+      // elements: the TrackSources atom and {rate_limit,[...]}. The server parses
+      // those by tag, not by position, so they may appear in either order or alone.
+      // A positional regex group cannot capture {rate_limit,...} (it contains the
+      // commas, braces and brackets such a group has to exclude), so the mandatory
+      // fields are matched by shape and the rest is tokenized and classified by tag.
+      var srvLine = l.match(/^{srv,{([\s\S]*)}}\.(\t* *| *\t*%.*)$/);
+      var srvFields = srvLine ? splitErlTupleFields(srvLine[1]) : [];
+      // Mandatory field shapes, kept identical to the previous positional regex so a
+      // tuple that used to be rejected (e.g. one carrying a nested {groups,[...]}) is
+      // still rejected rather than silently changing meaning.
+      var srvShapeOk = srvFields.length >= 4 && srvFields.length <= 6 &&
+        /^"[^"]+"$/.test(srvFields[0]) && /^"[^"]+"$/.test(srvFields[1]) &&
+        /^\[[^\]]*\]$/.test(srvFields[2]) && /^\[[^\]]*\]$/.test(srvFields[3]);
+      if (!srvShapeOk) {
+        var srvBody = l.match(/^{srv,{([\s\S]*)}}\./);
+        var srvFieldCount = srvBody ? countErlTupleFields(srvBody[1]) : 0;
+        parseErrors.push('Invalid srv tuple: expected 4 to 6 fields, found ' + srvFieldCount + ': ' + l);
+        srvSuppressed = true;
+      } else {
+        var srvTail = classifyErlTrailingElements(srvFields.slice(4), 'srv');
+        if (!srvTail.ok) {
+          parseErrors.push(srvTail.error + ' in srv tuple: ' + l);
           srvSuppressed = true;
-        }
-      }
-      if (!srvSuppressed) {
-        Srv['ns'] = m[1]; Srv['email'] = m[2]; Srv['tkeys'] = [];
-        m[3].split(/,|\s|"/g).filter(String).forEach(function(el) { Srv['tkeys'].push(el); });
-        Srv['mgmt'] = m[4].replace(/"/g, '');
-        Srv['track_default'] = srvTrack;
-      }
-    } else if (/^{srv,{/.test(l)) {
-      // Looks like a srv tuple but matched neither the 4- nor 5-field arity.
-      var srvBody = l.match(/^{srv,{(.*)}}\./);
-      var srvFieldCount = srvBody ? countErlTupleFields(srvBody[1]) : 0;
-      parseErrors.push('Invalid srv tuple: expected 4 or 5 fields, found ' + srvFieldCount + ': ' + l);
-      srvSuppressed = true;
-    }
-    if (m = l.match(/^{rpz,{"([^"]+)",([0-9]+),([0-9]+),([0-9]+),([0-9]+),"([^"]+)","([^"]+)","?([^"]+|\[[^\]]*\])"?,\[([^\]]*)\],"([^"]+)",([0-9]+),([0-9]+),\[([^\]]*)\],\[([^\]]*)\],\[([^\]]*)\](?:,([^,}\]]+))?}}\.(\t* *| *\t*%.*)$/)) {
-      // Optional 16th atom (Feed_Track_Setting) appended after the Whitelist element.
-      // Absent => Inherit; a value outside {auto, true, false} is a parse error and
-      // suppresses the feed record.
-      var rpzTrack = 'Inherit';
-      if (m[16] !== undefined) {
-        if (['auto', 'true', 'false'].includes(m[16])) {
-          rpzTrack = m[16];
         } else {
-          parseErrors.push('Invalid track sources value "' + m[16] + '" in rpz tuple: ' + l);
-          continue;
+          Srv['ns'] = srvFields[0].slice(1, -1);
+          Srv['email'] = srvFields[1].slice(1, -1);
+          Srv['tkeys'] = [];
+          srvFields[2].slice(1, -1).split(/,|\s|"/g).filter(String).forEach(function(el) { Srv['tkeys'].push(el); });
+          Srv['mgmt'] = srvFields[3].slice(1, -1).replace(/"/g, '');
+          // Absent TrackSources => off; absent rate_limit options => inherit, which is
+          // represented as '' (never a number) so it stays distinct from an explicit value.
+          Srv['track_default'] = srvTail.track === null ? 'off' : srvTail.track;
+          var srvRL = srvTail.rateLimit || {};
+          Srv['rl_window'] = srvRL.window === undefined ? '' : String(srvRL.window);
+          Srv['rl_max_requests'] = srvRL.max_requests === undefined ? '' : String(srvRL.max_requests);
+          Srv['rl_max_unknown_requests'] = srvRL.max_unknown_requests === undefined ? '' : String(srvRL.max_unknown_requests);
         }
       }
-      Rpz[m[1]] = [];
-      Rpz[m[1]]['tkeys'] = [];
-      if (m[9]) m[9].split(/,|\s|"/g).filter(String).forEach(function(el) { Rpz[m[1]]['tkeys'].push(el); });
-      Rpz[m[1]]['sources'] = [];
-      m[13].split(/,|\s|"/g).filter(String).forEach(function(el) { Rpz[m[1]]['sources'].push(el); });
-      Rpz[m[1]]['notify'] = m[14].replace(/"/g, '');
-      Rpz[m[1]]['whitelists'] = [];
-      if (m[15]) m[15].split(/,|\s|"/g).filter(String).forEach(function(el) { Rpz[m[1]]['whitelists'].push(el); });
-      Rpz[m[1]]['name'] = m[1]; Rpz[m[1]]['soa_refresh'] = m[2]; Rpz[m[1]]['soa_update'] = m[3];
-      Rpz[m[1]]['soa_exp'] = m[4]; Rpz[m[1]]['soa_nxttl'] = m[5];
-      Rpz[m[1]]['cache'] = m[6] == "true" ? 1 : 0; Rpz[m[1]]['wildcards'] = m[7] == "true" ? 1 : 0;
-      Rpz[m[1]]['action'] = m[8]; Rpz[m[1]]['ioc_type'] = m[10];
-      Rpz[m[1]]['AXFR_time'] = m[11]; Rpz[m[1]]['IXFR_time'] = m[12];
-      Rpz[m[1]]['track_sources'] = rpzTrack;
-    } else if (/^{rpz,{/.test(l)) {
-      // Looks like an rpz tuple but matched neither the 15- nor 16-field arity.
-      var rpzBody = l.match(/^{rpz,{(.*)}}\./);
-      var rpzFieldCount = rpzBody ? countErlTupleFields(rpzBody[1]) : 0;
-      parseErrors.push('Invalid rpz tuple: expected 15 or 16 fields, found ' + rpzFieldCount + ': ' + l);
+    }
+    if (/^{rpz,{/.test(l)) {
+      // 15 mandatory fields followed by up to 2 optional TRAILING elements (the
+      // TrackSources atom and {rate_limit,[...]}), in either order or either alone.
+      // Same reason as the srv tuple above: the tail is tokenized and classified by
+      // tag instead of being captured positionally.
+      var rpzLine = l.match(/^{rpz,{([\s\S]*)}}\.(\t* *| *\t*%.*)$/);
+      var rpzFields = rpzLine ? splitErlTupleFields(rpzLine[1]) : [];
+      // Mandatory field shapes, preserving exactly what the previous positional regex
+      // accepted: quoted name, 4 integers, quoted cache/wildcard, quoted-or-list
+      // action, bracket lists, quoted ioc_type, 2 integers, 3 bracket lists.
+      var RPZ_SHAPES = [
+        /^"[^"]+"$/, /^[0-9]+$/, /^[0-9]+$/, /^[0-9]+$/, /^[0-9]+$/,
+        /^"[^"]+"$/, /^"[^"]+"$/, /^(?:"[^"]+"|[^"]+|\[[^\]]*\])$/, /^\[[^\]]*\]$/,
+        /^"[^"]+"$/, /^[0-9]+$/, /^[0-9]+$/, /^\[[^\]]*\]$/, /^\[[^\]]*\]$/, /^\[[^\]]*\]$/
+      ];
+      var rpzShapeOk = rpzFields.length >= 15 && rpzFields.length <= 17;
+      if (rpzShapeOk) {
+        for (var rsi = 0; rsi < RPZ_SHAPES.length; rsi++) {
+          if (!RPZ_SHAPES[rsi].test(rpzFields[rsi])) { rpzShapeOk = false; break; }
+        }
+      }
+      if (!rpzShapeOk) {
+        var rpzBody = l.match(/^{rpz,{([\s\S]*)}}\./);
+        var rpzFieldCount = rpzBody ? countErlTupleFields(rpzBody[1]) : 0;
+        parseErrors.push('Invalid rpz tuple: expected 15 to 17 fields, found ' + rpzFieldCount + ': ' + l);
+      } else {
+        var rpzTail = classifyErlTrailingElements(rpzFields.slice(15), 'rpz');
+        if (!rpzTail.ok) {
+          parseErrors.push(rpzTail.error + ' in rpz tuple: ' + l);
+        } else {
+          // Strip the wrapping quotes/brackets exactly as the positional capture groups did.
+          var unq = function(s) { return /^"[\s\S]*"$/.test(s) ? s.slice(1, -1) : s; };
+          var inner = function(s) { return s.slice(1, -1); };
+          // The server canonicalises zone names to lower case (RFC 4343), so normalize
+          // on import too: a mixed-case name in a hand-written config would otherwise
+          // import as a zone the server then renames behind the GUI's back.
+          var rName = inner(rpzFields[0]).toLowerCase();
+          var rpzRL = rpzTail.rateLimit || {};
+          Rpz[rName] = [];
+          Rpz[rName]['tkeys'] = [];
+          if (inner(rpzFields[8])) inner(rpzFields[8]).split(/,|\s|"/g).filter(String).forEach(function(el) { Rpz[rName]['tkeys'].push(el); });
+          Rpz[rName]['sources'] = [];
+          inner(rpzFields[12]).split(/,|\s|"/g).filter(String).forEach(function(el) { Rpz[rName]['sources'].push(el); });
+          Rpz[rName]['notify'] = inner(rpzFields[13]).replace(/"/g, '');
+          Rpz[rName]['whitelists'] = [];
+          if (inner(rpzFields[14])) inner(rpzFields[14]).split(/,|\s|"/g).filter(String).forEach(function(el) { Rpz[rName]['whitelists'].push(el); });
+          Rpz[rName]['name'] = rName;
+          Rpz[rName]['soa_refresh'] = rpzFields[1]; Rpz[rName]['soa_update'] = rpzFields[2];
+          Rpz[rName]['soa_exp'] = rpzFields[3]; Rpz[rName]['soa_nxttl'] = rpzFields[4];
+          Rpz[rName]['cache'] = unq(rpzFields[5]) == "true" ? 1 : 0;
+          Rpz[rName]['wildcards'] = unq(rpzFields[6]) == "true" ? 1 : 0;
+          Rpz[rName]['action'] = unq(rpzFields[7]); Rpz[rName]['ioc_type'] = unq(rpzFields[9]);
+          Rpz[rName]['AXFR_time'] = rpzFields[10]; Rpz[rName]['IXFR_time'] = rpzFields[11];
+          Rpz[rName]['track_sources'] = rpzTail.track === null ? 'Inherit' : rpzTail.track;
+          // Absent option => inherit, carried as '' rather than a number.
+          Rpz[rName]['rl_window'] = rpzRL.window === undefined ? '' : String(rpzRL.window);
+          Rpz[rName]['rl_max_requests'] = rpzRL.max_requests === undefined ? '' : String(rpzRL.max_requests);
+        }
+      }
     }
     if (m = l.match(/^{key,{"([^"]+)","([^"]+)","([^"]+)"}}\.(\t* *| *\t*%.*)$/)) {
       if (vm.ftImpAction == 1 || (vm.ftImpAction == 2 && (!TKeysAll[m[1]] || (!TKeysAll[vm.ftImpPrefix + m[1]] && vm.ftImpPrefix))) || (vm.ftImpAction == 0 && (!TKeysAll[vm.ftImpPrefix + m[1]]))) {
@@ -502,6 +775,10 @@ export async function ImportIOC2RPZ(vm, txt) {
     vm.ftSrvNS = Srv['ns']; vm.ftSrvEmail = Srv['email'].replace('.', '@');
     vm.ftSrvMGMTIP = Srv['mgmt'];
     vm.ftSrvTrackDefault = Srv['track_default'] || 'off';
+    // '' means inherit: the option was absent from the imported tuple.
+    vm.ftSrvRLWindow = Srv['rl_window'] || '';
+    vm.ftSrvRLMaxRequests = Srv['rl_max_requests'] || '';
+    vm.ftSrvRLMaxUnknownRequests = Srv['rl_max_unknown_requests'] || '';
     if (Srv['tkeys']) Srv['tkeys'].forEach(function(el) {
       if (TKeys[el] && TKeysAll[TKeys[el]]) vm.ftSrvTKeys.push(TKeysAll[TKeys[el]]);
     });
@@ -537,6 +814,9 @@ export async function ImportIOC2RPZ(vm, txt) {
       vm.ftRPZAXFR = Rpz[RpzName]['AXFR_time'];
       vm.ftRPZIXFR = Rpz[RpzName]['IXFR_time'];
       vm.ftRPZTrackSources = Rpz[RpzName]['track_sources'] || 'Inherit';
+      // '' means inherit: the option was absent from the imported tuple.
+      vm.ftRPZRLWindow = Rpz[RpzName]['rl_window'] || '';
+      vm.ftRPZRLMaxRequests = Rpz[RpzName]['rl_max_requests'] || '';
       vm.ftRPZTKeys = [];
       if (Rpz[RpzName]['tkeys']) Rpz[RpzName]['tkeys'].forEach(function(el) {
         if (TKeys[el] && TKeysAll[TKeys[el]]) vm.ftRPZTKeys.push(TKeysAll[TKeys[el]]);
@@ -702,6 +982,9 @@ export const appConfig = {
     ftSrvMGMT: 0, ftSrvMGMTIP: '', ftSrvTKeys: [], ftSrvTKeysAll: [], ftSrvDisabled: 0,
     ftSrvSType: 0, ftSrvURL: "", ftCertFile: "", ftKeyFile: "", ftCACertFile: "", ftCustomConfig: "",
     ftSrvTrackDefault: 'off',
+    // Server-level DNS rate limits. '' means inherit the ioc2rpz built-in default;
+    // they are kept as strings so an empty input stays distinguishable from 0.
+    ftSrvRLWindow: '', ftSrvRLMaxRequests: '', ftSrvRLMaxUnknownRequests: '',
     servers_filter: "",
 
     Srv_TrackDefault_Options: [
@@ -719,6 +1002,8 @@ export const appConfig = {
     ftRPZAction: "nxdomain", ftRPZActionCustom: "",
     ftRPZIOCType: "mixed", ftRPZAXFR: '', ftRPZIXFR: '', ftRPZDisabled: 0,
     ftRPZTrackSources: 'Inherit',
+    // Per-feed DNS rate limit overrides. '' means inherit from the server level.
+    ftRPZRLWindow: '', ftRPZRLMaxRequests: '',
 
     RPZ_TrackSources_Options: [
       { value: 'Inherit', text: 'Inherit' },
@@ -900,6 +1185,85 @@ export const appConfig = {
       // Inherit (or unexpected): enabling only when effective tracking is auto or on.
       var eff = this.effectiveTracking;
       return eff === 'auto' || eff === 'on';
+    },
+
+    /**
+     * The selected server's stored rate limits, used as the middle link of the
+     * feed-level resolution chain.
+     *
+     * Taken from the first selected server (ftRPZSrvs[0]) in the loaded server list
+     * (ftRPZSrvsAll), which the rpz_servers endpoint exposes rl_window and
+     * rl_max_requests on. When no server is selected, or the list has not loaded,
+     * every option is treated as absent so resolution falls through to the built-in
+     * defaults.
+     */
+    rpzServerRateLimit: function() {
+      var empty = { window: '', max_requests: '' };
+      if (!Array.isArray(this.ftRPZSrvs) || this.ftRPZSrvs.length === 0) return empty;
+      if (!Array.isArray(this.ftRPZSrvsAll)) return empty;
+      var firstId = this.ftRPZSrvs[0];
+      var srv = this.ftRPZSrvsAll.find(function(el) { return el && el.value == firstId; });
+      if (!srv) return empty;
+      return {
+        window: srv.rl_window === undefined || srv.rl_window === null ? '' : srv.rl_window,
+        max_requests: srv.rl_max_requests === undefined || srv.rl_max_requests === null ? '' : srv.rl_max_requests
+      };
+    },
+
+    /**
+     * Resolves the feed's effective DNS rate limits for display.
+     *
+     * Each option resolves independently through zone -> server -> built-in default,
+     * so a feed may set max_requests alone and still inherit window from the server.
+     * Returns, per option, the resolved value and where it came from, so the editor
+     * can tell the operator whether an empty input is inheriting from the server or
+     * from the ioc2rpz built-in default.
+     */
+    effectiveRPZRateLimit: function() {
+      var srv = this.rpzServerRateLimit;
+      return {
+        window: resolveRateLimit(this.ftRPZRLWindow, srv.window, 'window'),
+        max_requests: resolveRateLimit(this.ftRPZRLMaxRequests, srv.max_requests, 'max_requests')
+      };
+    },
+
+    /** Human-readable origin+value hint for the feed's inherited rate limit window. */
+    effectiveRPZRLWindowHint: function() {
+      return rateLimitHint(this.effectiveRPZRateLimit.window);
+    },
+
+    /** Human-readable origin+value hint for the feed's inherited max_requests. */
+    effectiveRPZRLMaxRequestsHint: function() {
+      return rateLimitHint(this.effectiveRPZRateLimit.max_requests);
+    },
+
+    /**
+     * Resolves the server's effective DNS rate limits for display.
+     *
+     * The server is the second link of the chain, so there is no zone value here: an
+     * empty input inherits the ioc2rpz built-in default directly.
+     */
+    effectiveSrvRateLimit: function() {
+      return {
+        window: resolveRateLimit('', this.ftSrvRLWindow, 'window'),
+        max_requests: resolveRateLimit('', this.ftSrvRLMaxRequests, 'max_requests'),
+        max_unknown_requests: resolveRateLimit('', this.ftSrvRLMaxUnknownRequests, 'max_unknown_requests')
+      };
+    },
+
+    /** Human-readable origin+value hint for the server's rate limit window. */
+    effectiveSrvRLWindowHint: function() {
+      return rateLimitHint(this.effectiveSrvRateLimit.window);
+    },
+
+    /** Human-readable origin+value hint for the server's max_requests. */
+    effectiveSrvRLMaxRequestsHint: function() {
+      return rateLimitHint(this.effectiveSrvRateLimit.max_requests);
+    },
+
+    /** Human-readable origin+value hint for the server's max_unknown_requests. */
+    effectiveSrvRLMaxUnknownRequestsHint: function() {
+      return rateLimitHint(this.effectiveSrvRateLimit.max_unknown_requests);
     }
   },
 
@@ -1219,6 +1583,8 @@ export const appConfig = {
           this.$root.ftCertFile = ""; this.$root.ftKeyFile = "";
           this.$root.ftCACertFile = ""; this.$root.ftCustomConfig = "";
           this.$root.ftSrvDisabled = 0; this.$root.ftSrvTrackDefault = 'off';
+          // '' = inherit the ioc2rpz built-in default
+          this.$root.ftSrvRLWindow = ''; this.$root.ftSrvRLMaxRequests = ''; this.$root.ftSrvRLMaxUnknownRequests = '';
           this.$root.get_lists('tkeys_mgmt', 'ftSrvTKeysAll'); this.$root.editRow = {};
           showModal('mConfEditSrv'); break;
         case "info servers": case "edit servers": case "clone servers":
@@ -1231,6 +1597,10 @@ export const appConfig = {
           this.$root.ftKeyFile = row.item.keyfile; this.$root.ftCACertFile = row.item.cacertfile;
           this.$root.ftCustomConfig = row.item.custom_config; this.$root.ftSrvDisabled = row.item.disabled;
           this.$root.ftSrvTrackDefault = row.item.track_default || 'off';
+          // A NULL/absent stored limit binds to '' (inherit); 0 is a real value and must survive.
+          this.$root.ftSrvRLWindow = rlToInput(row.item.rl_window);
+          this.$root.ftSrvRLMaxRequests = rlToInput(row.item.rl_max_requests);
+          this.$root.ftSrvRLMaxUnknownRequests = rlToInput(row.item.rl_max_unknown_requests);
           var IPs = '';
           row.item.mgmt_ips.forEach(function(el) { IPs += el.mgmt_ip + ' '; });
           this.$root.ftSrvMGMTIP = IPs.trim();
@@ -1270,6 +1640,8 @@ export const appConfig = {
           this.$root.ftRPZAction = "nxdomain"; this.$root.ftRPZActionCustom = "";
           this.$root.ftRPZIOCType = "mixed"; this.$root.ftRPZNotify = "";
           this.$root.ftRPZTrackSources = 'Inherit';
+          // '' = inherit from the server level
+          this.$root.ftRPZRLWindow = ''; this.$root.ftRPZRLMaxRequests = '';
           this.$root.ftRPZDisabled = false; this.$root.editRow = {};
           showModal('mConfEditRPZ'); break;
         case "info rpzs": case "edit rpzs": case "clone rpzs":
@@ -1289,6 +1661,9 @@ export const appConfig = {
           this.$root.ftRPZActionCustom = row.item.actioncustom ? JSON.parse(row.item.actioncustom) : "";
           this.$root.ftRPZIOCType = row.item.ioc_type; 
           this.$root.ftRPZTrackSources = row.item.track_sources || 'Inherit';
+          // A NULL/absent stored limit binds to '' (inherit); 0 is a real value and must survive.
+          this.$root.ftRPZRLWindow = rlToInput(row.item.rl_window);
+          this.$root.ftRPZRLMaxRequests = rlToInput(row.item.rl_max_requests);
           this.$root.ftRPZDisabled = (row.item.disabled == 1);
           let vm = this;
           var RPZNotify = '';
@@ -1347,6 +1722,21 @@ export const appConfig = {
       return (this.$data[vrbl].length >= 3 && /^[a-zA-Z0-9\.\-\_]+$/.test(this.$data[vrbl])) ? true : this.$data[vrbl].length == 0 ? null : false;
     },
 
+    /**
+     * Formatter for zone (feed) names: the same character filtering as formatName,
+     * plus canonicalisation to lower case.
+     *
+     * The ioc2rpz server canonicalises zone names to lower case (RFC 4343), so a
+     * mixed-case name typed here would come back lower-cased from an imported config
+     * and look like a different zone. Normalizing on input keeps the GUI and the server
+     * in agreement.
+     */
+    formatZoneName: function(val, e) {
+      let a = val.replace(/[^a-zA-Z0-9\.\-\_]/g, "").toLowerCase();
+      if (e) e.currentTarget.value = a;
+      return a;
+    },
+
     formatName: function(val, e) {
       let a = val.replace(/[^a-zA-Z0-9\.\-\_]/g, "");
       if (e) e.currentTarget.value = a;
@@ -1361,6 +1751,31 @@ export const appConfig = {
       let a = val.replace(/[^A-Za-z0-9/=\+\/]/g, "");
       if (e) e.currentTarget.value = a;
       return a;
+    },
+
+    /**
+     * Validates an optional DNS rate limit input.
+     *
+     * Empty means inherit, so it yields null (no validation state shown), matching
+     * validateInt()'s treatment of an empty field. A value that is present must be a
+     * non-negative integer at or above `min`: `min` is 1 for `window` (a zero-length
+     * window is meaningless) and 0 for the maximums, where 0 legitimately means
+     * "refuse every request in that bucket".
+     *
+     * Validating here matters because the server only logs and ignores an invalid
+     * value and then falls back to the next level, so a bad value would silently do
+     * nothing rather than fail loudly.
+     *
+     * @param {string} vrbl Name of the reactive field holding the input
+     * @param {number} min Smallest accepted value
+     * @returns {boolean|null} true valid, false invalid, null empty (inherit)
+     */
+    validateRateLimit: function(vrbl, min) {
+      var v = this.$data[vrbl];
+      if (v === null || v === undefined || String(v).length === 0) return null;
+      v = String(v);
+      if (!/^[0-9]+$/.test(v)) return false;
+      return parseInt(v, 10) >= min;
     },
 
     validateInt: function(vrbl) {
@@ -1564,10 +1979,10 @@ export const appConfig = {
     },
 
     tblMgmtSrvRecord: function(ev, table) {
-      if (this.validateName('ftSrvName') && (this.validateIP('ftSrvPubIP') || this.validateIP('ftSrvPubIP') == null) && (this.validateIP('ftSrvIP') || this.validateIP('ftSrvIP') == null) && this.validateHostname('ftSrvNS') && this.validateEmail('ftSrvEmail') && (this.validateIPList('ftSrvMGMTIP') || this.validateIP('ftSrvMGMTIP') == null)) {
+      if (this.validateName('ftSrvName') && (this.validateIP('ftSrvPubIP') || this.validateIP('ftSrvPubIP') == null) && (this.validateIP('ftSrvIP') || this.validateIP('ftSrvIP') == null) && this.validateHostname('ftSrvNS') && this.validateEmail('ftSrvEmail') && (this.validateIPList('ftSrvMGMTIP') || this.validateIP('ftSrvMGMTIP') == null) && this.validateRateLimit('ftSrvRLWindow', 1) !== false && this.validateRateLimit('ftSrvRLMaxRequests', 0) !== false && this.validateRateLimit('ftSrvRLMaxUnknownRequests', 0) !== false) {
         var obj = this;
-        if (this.ftSrvName != this.editRow.name || this.ftSrvIP != this.editRow.ip || this.ftSrvPubIP != this.editRow.pub_ip || this.ftSrvNS != this.editRow.ns || this.ftSrvEmail != this.editRow.email || this.ftSrvMGMT != this.editRow.mgmt || this.ftSrvSType != this.editRow.stype || this.ftSrvURL != this.editRow.URL || this.ftSrvMGMTIP != this.editRow.mgmt_ips_str || this.ftSrvTKeys != this.editRow.tkeys_arr || this.ftCertFile != this.editRow.certfile || this.ftKeyFile != this.editRow.keyfile || this.ftCACertFile != this.editRow.cacertfile || this.ftCustomConfig != this.editRow.custom_config || this.ftSrvTrackDefault != (this.editRow.track_default || 'off')) toggleUpdates(0, this, true);
-        let data = { tSrvId: this.ftSrvId, tSrvName: this.ftSrvName, tSrvIP: this.ftSrvIP, tSrvPubIP: this.ftSrvPubIP, tSrvNS: this.ftSrvNS, tSrvEmail: this.ftSrvEmail, tSrvMGMT: this.ftSrvMGMT, tSrvMGMTIP: JSON.stringify(this.ftSrvMGMTIP.split(/,|\s/g).filter(String)), tSrvTKeys: JSON.stringify(this.ftSrvTKeys), tSrvDisabled: this.ftSrvDisabled, tSrvSType: this.ftSrvSType, tSrvURL: this.ftSrvURL, tCertFile: this.ftCertFile, tKeyFile: this.ftKeyFile, tCACertFile: this.ftCACertFile, tCustomConfig: this.ftCustomConfig, tSrvTrackDefault: this.ftSrvTrackDefault };
+        if (this.ftSrvName != this.editRow.name || this.ftSrvIP != this.editRow.ip || this.ftSrvPubIP != this.editRow.pub_ip || this.ftSrvNS != this.editRow.ns || this.ftSrvEmail != this.editRow.email || this.ftSrvMGMT != this.editRow.mgmt || this.ftSrvSType != this.editRow.stype || this.ftSrvURL != this.editRow.URL || this.ftSrvMGMTIP != this.editRow.mgmt_ips_str || this.ftSrvTKeys != this.editRow.tkeys_arr || this.ftCertFile != this.editRow.certfile || this.ftKeyFile != this.editRow.keyfile || this.ftCACertFile != this.editRow.cacertfile || this.ftCustomConfig != this.editRow.custom_config || this.ftSrvTrackDefault != (this.editRow.track_default || 'off') || this.ftSrvRLWindow != rlToInput(this.editRow.rl_window) || this.ftSrvRLMaxRequests != rlToInput(this.editRow.rl_max_requests) || this.ftSrvRLMaxUnknownRequests != rlToInput(this.editRow.rl_max_unknown_requests)) toggleUpdates(0, this, true);
+        let data = { tSrvId: this.ftSrvId, tSrvName: this.ftSrvName, tSrvIP: this.ftSrvIP, tSrvPubIP: this.ftSrvPubIP, tSrvNS: this.ftSrvNS, tSrvEmail: this.ftSrvEmail, tSrvMGMT: this.ftSrvMGMT, tSrvMGMTIP: JSON.stringify(this.ftSrvMGMTIP.split(/,|\s/g).filter(String)), tSrvTKeys: JSON.stringify(this.ftSrvTKeys), tSrvDisabled: this.ftSrvDisabled, tSrvSType: this.ftSrvSType, tSrvURL: this.ftSrvURL, tCertFile: this.ftCertFile, tKeyFile: this.ftKeyFile, tCACertFile: this.ftCACertFile, tCustomConfig: this.ftCustomConfig, tSrvTrackDefault: this.ftSrvTrackDefault, tSrvRLWindow: this.ftSrvRLWindow, tSrvRLMaxRequests: this.ftSrvRLMaxRequests, tSrvRLMaxUnknownRequests: this.ftSrvRLMaxUnknownRequests };
         if (this.ftSrvId == -1) {
           axios.post('/io2data.php/' + table, data).then((data) => { if (/DOCTYPE html/.test(data.data)) { window.location.reload(true); } else obj.mgmtTableOk(data, obj, table); }).catch(function(error) { obj.mgmtTableError(error, obj, table); });
         } else {
@@ -1588,10 +2003,10 @@ export const appConfig = {
     },
 
     tblMgmtRPZRecord: function(ev, table) {
-      if (this.validateHostnameNum('ftRPZName') && (this.validateIPList('ftRPZNotify') || this.validateIPList('ftRPZNotify') == null) && ((this.validateCustomAction(this.ftRPZActionCustom) && this.ftRPZAction === 'local') || this.ftRPZAction != 'local') && this.validateInt('ftRPZSOA_Refresh') && this.validateInt('ftRPZSOA_UpdRetry') && this.validateInt('ftRPZSOA_Exp') && this.validateInt('ftRPZSOA_NXTTL') && this.validateInt('ftRPZAXFR') && this.validateInt('ftRPZIXFR')) {
+      if (this.validateHostnameNum('ftRPZName') && (this.validateIPList('ftRPZNotify') || this.validateIPList('ftRPZNotify') == null) && ((this.validateCustomAction(this.ftRPZActionCustom) && this.ftRPZAction === 'local') || this.ftRPZAction != 'local') && this.validateInt('ftRPZSOA_Refresh') && this.validateInt('ftRPZSOA_UpdRetry') && this.validateInt('ftRPZSOA_Exp') && this.validateInt('ftRPZSOA_NXTTL') && this.validateInt('ftRPZAXFR') && this.validateInt('ftRPZIXFR') && this.validateRateLimit('ftRPZRLWindow', 1) !== false && this.validateRateLimit('ftRPZRLMaxRequests', 0) !== false) {
         var obj = this;
-        if (this.ftRPZName != this.editRow.name || this.ftRPZSOA_Refresh != this.editRow.soa_refresh || this.ftRPZSOA_UpdRetry != this.editRow.soa_update_retry || this.ftRPZSOA_Exp != this.editRow.soa_expiration || this.ftRPZSOA_NXTTL != this.editRow.soa_nx_ttl || this.ftRPZAXFR != this.editRow.axfr_update || this.ftRPZIXFR != this.editRow.ixfr_update || this.ftRPZCache != this.editRow.cache || this.ftRPZWildcard != this.editRow.wildcard || this.ftRPZAction != this.editRow.action || this.ftRPZIOCType != this.editRow.ioc_type || this.editRow.notify_str != this.ftRPZNotify || this.editRow.servers_arr != this.ftRPZSrvs || this.editRow.tkeys_arr != this.ftRPZTKeys || this.editRow.sources_arr != this.ftRPZSrc || this.editRow.whitelists_arr != this.ftRPZWL || this.ftRPZActionCustom != this.editRow.actioncustom || this.ftRPZDisabled != this.editRow.disabled || this.ftRPZTrackSources != (this.editRow.track_sources || 'Inherit')) toggleUpdates(0, this, true);
-        let data = { tRPZId: this.ftRPZId, tRPZName: this.ftRPZName, tRPZSOA_Refresh: this.ftRPZSOA_Refresh, tRPZSOA_UpdRetry: this.ftRPZSOA_UpdRetry, tRPZSOA_Exp: this.ftRPZSOA_Exp, tRPZSOA_NXTTL: this.ftRPZSOA_NXTTL, tRPZCache: this.ftRPZCache, tRPZWildcard: this.ftRPZWildcard, tRPZNotify: JSON.stringify(this.ftRPZNotify.split(/,|\s/g).filter(String)), tRPZSrvs: JSON.stringify(this.ftRPZSrvs), tRPZIOCType: this.ftRPZIOCType, tRPZAXFR: this.ftRPZAXFR, tRPZIXFR: this.ftRPZIXFR, tRPZDisabled: this.ftRPZDisabled, tRPZTKeys: JSON.stringify(this.ftRPZTKeys), tRPZWL: JSON.stringify(this.ftRPZWL), tRPZSrc: JSON.stringify(this.ftRPZSrc), tRPZAction: this.ftRPZAction, tRPZActionCustom: JSON.stringify(this.ftRPZActionCustom), tRPZTrackSources: this.ftRPZTrackSources };
+        if (this.ftRPZName != this.editRow.name || this.ftRPZSOA_Refresh != this.editRow.soa_refresh || this.ftRPZSOA_UpdRetry != this.editRow.soa_update_retry || this.ftRPZSOA_Exp != this.editRow.soa_expiration || this.ftRPZSOA_NXTTL != this.editRow.soa_nx_ttl || this.ftRPZAXFR != this.editRow.axfr_update || this.ftRPZIXFR != this.editRow.ixfr_update || this.ftRPZCache != this.editRow.cache || this.ftRPZWildcard != this.editRow.wildcard || this.ftRPZAction != this.editRow.action || this.ftRPZIOCType != this.editRow.ioc_type || this.editRow.notify_str != this.ftRPZNotify || this.editRow.servers_arr != this.ftRPZSrvs || this.editRow.tkeys_arr != this.ftRPZTKeys || this.editRow.sources_arr != this.ftRPZSrc || this.editRow.whitelists_arr != this.ftRPZWL || this.ftRPZActionCustom != this.editRow.actioncustom || this.ftRPZDisabled != this.editRow.disabled || this.ftRPZTrackSources != (this.editRow.track_sources || 'Inherit') || this.ftRPZRLWindow != rlToInput(this.editRow.rl_window) || this.ftRPZRLMaxRequests != rlToInput(this.editRow.rl_max_requests)) toggleUpdates(0, this, true);
+        let data = { tRPZId: this.ftRPZId, tRPZName: this.ftRPZName, tRPZSOA_Refresh: this.ftRPZSOA_Refresh, tRPZSOA_UpdRetry: this.ftRPZSOA_UpdRetry, tRPZSOA_Exp: this.ftRPZSOA_Exp, tRPZSOA_NXTTL: this.ftRPZSOA_NXTTL, tRPZCache: this.ftRPZCache, tRPZWildcard: this.ftRPZWildcard, tRPZNotify: JSON.stringify(this.ftRPZNotify.split(/,|\s/g).filter(String)), tRPZSrvs: JSON.stringify(this.ftRPZSrvs), tRPZIOCType: this.ftRPZIOCType, tRPZAXFR: this.ftRPZAXFR, tRPZIXFR: this.ftRPZIXFR, tRPZDisabled: this.ftRPZDisabled, tRPZTKeys: JSON.stringify(this.ftRPZTKeys), tRPZWL: JSON.stringify(this.ftRPZWL), tRPZSrc: JSON.stringify(this.ftRPZSrc), tRPZAction: this.ftRPZAction, tRPZActionCustom: JSON.stringify(this.ftRPZActionCustom), tRPZTrackSources: this.ftRPZTrackSources, tRPZRLWindow: this.ftRPZRLWindow, tRPZRLMaxRequests: this.ftRPZRLMaxRequests };
         if (this.ftRPZId == -1) {
           axios.post('/io2data.php/' + table, data).then((data) => { if (/DOCTYPE html/.test(data.data)) { window.location.reload(true); } else obj.mgmtTableOk(data, obj, table); }).catch(function(error) { obj.mgmtTableError(error, obj, table); });
         } else {

@@ -80,8 +80,13 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
       $tkeys_groups=DB_selectArray($db,"select rowid from tkeys_groups where rowid in (".implode(",",getGroupsId(json_decode($REQUEST['tSrvTKeys']))).")");
       // Validated tSrvTrackDefault (validateServerFields guarantees off/auto/on); absent/empty defaults to 'off'
       $trackDefault = (isset($REQUEST['tSrvTrackDefault']) && $REQUEST['tSrvTrackDefault'] !== '') ? $REQUEST['tSrvTrackDefault'] : 'off';
+      // Validated DNS rate limits (validateServerFields guarantees integer/in-range or empty).
+      // Empty/absent persists as NULL, not 0, so "inherit" stays distinct from an explicit value.
+      $rlWindow = DB_intOrNull($REQUEST['tSrvRLWindow'] ?? null);
+      $rlMaxRequests = DB_intOrNull($REQUEST['tSrvRLMaxRequests'] ?? null);
+      $rlMaxUnknownRequests = DB_intOrNull($REQUEST['tSrvRLMaxUnknownRequests'] ?? null);
       $sql="insert into servers values($USERID,'".DB_escape($db,$REQUEST['tSrvName'])."','".DB_escape($db,$REQUEST['tSrvIP'])."','".DB_escape($db,$REQUEST['tSrvPubIP']).
-      "','".DB_escape($db,$REQUEST['tSrvNS'])."','".DB_escape($db,$REQUEST['tSrvEmail'])."',".DB_escape($db,$REQUEST['tSrvMGMT']).",".DB_boolval($REQUEST['tSrvDisabled']).",".intval($REQUEST['tSrvSType']).",'".DB_escape($db,$REQUEST['tSrvURL'])."',".DB_boolval($REQUEST['tSrvMGMT']).",0,'".DB_escape($db,$REQUEST['tCertFile'])."','".DB_escape($db,$REQUEST['tKeyFile'])."','".DB_escape($db,$REQUEST['tCACertFile'])."','".DB_escape($db,$REQUEST['tCustomConfig'])."','".DB_escape($db,$trackDefault)."')"; #certfile, keyfile, cacertfile, custom_config, track_default (validated value)
+      "','".DB_escape($db,$REQUEST['tSrvNS'])."','".DB_escape($db,$REQUEST['tSrvEmail'])."',".DB_escape($db,$REQUEST['tSrvMGMT']).",".DB_boolval($REQUEST['tSrvDisabled']).",".intval($REQUEST['tSrvSType']).",'".DB_escape($db,$REQUEST['tSrvURL'])."',".DB_boolval($REQUEST['tSrvMGMT']).",0,'".DB_escape($db,$REQUEST['tCertFile'])."','".DB_escape($db,$REQUEST['tKeyFile'])."','".DB_escape($db,$REQUEST['tCACertFile'])."','".DB_escape($db,$REQUEST['tCustomConfig'])."','".DB_escape($db,$trackDefault)."',$rlWindow,$rlMaxRequests,$rlMaxUnknownRequests)"; #certfile, keyfile, cacertfile, custom_config, track_default, rate limits (validated values; NULL = inherit)
       if (DB_execute($db,$sql)) {
         //safest way to get id?
         $srvid=DB_selectArray($db,"select max(rowid) as rowid from servers where name='".DB_escape($db,$REQUEST['tSrvName'])."'")[0]['rowid'];
@@ -108,6 +113,10 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
       if (!$v['valid']) { $response='{"status":"failed","reason":"'.addslashes($v['error']).'"}'; break; }
       // Validated tSrvTrackDefault (validateServerFields guarantees off/auto/on); absent/empty defaults to 'off'
       $trackDefault = (isset($REQUEST['tSrvTrackDefault']) && $REQUEST['tSrvTrackDefault'] !== '') ? $REQUEST['tSrvTrackDefault'] : 'off';
+      // Validated DNS rate limits; empty/absent persists as NULL (inherit), not 0.
+      $rlWindow = DB_intOrNull($REQUEST['tSrvRLWindow'] ?? null);
+      $rlMaxRequests = DB_intOrNull($REQUEST['tSrvRLMaxRequests'] ?? null);
+      $rlMaxUnknownRequests = DB_intOrNull($REQUEST['tSrvRLMaxUnknownRequests'] ?? null);
       $srvid=intval($REQUEST['tSrvId']);
       $tkeys_new=DB_selectArray($db,"select rowid from tkeys where rowid in (".implode(",",filterIntArr(json_decode($REQUEST['tSrvTKeys']))).")");
       $tkeys_old=DB_selectArray($db,"select rowid,tsig_id from servers_tsig where server_id=$srvid");
@@ -138,7 +147,7 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
         $sql.="insert into mgmt_ips values($srvid,$USERID,'".DB_escape($db,$ip)."');\n";
       };
       $sql.="update servers set name='".DB_escape($db,$REQUEST['tSrvName'])."', ip='".DB_escape($db,$REQUEST['tSrvIP'])."', pub_ip='".DB_escape($db,$REQUEST['tSrvPubIP']).
-      "', ns='".DB_escape($db,$REQUEST['tSrvNS'])."', email='".DB_escape($db,$REQUEST['tSrvEmail'])."', mgmt=".DB_boolval($REQUEST['tSrvMGMT']).", disabled=".DB_boolval($REQUEST['tSrvDisabled'])." ,stype=".intval($REQUEST['tSrvSType']).", URL='".DB_escape($db,$REQUEST['tSrvURL'])."', cfg_updated=".DB_boolval(1).", certfile='".DB_escape($db,$REQUEST['tCertFile'])."', keyfile='".DB_escape($db,$REQUEST['tKeyFile'])."', cacertfile='".DB_escape($db,$REQUEST['tCACertFile'])."', custom_config='".DB_escape($db,$REQUEST['tCustomConfig'])."', track_default='".DB_escape($db,$trackDefault)."' where rowid=$srvid";
+      "', ns='".DB_escape($db,$REQUEST['tSrvNS'])."', email='".DB_escape($db,$REQUEST['tSrvEmail'])."', mgmt=".DB_boolval($REQUEST['tSrvMGMT']).", disabled=".DB_boolval($REQUEST['tSrvDisabled'])." ,stype=".intval($REQUEST['tSrvSType']).", URL='".DB_escape($db,$REQUEST['tSrvURL'])."', cfg_updated=".DB_boolval(1).", certfile='".DB_escape($db,$REQUEST['tCertFile'])."', keyfile='".DB_escape($db,$REQUEST['tKeyFile'])."', cacertfile='".DB_escape($db,$REQUEST['tCACertFile'])."', custom_config='".DB_escape($db,$REQUEST['tCustomConfig'])."', track_default='".DB_escape($db,$trackDefault)."', rl_window=$rlWindow, rl_max_requests=$rlMaxRequests, rl_max_unknown_requests=$rlMaxUnknownRequests where rowid=$srvid";
 
       if (DB_execute($db,$sql)) $response='{"status":"ok"}'; else $response='{"status":"failed", "reason":"Database operation failed"}';
       break;
@@ -328,6 +337,10 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
 
       // Validated tRPZTrackSources (validateRpzFields guarantees Inherit/auto/true/false); absent/empty defaults to 'Inherit'
       $trackSources = (isset($REQUEST['tRPZTrackSources']) && $REQUEST['tRPZTrackSources'] !== '') ? $REQUEST['tRPZTrackSources'] : 'Inherit';
+      // Validated per-feed DNS rate limits (validateRpzFields guarantees integer/in-range
+      // or empty). Empty/absent persists as NULL = inherit from the server level.
+      $rlWindow = DB_intOrNull($REQUEST['tRPZRLWindow'] ?? null);
+      $rlMaxRequests = DB_intOrNull($REQUEST['tRPZRLMaxRequests'] ?? null);
       $tkeys=DB_selectArray($db,"select rowid from tkeys where rowid in (".implode(",",filterIntArr(json_decode($REQUEST['tRPZTKeys']))).")");
       $tkeys_groups=DB_selectArray($db,"select rowid from tkeys_groups where rowid in (".implode(",",getGroupsId(json_decode($REQUEST['tRPZTKeys']))).")");
       $servers=DB_selectArray($db,"select rowid from servers where rowid in (".implode(",",filterIntArr(json_decode($REQUEST['tRPZSrvs']))).")");
@@ -339,7 +352,7 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
       $sql="insert into rpzs values($USERID,'".DB_escape($db,$REQUEST['tRPZName'])."',".intval($REQUEST['tRPZSOA_Refresh']).",".intval($REQUEST['tRPZSOA_UpdRetry']).",".
             intval($REQUEST['tRPZSOA_Exp']).",".intval($REQUEST['tRPZSOA_NXTTL']).",".DB_boolval($REQUEST['tRPZCache']).",".DB_boolval($REQUEST['tRPZWildcard']).",'".
             DB_escape($db,$action)."','".DB_escape($db,$REQUEST['tRPZIOCType'])."',".intval($REQUEST['tRPZAXFR']).",".intval($REQUEST['tRPZIXFR']).",".
-            DB_boolval($REQUEST['tRPZDisabled']).",'".DB_escape($db,$trackSources)."');"; #trailing track_sources (validated value)
+            DB_boolval($REQUEST['tRPZDisabled']).",'".DB_escape($db,$trackSources)."',$rlWindow,$rlMaxRequests);"; #trailing track_sources, rate limits (validated values; NULL = inherit)
       if (DB_execute($db,$sql)) {
         //safest way to get id?
         $rpzid=DB_selectArray($db,"select max(rowid) as rowid from rpzs where name='".DB_escape($db,$REQUEST['tRPZName'])."'")[0]['rowid'];
@@ -374,6 +387,9 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
       if (!$v['valid']) { $response='{"status":"failed","reason":"'.addslashes($v['error']).'"}'; break; }
       // Validated tRPZTrackSources (validateRpzFields guarantees Inherit/auto/true/false); absent/empty defaults to 'Inherit'
       $trackSources = (isset($REQUEST['tRPZTrackSources']) && $REQUEST['tRPZTrackSources'] !== '') ? $REQUEST['tRPZTrackSources'] : 'Inherit';
+      // Validated per-feed DNS rate limits; empty/absent persists as NULL (inherit), not 0.
+      $rlWindow = DB_intOrNull($REQUEST['tRPZRLWindow'] ?? null);
+      $rlMaxRequests = DB_intOrNull($REQUEST['tRPZRLMaxRequests'] ?? null);
       $rpzid=intval($REQUEST['tRPZId']);
       $tkeys_new=DB_selectArray($db,"select rowid from tkeys where rowid in (".implode(",",filterIntArr(json_decode($REQUEST['tRPZTKeys']))).")");
       $tkeys_old=DB_selectArray($db,"select rowid,tkey_id from rpzs_tkeys where rpz_id=$rpzid");
@@ -420,7 +436,7 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
             intval($REQUEST['tRPZSOA_UpdRetry']).",soa_expiration=".intval($REQUEST['tRPZSOA_Exp']).", soa_nx_ttl=".intval($REQUEST['tRPZSOA_NXTTL']).", cache=".
             DB_boolval($REQUEST['tRPZCache']).", wildcard=".DB_boolval($REQUEST['tRPZWildcard']).","."action='".DB_escape($db,$action)."',ioc_type='".
             DB_escape($db,$REQUEST['tRPZIOCType'])."',axfr_update=".intval($REQUEST['tRPZAXFR']).",ixfr_update=".intval($REQUEST['tRPZIXFR']).",disabled=".
-            DB_boolval($REQUEST['tRPZDisabled']).",track_sources='".DB_escape($db,$trackSources)."' where rowid=$rpzid";
+            DB_boolval($REQUEST['tRPZDisabled']).",track_sources='".DB_escape($db,$trackSources)."',rl_window=$rlWindow,rl_max_requests=$rlMaxRequests where rowid=$rpzid";
 
       if (DB_execute($db,$sql)) $response='{"status":"ok"}'; else $response='{"status":"failed", "reason":"Database operation failed"}';
 
@@ -436,8 +452,10 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
       if (DB_execute($db,$sql)) $response='{"status":"ok"}'; else $response='{"status":"failed", "reason":"Database operation failed"}';
       break;
 
+    // rl_window / rl_max_requests are exposed so the feed editor can resolve and show
+    // the inherited rate limit (zone -> server -> built-in default) without a save.
     case "GET rpz_servers":
-      $response=json_encode(DB_selectArray($db,"select rowid as value, name as text from servers"));
+      $response=json_encode(DB_selectArray($db,"select rowid as value, name as text, rl_window, rl_max_requests from servers"));
       break;
 
     case "GET rpz_tkeys":

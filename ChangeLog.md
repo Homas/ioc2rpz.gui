@@ -1,4 +1,11 @@
 #ioc2rpz.gui change log
+## 2.2.0.0 2026-08-25
+- Added DNS rate limit management (ioc2rpz 1.4.0.4). The server editor exposes a rate limit window (seconds), max requests per window, and max unknown requests per window; the feed editor exposes the window and max requests, overriding the server values per feed. Each option resolves independently with the precedence feed -> server -> built-in default, an empty field means inherit and shows the resolved value and its origin, and a maximum of 0 (refuse every request in that bucket) is called out in the UI. Set options are serialized as the optional trailing `{rate_limit, Options}` element on the srv and rpz tuples and parsed back on import, in either order with the TrackSources element.
+- Invalid rate limits are rejected by the frontend and the backend instead of being written. The ioc2rpz server only logs and ignores an invalid value and falls back to the next level, so a bad value would otherwise silently do nothing.
+- DB schema version bumped from 3 to 4, adding nullable columns servers.rl_window, servers.rl_max_requests, servers.rl_max_unknown_requests, rpzs.rl_window and rpzs.rl_max_requests. NULL means inherit, so existing databases migrate with every feed and server inheriting as before, and existing configurations are unaffected: a record with no rate limit still serializes to the byte-identical legacy tuple, and legacy configs still import unchanged.
+- Feed names are normalized to lower case on input and on import, matching the server's RFC 4343 zone name canonicalisation.
+- The server editor notes that sources in the management ACL are exempt from DNS rate limiting.
+
 ## 2.1.1.0 2026-07-07
 - Security: the IOC lookup endpoint now scopes the target server and its management TSIG credentials to the authenticated user (user_id). A session can no longer resolve another user's server or use its management key by supplying an arbitrary server rowid.
 - Fixed IOC lookup handling and result rendering (enhanced matched-indicator grouping, empty/not-found handling).

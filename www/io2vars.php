@@ -180,6 +180,24 @@ function DB_boolval($val){
 };
 
 /**
+ * Renders an optional integer as a SQL literal, preserving the NULL/0 distinction.
+ *
+ * Used for the nullable DNS rate limit columns, where NULL means "inherit" and 0 is
+ * a legitimate value (refuse every request in that bucket). An absent, empty, or
+ * non-integer input yields the unquoted keyword NULL; anything else yields the
+ * integer, so the value can never carry SQL syntax.
+ *
+ * @param mixed $val Value to render (null, "", or an integer-like scalar)
+ * @return string `"NULL"` or a decimal integer literal
+ */
+function DB_intOrNull($val){
+  if ($val === null || $val === "" || $val === false) return "NULL";
+  if (is_array($val)) return "NULL";
+  if (!preg_match('/^\s*-?[0-9]+\s*$/', (string)$val)) return "NULL";
+  return (string)intval($val);
+};
+
+/**
  * Executes a SELECT query and returns all results as an array
  * 
  * @param SQLite3 $db Database connection handle
@@ -258,7 +276,7 @@ function genConfig($db,$USERID,$SrvId){
   $subres_gr=DB_selectArray($db,"select group_name from servers_tsig_groups left join tkeys_groups on tkeys_groups.rowid=servers_tsig_groups.tsig_group_id where servers_tsig_groups.user_id=$USERID and servers_tsig_groups.server_id=$SrvId");
 	if ($subres_gr) $groups=",{groups,[\"".implode('","',array_column($subres_gr,'group_name'))."\"]}"; else $groups="";
 
-  $cfg.="{srv,{\"".erlEscape($row['ns'])."\",\"".str_replace("@",".",erlEscape($row['email']))."\",[\"".implode('","',array_map('erlEscape',array_column($subres,'name')))."\"$groups],[\"".implode('","',array_map('erlEscape',array_column($subres1,'mgmt_ip')))."\"]".erlSrvTrackSources($row['track_default'])."}}.\n";
+  $cfg.="{srv,{\"".erlEscape($row['ns'])."\",\"".str_replace("@",".",erlEscape($row['email']))."\",[\"".implode('","',array_map('erlEscape',array_column($subres,'name')))."\"$groups],[\"".implode('","',array_map('erlEscape',array_column($subres1,'mgmt_ip')))."\"]".erlSrvTrackSources($row['track_default']).erlSrvRateLimit($row)."}}.\n";
 
   if ($row['certfile']!="" and $row['keyfile']!="") {
     $cfg.="\n% cert record: certfile, keyfile, cacertfile\n";
@@ -302,7 +320,7 @@ function genConfig($db,$USERID,$SrvId){
     $subres_wl=DB_selectArray($db,"select name from rpzs_whitelists left join whitelists on whitelists.rowid=rpzs_whitelists.whitelist_id where rpzs_whitelists.user_id=$USERID and rpz_id=${item['rowid']}");
     $subres_notify=DB_selectArray($db,"select notify from rpzs_notify where user_id=$USERID and rpz_id=${item['rowid']}");
 
-    $cfg.="{rpz,{\"${item['name']}\",${item['soa_refresh']},${item['soa_update_retry']},${item['soa_expiration']},${item['soa_nx_ttl']},\"".($item['cache']?"true":"false")."\",\"".($item['wildcard']?"true":"false")."\",".erlAction($item['action']).",[\"".implode('","',array_column($subres_tkeys,'name'))."\"$groups],\"${item['ioc_type']}\",${item['axfr_update']},${item['ixfr_update']},[\"".implode('","',array_column($subres_srcs,'name'))."\"],[".(empty($subres_notify)?"":"\"".implode('","',array_column($subres_notify,'notify'))."\"")."],[".(empty($subres_wl)?"":"\"".implode('","',array_column($subres_wl,'name'))."\"")."]".erlRpzTrackSources($item['track_sources'])."}}.\n";
+    $cfg.="{rpz,{\"${item['name']}\",${item['soa_refresh']},${item['soa_update_retry']},${item['soa_expiration']},${item['soa_nx_ttl']},\"".($item['cache']?"true":"false")."\",\"".($item['wildcard']?"true":"false")."\",".erlAction($item['action']).",[\"".implode('","',array_column($subres_tkeys,'name'))."\"$groups],\"${item['ioc_type']}\",${item['axfr_update']},${item['ixfr_update']},[\"".implode('","',array_column($subres_srcs,'name'))."\"],[".(empty($subres_notify)?"":"\"".implode('","',array_column($subres_notify,'notify'))."\"")."],[".(empty($subres_wl)?"":"\"".implode('","',array_column($subres_wl,'name'))."\"")."]".erlRpzTrackSources($item['track_sources']).erlRpzRateLimit($item)."}}.\n";
   };
 
   $response['cfg']=$cfg;
@@ -468,6 +486,108 @@ function erlRpzTrackSources($value){
   if ($value === "false") return ",false";
   // Inherit, absent, null, or invalid => no trailing element (legacy 15-field tuple)
   return "";
+};
+
+/**
+ * ioc2rpz compile-time rate limit defaults (include/ioc2rpz.hrl).
+ *
+ * These are the values the server falls back to when neither the rpz nor the srv
+ * record carries the option. The GUI only ever displays them as the resolved
+ * "inherited" value; it must NEVER emit them, because emitting a value would turn
+ * "inherit" into "explicitly set" and freeze the setting against future server
+ * default changes.
+ */
+define("RL_DEFAULT_WINDOW", 60);                 // ?RATE_LIMIT_WINDOW (60000 ms)
+define("RL_DEFAULT_MAX_REQUESTS", 6);            // ?MAX_REQUESTS_PER_WINDOW
+define("RL_DEFAULT_MAX_UNKNOWN_REQUESTS", 1);    // ?MAX_UNKNOWN_REQUESTS_PER_WINDOW
+
+/**
+ * Normalizes one stored rate limit value, or null when it must be omitted.
+ *
+ * A value is emitted only when it is an unambiguous integer within the option's
+ * legal range. Absent, empty, non-numeric, and out-of-range values all normalize to
+ * null (omit the option) rather than to a number, because the server logs and
+ * ignores an invalid value and silently falls back to the next level - so emitting
+ * a bad value would look like a setting that does nothing. Omitting it makes the
+ * inheritance explicit and keeps the emitted tuple always well-formed.
+ *
+ * @param mixed $value Stored value (int, numeric string, "", or null)
+ * @param int $min Smallest legal value (1 for window, 0 for the maximums)
+ * @return int|null Normalized integer, or null when the option must be omitted
+ */
+function erlRateLimitValue($value, $min){
+  if ($value === null || $value === "" || $value === false) return null;
+  if (!is_scalar($value)) return null;
+  // Reject anything that is not purely an integer, so "60abc", "6.5", "1e3" and
+  // any injection attempt can never reach the generated configuration.
+  if (!preg_match('/^\s*-?[0-9]+\s*$/', (string)$value)) return null;
+  $int = intval($value);
+  if ($int < $min) return null;
+  return $int;
+};
+
+/**
+ * Builds the optional trailing `{rate_limit,[...]}` element from a set of options.
+ *
+ * Only the options that are set are emitted, each one independently, so a record can
+ * set `max_requests` alone and still inherit `window`. When no option survives
+ * normalization the result is the empty string, which keeps a record with no rate
+ * limits serializing to the byte-identical legacy tuple.
+ *
+ * The result is comma-prefixed so it can be appended directly before the closing
+ * `}}` of the srv/rpz tuple, after the optional TrackSources element.
+ *
+ * @param array $opts Ordered map of option name => stored value
+ * @return string `",{rate_limit,[{opt,N},...]}"`, or `""` when nothing is set
+ */
+function erlRateLimitElement($opts){
+  $parts = [];
+  foreach ($opts as $name => $spec) {
+    $norm = erlRateLimitValue($spec['value'], $spec['min']);
+    if ($norm !== null) $parts[] = "{".$name.",".$norm."}";
+  }
+  if (empty($parts)) return "";
+  return ",{rate_limit,[".implode(",", $parts)."]}";
+};
+
+/**
+ * Emits the optional srv-tuple `{rate_limit,[...]}` element.
+ *
+ * Server-level limits apply to every zone that does not override them. All three
+ * options are valid here, including `max_unknown_requests`, which has no rpz-level
+ * counterpart because a request counted in that bucket never resolved to a zone.
+ *
+ * `window` must be > 0; the maximums may be 0, which means "refuse every request in
+ * that bucket".
+ *
+ * @param array $row Server record (rl_window, rl_max_requests, rl_max_unknown_requests)
+ * @return string Comma-prefixed rate_limit element, or `""` when nothing is set
+ */
+function erlSrvRateLimit($row){
+  if (!is_array($row)) return "";
+  return erlRateLimitElement([
+    "window"               => ["value" => $row["rl_window"] ?? null,               "min" => 1],
+    "max_requests"         => ["value" => $row["rl_max_requests"] ?? null,         "min" => 0],
+    "max_unknown_requests" => ["value" => $row["rl_max_unknown_requests"] ?? null, "min" => 0],
+  ]);
+};
+
+/**
+ * Emits the optional rpz-tuple `{rate_limit,[...]}` element.
+ *
+ * Zone-level limits take precedence over the srv-level ones, per option. Only
+ * `window` and `max_requests` exist at this level: the server logs and ignores
+ * `max_unknown_requests` on an rpz record, so it is never emitted here.
+ *
+ * @param array $item Feed record (rl_window, rl_max_requests)
+ * @return string Comma-prefixed rate_limit element, or `""` when nothing is set
+ */
+function erlRpzRateLimit($item){
+  if (!is_array($item)) return "";
+  return erlRateLimitElement([
+    "window"       => ["value" => $item["rl_window"] ?? null,       "min" => 1],
+    "max_requests" => ["value" => $item["rl_max_requests"] ?? null, "min" => 0],
+  ]);
 };
 
 ?>

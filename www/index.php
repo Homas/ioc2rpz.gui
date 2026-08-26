@@ -656,6 +656,44 @@
             </b-col>
           </b-row>
           <b-row>
+            <b-col :sm="12" class="form_row text-start">
+              <label class="mb-0 fw-bold">DNS rate limits</label>
+              <small class="text-muted d-block" id="fSrvRateLimitHint">Server-wide defaults for every zone. Leave a field empty to inherit the ioc2rpz built-in default. Sources listed in the management ACL above are exempt from DNS rate limiting.</small>
+            </b-col>
+          </b-row>
+          <b-row>
+            <b-col :sm="6" class="form_row text-start align-self-center">
+              <label for="fSrvRLWindow" class="mb-0">Rate limit window (seconds)</label>
+            </b-col>
+            <b-col :sm="6" class="form_row text-start">
+              <b-form-input id="fSrvRLWindow" v-model.trim="ftSrvRLWindow" :state="validateRateLimit('ftSrvRLWindow', 1)" :formatter="formatInt" ref="formSrvRLWindow" :readonly="infoWindow" placeholder="Inherit" aria-describedby="fSrvRLWindowHint fSrvRLWindowError" v-b-tooltip.hover title="Rate limit window in seconds" />
+              <small v-if="ftSrvRLWindow === ''" class="text-muted d-block" id="fSrvRLWindowHint">{{ effectiveSrvRLWindowHint }}</small>
+              <b-form-invalid-feedback id="fSrvRLWindowError" role="alert">Window must be a whole number of seconds greater than 0.</b-form-invalid-feedback>
+            </b-col>
+          </b-row>
+          <b-row>
+            <b-col :sm="6" class="form_row text-start align-self-center">
+              <label for="fSrvRLMaxRequests" class="mb-0">Max requests per window</label>
+            </b-col>
+            <b-col :sm="6" class="form_row text-start">
+              <b-form-input id="fSrvRLMaxRequests" v-model.trim="ftSrvRLMaxRequests" :state="validateRateLimit('ftSrvRLMaxRequests', 0)" :formatter="formatInt" ref="formSrvRLMaxRequests" :readonly="infoWindow" placeholder="Inherit" aria-describedby="fSrvRLMaxRequestsHint fSrvRLMaxRequestsError" v-b-tooltip.hover title="Max requests per window for a known zone (SOA/AXFR/IXFR and recognized management requests)" />
+              <small v-if="ftSrvRLMaxRequests === ''" class="text-muted d-block" id="fSrvRLMaxRequestsHint">{{ effectiveSrvRLMaxRequestsHint }}</small>
+              <small v-if="ftSrvRLMaxRequests === '0'" class="text-warning d-block" id="fSrvRLMaxRequestsZero">0 refuses every zone request in the window.</small>
+              <b-form-invalid-feedback id="fSrvRLMaxRequestsError" role="alert">Max requests must be a whole number of 0 or more.</b-form-invalid-feedback>
+            </b-col>
+          </b-row>
+          <b-row>
+            <b-col :sm="6" class="form_row text-start align-self-center">
+              <label for="fSrvRLMaxUnknownRequests" class="mb-0">Max unknown requests per window</label>
+            </b-col>
+            <b-col :sm="6" class="form_row text-start">
+              <b-form-input id="fSrvRLMaxUnknownRequests" v-model.trim="ftSrvRLMaxUnknownRequests" :state="validateRateLimit('ftSrvRLMaxUnknownRequests', 0)" :formatter="formatInt" ref="formSrvRLMaxUnknownRequests" :readonly="infoWindow" placeholder="Inherit" aria-describedby="fSrvRLMaxUnknownRequestsHint fSrvRLMaxUnknownRequestsError" v-b-tooltip.hover title="Max requests per window for an unknown zone, unsupported qtype, or wrong class. Server level only." />
+              <small v-if="ftSrvRLMaxUnknownRequests === ''" class="text-muted d-block" id="fSrvRLMaxUnknownRequestsHint">{{ effectiveSrvRLMaxUnknownRequestsHint }}</small>
+              <small v-if="ftSrvRLMaxUnknownRequests === '0'" class="text-warning d-block" id="fSrvRLMaxUnknownRequestsZero">0 refuses every unknown-zone request in the window.</small>
+              <b-form-invalid-feedback id="fSrvRLMaxUnknownRequestsError" role="alert">Max unknown requests must be a whole number of 0 or more.</b-form-invalid-feedback>
+            </b-col>
+          </b-row>
+          <b-row>
             <b-col :sm="12" class="form_row text-start"><b-form-checkbox :false-value="0" :true-value="1" :disabled="infoWindow"  v-model="ftSrvDisabled">Disabled</b-form-checkbox></b-col>
           </b-row>
           <!-- keys, notify_list -->
@@ -672,7 +710,7 @@
           <span class='text-center'>
             <div>
               <b-row class="form_row">
-                <b-col :sm="12" class=""><b-form-input v-model.trim="ftRPZName" :state="validateHostnameNum('ftRPZName')" :formatter="formatName" ref="formRPZName" :readonly="infoWindow" placeholder="Enter RPZ name"  v-b-tooltip.hover title="RPZ Name" /></b-col>
+                <b-col :sm="12" class=""><b-form-input v-model.trim="ftRPZName" :state="validateHostnameNum('ftRPZName')" :formatter="formatZoneName" ref="formRPZName" :readonly="infoWindow" placeholder="Enter RPZ name"  v-b-tooltip.hover title="RPZ Name (canonicalised to lower case, RFC 4343)" /></b-col>
               </b-row>
 
               <b-row class="form_row">
@@ -756,6 +794,33 @@ local_cname=www.example.com
                   <small v-if="trackingEnabling" class="text-muted d-block" id="fRPZTrackSourcesRebuildHint">Enabling tracking on a feed whose cache is true triggers a one-time full zone (AXFR) rebuild.</small>
                   <small class="text-muted d-block" id="fRPZTrackSourcesCacheHint">Attribution requires cache = true.</small>
                   <small v-if="trackingEnabling && !(ftRPZCache === 1 || ftRPZCache === true || ftRPZCache === 'true')" class="text-warning d-block" id="fRPZTrackSourcesUnavailableNotice">Attribution will not be produced until cache = true.</small>
+                </b-col>
+              </b-row>
+              <b-row class="form_row">
+                <b-col :sm="12" class="text-start">
+                  <label class="mb-0 fw-bold">DNS rate limits</label>
+                  <small class="text-muted d-block" id="fRPZRateLimitHint">Overrides the server-wide limits for this feed. Each field is independent: leave one empty to inherit it while overriding the other.</small>
+                </b-col>
+              </b-row>
+              <b-row class="form_row">
+                <b-col :sm="4" class="text-start align-self-center">
+                  <label for="fRPZRLWindow" class="mb-0">Rate limit window (seconds)</label>
+                </b-col>
+                <b-col :sm="8" class="text-start">
+                  <b-form-input id="fRPZRLWindow" v-model.trim="ftRPZRLWindow" :state="validateRateLimit('ftRPZRLWindow', 1)" :formatter="formatInt" ref="formRPZRLWindow" :readonly="infoWindow" placeholder="Inherit" aria-describedby="fRPZRLWindowHint fRPZRLWindowError" v-b-tooltip.hover title="Rate limit window in seconds" />
+                  <small v-if="ftRPZRLWindow === ''" class="text-muted d-block" id="fRPZRLWindowHint">{{ effectiveRPZRLWindowHint }}</small>
+                  <b-form-invalid-feedback id="fRPZRLWindowError" role="alert">Window must be a whole number of seconds greater than 0.</b-form-invalid-feedback>
+                </b-col>
+              </b-row>
+              <b-row class="form_row">
+                <b-col :sm="4" class="text-start align-self-center">
+                  <label for="fRPZRLMaxRequests" class="mb-0">Max requests per window</label>
+                </b-col>
+                <b-col :sm="8" class="text-start">
+                  <b-form-input id="fRPZRLMaxRequests" v-model.trim="ftRPZRLMaxRequests" :state="validateRateLimit('ftRPZRLMaxRequests', 0)" :formatter="formatInt" ref="formRPZRLMaxRequests" :readonly="infoWindow" placeholder="Inherit" aria-describedby="fRPZRLMaxRequestsHint fRPZRLMaxRequestsError" v-b-tooltip.hover title="Max SOA/AXFR/IXFR requests per window for this zone" />
+                  <small v-if="ftRPZRLMaxRequests === ''" class="text-muted d-block" id="fRPZRLMaxRequestsHint">{{ effectiveRPZRLMaxRequestsHint }}</small>
+                  <small v-if="ftRPZRLMaxRequests === '0'" class="text-warning d-block" id="fRPZRLMaxRequestsZero">0 refuses every request for this zone in the window.</small>
+                  <b-form-invalid-feedback id="fRPZRLMaxRequestsError" role="alert">Max requests must be a whole number of 0 or more.</b-form-invalid-feedback>
                 </b-col>
               </b-row>
               <b-row class="form_row">

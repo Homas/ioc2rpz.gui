@@ -645,6 +645,61 @@ function validateServerFields($data) {
     if ($trackDefault !== '' && !in_array($trackDefault, ['off', 'auto', 'on'], true)) {
         return ['valid' => false, 'error' => 'Invalid source attribution default: ' . $trackDefault];
     }
+    // Validate the server-level DNS rate limits. Absent/empty means inherit the
+    // ioc2rpz compile-time default and is always valid; anything present must be an
+    // integer in range. All three options are valid at the server level.
+    $rl = validateRateLimitFields($data, [
+        'tSrvRLWindow'             => ['label' => 'rate limit window',              'min' => 1],
+        'tSrvRLMaxRequests'        => ['label' => 'rate limit max requests',        'min' => 0],
+        'tSrvRLMaxUnknownRequests' => ['label' => 'rate limit max unknown requests', 'min' => 0],
+    ]);
+    if (!$rl['valid']) {
+        return $rl;
+    }
+    return ['valid' => true, 'error' => null];
+}
+
+/**
+ * Validates a set of optional DNS rate limit inputs.
+ *
+ * Every option is individually optional: an absent or empty value means "inherit"
+ * (resolve through zone -> server -> compile-time default) and is always accepted. A
+ * value that is present must be a plain integer at or above the option's minimum:
+ * `window` must be > 0 (min 1), and the maximums must be >= 0, where 0 is legal and
+ * means "refuse every request in that bucket".
+ *
+ * Rejecting here matters because the server only logs and ignores an invalid value
+ * and then falls back to the next level, so a bad value written by the GUI would
+ * silently do nothing.
+ *
+ * @param array $data Request data
+ * @param array $fields Map of request key => ['label' => string, 'min' => int]
+ * @return array ['valid' => bool, 'error' => string|null]
+ */
+function validateRateLimitFields($data, $fields) {
+    foreach ($fields as $key => $spec) {
+        $value = $data[$key] ?? '';
+        if (is_array($value)) {
+            return ['valid' => false, 'error' => 'Invalid ' . $spec['label'] . ': not a number'];
+        }
+        $value = trim((string) $value);
+        if ($value === '') {
+            continue; // absent/empty => inherit
+        }
+        if (!preg_match('/^-?[0-9]+$/', $value)) {
+            return [
+                'valid' => false,
+                'error' => 'Invalid ' . $spec['label'] . ': ' . substr($value, 0, 45) . ' is not an integer',
+            ];
+        }
+        $int = intval($value);
+        if ($int < $spec['min']) {
+            return [
+                'valid' => false,
+                'error' => 'Invalid ' . $spec['label'] . ': ' . $int . ' is below the minimum of ' . $spec['min'],
+            ];
+        }
+    }
     return ['valid' => true, 'error' => null];
 }
 
@@ -729,6 +784,26 @@ function validateRpzFields($data) {
     $trackSources = $data['tRPZTrackSources'] ?? '';
     if ($trackSources !== '' && !in_array($trackSources, ['Inherit', 'auto', 'true', 'false'], true)) {
         return ['valid' => false, 'error' => 'Invalid track sources value: ' . $trackSources];
+    }
+    // Validate the per-feed DNS rate limits. Absent/empty means inherit the
+    // server-level value (then the compile-time default).
+    $rl = validateRateLimitFields($data, [
+        'tRPZRLWindow'      => ['label' => 'rate limit window',       'min' => 1],
+        'tRPZRLMaxRequests' => ['label' => 'rate limit max requests', 'min' => 0],
+    ]);
+    if (!$rl['valid']) {
+        return $rl;
+    }
+    // max_unknown_requests counts requests that never resolved to a zone, so there is
+    // no feed config for the server to read it from: it is server-level only, and the
+    // server logs and ignores it on an rpz record. Reject it rather than persisting a
+    // value that could never take effect.
+    $unknown = $data['tRPZRLMaxUnknownRequests'] ?? '';
+    if (!is_array($unknown) && trim((string) $unknown) !== '') {
+        return [
+            'valid' => false,
+            'error' => 'max_unknown_requests is a server-level option and cannot be set on a feed',
+        ];
     }
     return ['valid' => true, 'error' => null];
 }

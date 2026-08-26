@@ -5,7 +5,7 @@
 define("IO2PATH", "/opt/ioc2rpz.gui"); #/opt/ioc2rpz.gui
 require IO2PATH."/www/io2vars.php";
 
-define("DBVersion", 3);
+define("DBVersion", 4);
 
 function upgradeSQLiteDB($DBF){
   $db = new SQLite3($DBF);
@@ -29,6 +29,15 @@ function upgradeSQLiteDB($DBF){
       case 2:
         $sql.="alter table servers add column track_default text default 'off';";
         $sql.="alter table rpzs add column track_sources text default 'Inherit';";
+      case 3:
+        #DNS rate limits. NULL means "inherit": the srv value falls back to the
+        #ioc2rpz compile-time default, the rpz value falls back to the srv value.
+        #Existing rows keep NULL, so their generated configuration is unchanged.
+        $sql.="alter table servers add column rl_window integer default NULL;";
+        $sql.="alter table servers add column rl_max_requests integer default NULL;";
+        $sql.="alter table servers add column rl_max_unknown_requests integer default NULL;";
+        $sql.="alter table rpzs add column rl_window integer default NULL;";
+        $sql.="alter table rpzs add column rl_max_requests integer default NULL;";
       default:
         $sql.="PRAGMA user_version=".DBVersion.";";
   };
