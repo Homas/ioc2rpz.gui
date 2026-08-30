@@ -1,0 +1,48 @@
+{
+    "srv": [
+        {
+            "track": "off",
+            "atom": "",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"]}}.",
+            "expectedParse": "off"
+        },
+        {
+            "track": "auto",
+            "atom": ",auto",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],auto}}.",
+            "expectedParse": "auto"
+        },
+        {
+            "track": "on",
+            "atom": ",on",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],on}}.",
+            "expectedParse": "on"
+        }
+    ],
+    "rpz": [
+        {
+            "track": "Inherit",
+            "atom": "",
+            "line": "{rpz,{\"feed.example\",3600,60,86400,30,\"true\",\"true\",\"nxdomain\",[],\"fqdn\",900,300,[\"src1\",\"src2\"],[],[\"wl1\"]}}.",
+            "expectedParse": "Inherit"
+        },
+        {
+            "track": "auto",
+            "atom": ",auto",
+            "line": "{rpz,{\"feed.example\",3600,60,86400,30,\"true\",\"true\",\"nxdomain\",[],\"fqdn\",900,300,[\"src1\",\"src2\"],[],[\"wl1\"],auto}}.",
+            "expectedParse": "auto"
+        },
+        {
+            "track": "true",
+            "atom": ",true",
+            "line": "{rpz,{\"feed.example\",3600,60,86400,30,\"true\",\"true\",\"nxdomain\",[],\"fqdn\",900,300,[\"src1\",\"src2\"],[],[\"wl1\"],true}}.",
+            "expectedParse": "true"
+        },
+        {
+            "track": "false",
+            "atom": ",false",
+            "line": "{rpz,{\"feed.example\",3600,60,86400,30,\"true\",\"true\",\"nxdomain\",[],\"fqdn\",900,300,[\"src1\",\"src2\"],[],[\"wl1\"],false}}.",
+            "expectedParse": "false"
+        }
+    ]
+}

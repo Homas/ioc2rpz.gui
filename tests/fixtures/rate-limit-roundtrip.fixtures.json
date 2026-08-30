@@ -1,0 +1,1927 @@
+{
+    "srv": [
+        {
+            "stored": {
+                "track_default": "off",
+                "rl_window": null,
+                "rl_max_requests": null,
+                "rl_max_unknown_requests": null
+            },
+            "trackAtom": "",
+            "rlElement": "",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"]}}.",
+            "expected": {
+                "track": "off",
+                "window": null,
+                "max_requests": null,
+                "max_unknown_requests": null
+            }
+        },
+        {
+            "stored": {
+                "track_default": "auto",
+                "rl_window": null,
+                "rl_max_requests": null,
+                "rl_max_unknown_requests": null
+            },
+            "trackAtom": ",auto",
+            "rlElement": "",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],auto}}.",
+            "expected": {
+                "track": "auto",
+                "window": null,
+                "max_requests": null,
+                "max_unknown_requests": null
+            }
+        },
+        {
+            "stored": {
+                "track_default": "on",
+                "rl_window": null,
+                "rl_max_requests": null,
+                "rl_max_unknown_requests": null
+            },
+            "trackAtom": ",on",
+            "rlElement": "",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],on}}.",
+            "expected": {
+                "track": "on",
+                "window": null,
+                "max_requests": null,
+                "max_unknown_requests": null
+            }
+        },
+        {
+            "stored": {
+                "track_default": "off",
+                "rl_window": null,
+                "rl_max_requests": null,
+                "rl_max_unknown_requests": 0
+            },
+            "trackAtom": "",
+            "rlElement": ",{rate_limit,[{max_unknown_requests,0}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],{rate_limit,[{max_unknown_requests,0}]}}}.",
+            "expected": {
+                "track": "off",
+                "window": null,
+                "max_requests": null,
+                "max_unknown_requests": 0
+            }
+        },
+        {
+            "stored": {
+                "track_default": "auto",
+                "rl_window": null,
+                "rl_max_requests": null,
+                "rl_max_unknown_requests": 0
+            },
+            "trackAtom": ",auto",
+            "rlElement": ",{rate_limit,[{max_unknown_requests,0}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],auto,{rate_limit,[{max_unknown_requests,0}]}}}.",
+            "expected": {
+                "track": "auto",
+                "window": null,
+                "max_requests": null,
+                "max_unknown_requests": 0
+            }
+        },
+        {
+            "stored": {
+                "track_default": "on",
+                "rl_window": null,
+                "rl_max_requests": null,
+                "rl_max_unknown_requests": 0
+            },
+            "trackAtom": ",on",
+            "rlElement": ",{rate_limit,[{max_unknown_requests,0}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],on,{rate_limit,[{max_unknown_requests,0}]}}}.",
+            "expected": {
+                "track": "on",
+                "window": null,
+                "max_requests": null,
+                "max_unknown_requests": 0
+            }
+        },
+        {
+            "stored": {
+                "track_default": "off",
+                "rl_window": null,
+                "rl_max_requests": null,
+                "rl_max_unknown_requests": 20
+            },
+            "trackAtom": "",
+            "rlElement": ",{rate_limit,[{max_unknown_requests,20}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],{rate_limit,[{max_unknown_requests,20}]}}}.",
+            "expected": {
+                "track": "off",
+                "window": null,
+                "max_requests": null,
+                "max_unknown_requests": 20
+            }
+        },
+        {
+            "stored": {
+                "track_default": "auto",
+                "rl_window": null,
+                "rl_max_requests": null,
+                "rl_max_unknown_requests": 20
+            },
+            "trackAtom": ",auto",
+            "rlElement": ",{rate_limit,[{max_unknown_requests,20}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],auto,{rate_limit,[{max_unknown_requests,20}]}}}.",
+            "expected": {
+                "track": "auto",
+                "window": null,
+                "max_requests": null,
+                "max_unknown_requests": 20
+            }
+        },
+        {
+            "stored": {
+                "track_default": "on",
+                "rl_window": null,
+                "rl_max_requests": null,
+                "rl_max_unknown_requests": 20
+            },
+            "trackAtom": ",on",
+            "rlElement": ",{rate_limit,[{max_unknown_requests,20}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],on,{rate_limit,[{max_unknown_requests,20}]}}}.",
+            "expected": {
+                "track": "on",
+                "window": null,
+                "max_requests": null,
+                "max_unknown_requests": 20
+            }
+        },
+        {
+            "stored": {
+                "track_default": "off",
+                "rl_window": null,
+                "rl_max_requests": 0,
+                "rl_max_unknown_requests": null
+            },
+            "trackAtom": "",
+            "rlElement": ",{rate_limit,[{max_requests,0}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],{rate_limit,[{max_requests,0}]}}}.",
+            "expected": {
+                "track": "off",
+                "window": null,
+                "max_requests": 0,
+                "max_unknown_requests": null
+            }
+        },
+        {
+            "stored": {
+                "track_default": "auto",
+                "rl_window": null,
+                "rl_max_requests": 0,
+                "rl_max_unknown_requests": null
+            },
+            "trackAtom": ",auto",
+            "rlElement": ",{rate_limit,[{max_requests,0}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],auto,{rate_limit,[{max_requests,0}]}}}.",
+            "expected": {
+                "track": "auto",
+                "window": null,
+                "max_requests": 0,
+                "max_unknown_requests": null
+            }
+        },
+        {
+            "stored": {
+                "track_default": "on",
+                "rl_window": null,
+                "rl_max_requests": 0,
+                "rl_max_unknown_requests": null
+            },
+            "trackAtom": ",on",
+            "rlElement": ",{rate_limit,[{max_requests,0}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],on,{rate_limit,[{max_requests,0}]}}}.",
+            "expected": {
+                "track": "on",
+                "window": null,
+                "max_requests": 0,
+                "max_unknown_requests": null
+            }
+        },
+        {
+            "stored": {
+                "track_default": "off",
+                "rl_window": null,
+                "rl_max_requests": 0,
+                "rl_max_unknown_requests": 0
+            },
+            "trackAtom": "",
+            "rlElement": ",{rate_limit,[{max_requests,0},{max_unknown_requests,0}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],{rate_limit,[{max_requests,0},{max_unknown_requests,0}]}}}.",
+            "expected": {
+                "track": "off",
+                "window": null,
+                "max_requests": 0,
+                "max_unknown_requests": 0
+            }
+        },
+        {
+            "stored": {
+                "track_default": "auto",
+                "rl_window": null,
+                "rl_max_requests": 0,
+                "rl_max_unknown_requests": 0
+            },
+            "trackAtom": ",auto",
+            "rlElement": ",{rate_limit,[{max_requests,0},{max_unknown_requests,0}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],auto,{rate_limit,[{max_requests,0},{max_unknown_requests,0}]}}}.",
+            "expected": {
+                "track": "auto",
+                "window": null,
+                "max_requests": 0,
+                "max_unknown_requests": 0
+            }
+        },
+        {
+            "stored": {
+                "track_default": "on",
+                "rl_window": null,
+                "rl_max_requests": 0,
+                "rl_max_unknown_requests": 0
+            },
+            "trackAtom": ",on",
+            "rlElement": ",{rate_limit,[{max_requests,0},{max_unknown_requests,0}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],on,{rate_limit,[{max_requests,0},{max_unknown_requests,0}]}}}.",
+            "expected": {
+                "track": "on",
+                "window": null,
+                "max_requests": 0,
+                "max_unknown_requests": 0
+            }
+        },
+        {
+            "stored": {
+                "track_default": "off",
+                "rl_window": null,
+                "rl_max_requests": 0,
+                "rl_max_unknown_requests": 20
+            },
+            "trackAtom": "",
+            "rlElement": ",{rate_limit,[{max_requests,0},{max_unknown_requests,20}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],{rate_limit,[{max_requests,0},{max_unknown_requests,20}]}}}.",
+            "expected": {
+                "track": "off",
+                "window": null,
+                "max_requests": 0,
+                "max_unknown_requests": 20
+            }
+        },
+        {
+            "stored": {
+                "track_default": "auto",
+                "rl_window": null,
+                "rl_max_requests": 0,
+                "rl_max_unknown_requests": 20
+            },
+            "trackAtom": ",auto",
+            "rlElement": ",{rate_limit,[{max_requests,0},{max_unknown_requests,20}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],auto,{rate_limit,[{max_requests,0},{max_unknown_requests,20}]}}}.",
+            "expected": {
+                "track": "auto",
+                "window": null,
+                "max_requests": 0,
+                "max_unknown_requests": 20
+            }
+        },
+        {
+            "stored": {
+                "track_default": "on",
+                "rl_window": null,
+                "rl_max_requests": 0,
+                "rl_max_unknown_requests": 20
+            },
+            "trackAtom": ",on",
+            "rlElement": ",{rate_limit,[{max_requests,0},{max_unknown_requests,20}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],on,{rate_limit,[{max_requests,0},{max_unknown_requests,20}]}}}.",
+            "expected": {
+                "track": "on",
+                "window": null,
+                "max_requests": 0,
+                "max_unknown_requests": 20
+            }
+        },
+        {
+            "stored": {
+                "track_default": "off",
+                "rl_window": null,
+                "rl_max_requests": 20,
+                "rl_max_unknown_requests": null
+            },
+            "trackAtom": "",
+            "rlElement": ",{rate_limit,[{max_requests,20}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],{rate_limit,[{max_requests,20}]}}}.",
+            "expected": {
+                "track": "off",
+                "window": null,
+                "max_requests": 20,
+                "max_unknown_requests": null
+            }
+        },
+        {
+            "stored": {
+                "track_default": "auto",
+                "rl_window": null,
+                "rl_max_requests": 20,
+                "rl_max_unknown_requests": null
+            },
+            "trackAtom": ",auto",
+            "rlElement": ",{rate_limit,[{max_requests,20}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],auto,{rate_limit,[{max_requests,20}]}}}.",
+            "expected": {
+                "track": "auto",
+                "window": null,
+                "max_requests": 20,
+                "max_unknown_requests": null
+            }
+        },
+        {
+            "stored": {
+                "track_default": "on",
+                "rl_window": null,
+                "rl_max_requests": 20,
+                "rl_max_unknown_requests": null
+            },
+            "trackAtom": ",on",
+            "rlElement": ",{rate_limit,[{max_requests,20}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],on,{rate_limit,[{max_requests,20}]}}}.",
+            "expected": {
+                "track": "on",
+                "window": null,
+                "max_requests": 20,
+                "max_unknown_requests": null
+            }
+        },
+        {
+            "stored": {
+                "track_default": "off",
+                "rl_window": null,
+                "rl_max_requests": 20,
+                "rl_max_unknown_requests": 0
+            },
+            "trackAtom": "",
+            "rlElement": ",{rate_limit,[{max_requests,20},{max_unknown_requests,0}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],{rate_limit,[{max_requests,20},{max_unknown_requests,0}]}}}.",
+            "expected": {
+                "track": "off",
+                "window": null,
+                "max_requests": 20,
+                "max_unknown_requests": 0
+            }
+        },
+        {
+            "stored": {
+                "track_default": "auto",
+                "rl_window": null,
+                "rl_max_requests": 20,
+                "rl_max_unknown_requests": 0
+            },
+            "trackAtom": ",auto",
+            "rlElement": ",{rate_limit,[{max_requests,20},{max_unknown_requests,0}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],auto,{rate_limit,[{max_requests,20},{max_unknown_requests,0}]}}}.",
+            "expected": {
+                "track": "auto",
+                "window": null,
+                "max_requests": 20,
+                "max_unknown_requests": 0
+            }
+        },
+        {
+            "stored": {
+                "track_default": "on",
+                "rl_window": null,
+                "rl_max_requests": 20,
+                "rl_max_unknown_requests": 0
+            },
+            "trackAtom": ",on",
+            "rlElement": ",{rate_limit,[{max_requests,20},{max_unknown_requests,0}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],on,{rate_limit,[{max_requests,20},{max_unknown_requests,0}]}}}.",
+            "expected": {
+                "track": "on",
+                "window": null,
+                "max_requests": 20,
+                "max_unknown_requests": 0
+            }
+        },
+        {
+            "stored": {
+                "track_default": "off",
+                "rl_window": null,
+                "rl_max_requests": 20,
+                "rl_max_unknown_requests": 20
+            },
+            "trackAtom": "",
+            "rlElement": ",{rate_limit,[{max_requests,20},{max_unknown_requests,20}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],{rate_limit,[{max_requests,20},{max_unknown_requests,20}]}}}.",
+            "expected": {
+                "track": "off",
+                "window": null,
+                "max_requests": 20,
+                "max_unknown_requests": 20
+            }
+        },
+        {
+            "stored": {
+                "track_default": "auto",
+                "rl_window": null,
+                "rl_max_requests": 20,
+                "rl_max_unknown_requests": 20
+            },
+            "trackAtom": ",auto",
+            "rlElement": ",{rate_limit,[{max_requests,20},{max_unknown_requests,20}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],auto,{rate_limit,[{max_requests,20},{max_unknown_requests,20}]}}}.",
+            "expected": {
+                "track": "auto",
+                "window": null,
+                "max_requests": 20,
+                "max_unknown_requests": 20
+            }
+        },
+        {
+            "stored": {
+                "track_default": "on",
+                "rl_window": null,
+                "rl_max_requests": 20,
+                "rl_max_unknown_requests": 20
+            },
+            "trackAtom": ",on",
+            "rlElement": ",{rate_limit,[{max_requests,20},{max_unknown_requests,20}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],on,{rate_limit,[{max_requests,20},{max_unknown_requests,20}]}}}.",
+            "expected": {
+                "track": "on",
+                "window": null,
+                "max_requests": 20,
+                "max_unknown_requests": 20
+            }
+        },
+        {
+            "stored": {
+                "track_default": "off",
+                "rl_window": 1,
+                "rl_max_requests": null,
+                "rl_max_unknown_requests": null
+            },
+            "trackAtom": "",
+            "rlElement": ",{rate_limit,[{window,1}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],{rate_limit,[{window,1}]}}}.",
+            "expected": {
+                "track": "off",
+                "window": 1,
+                "max_requests": null,
+                "max_unknown_requests": null
+            }
+        },
+        {
+            "stored": {
+                "track_default": "auto",
+                "rl_window": 1,
+                "rl_max_requests": null,
+                "rl_max_unknown_requests": null
+            },
+            "trackAtom": ",auto",
+            "rlElement": ",{rate_limit,[{window,1}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],auto,{rate_limit,[{window,1}]}}}.",
+            "expected": {
+                "track": "auto",
+                "window": 1,
+                "max_requests": null,
+                "max_unknown_requests": null
+            }
+        },
+        {
+            "stored": {
+                "track_default": "on",
+                "rl_window": 1,
+                "rl_max_requests": null,
+                "rl_max_unknown_requests": null
+            },
+            "trackAtom": ",on",
+            "rlElement": ",{rate_limit,[{window,1}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],on,{rate_limit,[{window,1}]}}}.",
+            "expected": {
+                "track": "on",
+                "window": 1,
+                "max_requests": null,
+                "max_unknown_requests": null
+            }
+        },
+        {
+            "stored": {
+                "track_default": "off",
+                "rl_window": 1,
+                "rl_max_requests": null,
+                "rl_max_unknown_requests": 0
+            },
+            "trackAtom": "",
+            "rlElement": ",{rate_limit,[{window,1},{max_unknown_requests,0}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],{rate_limit,[{window,1},{max_unknown_requests,0}]}}}.",
+            "expected": {
+                "track": "off",
+                "window": 1,
+                "max_requests": null,
+                "max_unknown_requests": 0
+            }
+        },
+        {
+            "stored": {
+                "track_default": "auto",
+                "rl_window": 1,
+                "rl_max_requests": null,
+                "rl_max_unknown_requests": 0
+            },
+            "trackAtom": ",auto",
+            "rlElement": ",{rate_limit,[{window,1},{max_unknown_requests,0}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],auto,{rate_limit,[{window,1},{max_unknown_requests,0}]}}}.",
+            "expected": {
+                "track": "auto",
+                "window": 1,
+                "max_requests": null,
+                "max_unknown_requests": 0
+            }
+        },
+        {
+            "stored": {
+                "track_default": "on",
+                "rl_window": 1,
+                "rl_max_requests": null,
+                "rl_max_unknown_requests": 0
+            },
+            "trackAtom": ",on",
+            "rlElement": ",{rate_limit,[{window,1},{max_unknown_requests,0}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],on,{rate_limit,[{window,1},{max_unknown_requests,0}]}}}.",
+            "expected": {
+                "track": "on",
+                "window": 1,
+                "max_requests": null,
+                "max_unknown_requests": 0
+            }
+        },
+        {
+            "stored": {
+                "track_default": "off",
+                "rl_window": 1,
+                "rl_max_requests": null,
+                "rl_max_unknown_requests": 20
+            },
+            "trackAtom": "",
+            "rlElement": ",{rate_limit,[{window,1},{max_unknown_requests,20}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],{rate_limit,[{window,1},{max_unknown_requests,20}]}}}.",
+            "expected": {
+                "track": "off",
+                "window": 1,
+                "max_requests": null,
+                "max_unknown_requests": 20
+            }
+        },
+        {
+            "stored": {
+                "track_default": "auto",
+                "rl_window": 1,
+                "rl_max_requests": null,
+                "rl_max_unknown_requests": 20
+            },
+            "trackAtom": ",auto",
+            "rlElement": ",{rate_limit,[{window,1},{max_unknown_requests,20}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],auto,{rate_limit,[{window,1},{max_unknown_requests,20}]}}}.",
+            "expected": {
+                "track": "auto",
+                "window": 1,
+                "max_requests": null,
+                "max_unknown_requests": 20
+            }
+        },
+        {
+            "stored": {
+                "track_default": "on",
+                "rl_window": 1,
+                "rl_max_requests": null,
+                "rl_max_unknown_requests": 20
+            },
+            "trackAtom": ",on",
+            "rlElement": ",{rate_limit,[{window,1},{max_unknown_requests,20}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],on,{rate_limit,[{window,1},{max_unknown_requests,20}]}}}.",
+            "expected": {
+                "track": "on",
+                "window": 1,
+                "max_requests": null,
+                "max_unknown_requests": 20
+            }
+        },
+        {
+            "stored": {
+                "track_default": "off",
+                "rl_window": 1,
+                "rl_max_requests": 0,
+                "rl_max_unknown_requests": null
+            },
+            "trackAtom": "",
+            "rlElement": ",{rate_limit,[{window,1},{max_requests,0}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],{rate_limit,[{window,1},{max_requests,0}]}}}.",
+            "expected": {
+                "track": "off",
+                "window": 1,
+                "max_requests": 0,
+                "max_unknown_requests": null
+            }
+        },
+        {
+            "stored": {
+                "track_default": "auto",
+                "rl_window": 1,
+                "rl_max_requests": 0,
+                "rl_max_unknown_requests": null
+            },
+            "trackAtom": ",auto",
+            "rlElement": ",{rate_limit,[{window,1},{max_requests,0}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],auto,{rate_limit,[{window,1},{max_requests,0}]}}}.",
+            "expected": {
+                "track": "auto",
+                "window": 1,
+                "max_requests": 0,
+                "max_unknown_requests": null
+            }
+        },
+        {
+            "stored": {
+                "track_default": "on",
+                "rl_window": 1,
+                "rl_max_requests": 0,
+                "rl_max_unknown_requests": null
+            },
+            "trackAtom": ",on",
+            "rlElement": ",{rate_limit,[{window,1},{max_requests,0}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],on,{rate_limit,[{window,1},{max_requests,0}]}}}.",
+            "expected": {
+                "track": "on",
+                "window": 1,
+                "max_requests": 0,
+                "max_unknown_requests": null
+            }
+        },
+        {
+            "stored": {
+                "track_default": "off",
+                "rl_window": 1,
+                "rl_max_requests": 0,
+                "rl_max_unknown_requests": 0
+            },
+            "trackAtom": "",
+            "rlElement": ",{rate_limit,[{window,1},{max_requests,0},{max_unknown_requests,0}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],{rate_limit,[{window,1},{max_requests,0},{max_unknown_requests,0}]}}}.",
+            "expected": {
+                "track": "off",
+                "window": 1,
+                "max_requests": 0,
+                "max_unknown_requests": 0
+            }
+        },
+        {
+            "stored": {
+                "track_default": "auto",
+                "rl_window": 1,
+                "rl_max_requests": 0,
+                "rl_max_unknown_requests": 0
+            },
+            "trackAtom": ",auto",
+            "rlElement": ",{rate_limit,[{window,1},{max_requests,0},{max_unknown_requests,0}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],auto,{rate_limit,[{window,1},{max_requests,0},{max_unknown_requests,0}]}}}.",
+            "expected": {
+                "track": "auto",
+                "window": 1,
+                "max_requests": 0,
+                "max_unknown_requests": 0
+            }
+        },
+        {
+            "stored": {
+                "track_default": "on",
+                "rl_window": 1,
+                "rl_max_requests": 0,
+                "rl_max_unknown_requests": 0
+            },
+            "trackAtom": ",on",
+            "rlElement": ",{rate_limit,[{window,1},{max_requests,0},{max_unknown_requests,0}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],on,{rate_limit,[{window,1},{max_requests,0},{max_unknown_requests,0}]}}}.",
+            "expected": {
+                "track": "on",
+                "window": 1,
+                "max_requests": 0,
+                "max_unknown_requests": 0
+            }
+        },
+        {
+            "stored": {
+                "track_default": "off",
+                "rl_window": 1,
+                "rl_max_requests": 0,
+                "rl_max_unknown_requests": 20
+            },
+            "trackAtom": "",
+            "rlElement": ",{rate_limit,[{window,1},{max_requests,0},{max_unknown_requests,20}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],{rate_limit,[{window,1},{max_requests,0},{max_unknown_requests,20}]}}}.",
+            "expected": {
+                "track": "off",
+                "window": 1,
+                "max_requests": 0,
+                "max_unknown_requests": 20
+            }
+        },
+        {
+            "stored": {
+                "track_default": "auto",
+                "rl_window": 1,
+                "rl_max_requests": 0,
+                "rl_max_unknown_requests": 20
+            },
+            "trackAtom": ",auto",
+            "rlElement": ",{rate_limit,[{window,1},{max_requests,0},{max_unknown_requests,20}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],auto,{rate_limit,[{window,1},{max_requests,0},{max_unknown_requests,20}]}}}.",
+            "expected": {
+                "track": "auto",
+                "window": 1,
+                "max_requests": 0,
+                "max_unknown_requests": 20
+            }
+        },
+        {
+            "stored": {
+                "track_default": "on",
+                "rl_window": 1,
+                "rl_max_requests": 0,
+                "rl_max_unknown_requests": 20
+            },
+            "trackAtom": ",on",
+            "rlElement": ",{rate_limit,[{window,1},{max_requests,0},{max_unknown_requests,20}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],on,{rate_limit,[{window,1},{max_requests,0},{max_unknown_requests,20}]}}}.",
+            "expected": {
+                "track": "on",
+                "window": 1,
+                "max_requests": 0,
+                "max_unknown_requests": 20
+            }
+        },
+        {
+            "stored": {
+                "track_default": "off",
+                "rl_window": 1,
+                "rl_max_requests": 20,
+                "rl_max_unknown_requests": null
+            },
+            "trackAtom": "",
+            "rlElement": ",{rate_limit,[{window,1},{max_requests,20}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],{rate_limit,[{window,1},{max_requests,20}]}}}.",
+            "expected": {
+                "track": "off",
+                "window": 1,
+                "max_requests": 20,
+                "max_unknown_requests": null
+            }
+        },
+        {
+            "stored": {
+                "track_default": "auto",
+                "rl_window": 1,
+                "rl_max_requests": 20,
+                "rl_max_unknown_requests": null
+            },
+            "trackAtom": ",auto",
+            "rlElement": ",{rate_limit,[{window,1},{max_requests,20}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],auto,{rate_limit,[{window,1},{max_requests,20}]}}}.",
+            "expected": {
+                "track": "auto",
+                "window": 1,
+                "max_requests": 20,
+                "max_unknown_requests": null
+            }
+        },
+        {
+            "stored": {
+                "track_default": "on",
+                "rl_window": 1,
+                "rl_max_requests": 20,
+                "rl_max_unknown_requests": null
+            },
+            "trackAtom": ",on",
+            "rlElement": ",{rate_limit,[{window,1},{max_requests,20}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],on,{rate_limit,[{window,1},{max_requests,20}]}}}.",
+            "expected": {
+                "track": "on",
+                "window": 1,
+                "max_requests": 20,
+                "max_unknown_requests": null
+            }
+        },
+        {
+            "stored": {
+                "track_default": "off",
+                "rl_window": 1,
+                "rl_max_requests": 20,
+                "rl_max_unknown_requests": 0
+            },
+            "trackAtom": "",
+            "rlElement": ",{rate_limit,[{window,1},{max_requests,20},{max_unknown_requests,0}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],{rate_limit,[{window,1},{max_requests,20},{max_unknown_requests,0}]}}}.",
+            "expected": {
+                "track": "off",
+                "window": 1,
+                "max_requests": 20,
+                "max_unknown_requests": 0
+            }
+        },
+        {
+            "stored": {
+                "track_default": "auto",
+                "rl_window": 1,
+                "rl_max_requests": 20,
+                "rl_max_unknown_requests": 0
+            },
+            "trackAtom": ",auto",
+            "rlElement": ",{rate_limit,[{window,1},{max_requests,20},{max_unknown_requests,0}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],auto,{rate_limit,[{window,1},{max_requests,20},{max_unknown_requests,0}]}}}.",
+            "expected": {
+                "track": "auto",
+                "window": 1,
+                "max_requests": 20,
+                "max_unknown_requests": 0
+            }
+        },
+        {
+            "stored": {
+                "track_default": "on",
+                "rl_window": 1,
+                "rl_max_requests": 20,
+                "rl_max_unknown_requests": 0
+            },
+            "trackAtom": ",on",
+            "rlElement": ",{rate_limit,[{window,1},{max_requests,20},{max_unknown_requests,0}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],on,{rate_limit,[{window,1},{max_requests,20},{max_unknown_requests,0}]}}}.",
+            "expected": {
+                "track": "on",
+                "window": 1,
+                "max_requests": 20,
+                "max_unknown_requests": 0
+            }
+        },
+        {
+            "stored": {
+                "track_default": "off",
+                "rl_window": 1,
+                "rl_max_requests": 20,
+                "rl_max_unknown_requests": 20
+            },
+            "trackAtom": "",
+            "rlElement": ",{rate_limit,[{window,1},{max_requests,20},{max_unknown_requests,20}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],{rate_limit,[{window,1},{max_requests,20},{max_unknown_requests,20}]}}}.",
+            "expected": {
+                "track": "off",
+                "window": 1,
+                "max_requests": 20,
+                "max_unknown_requests": 20
+            }
+        },
+        {
+            "stored": {
+                "track_default": "auto",
+                "rl_window": 1,
+                "rl_max_requests": 20,
+                "rl_max_unknown_requests": 20
+            },
+            "trackAtom": ",auto",
+            "rlElement": ",{rate_limit,[{window,1},{max_requests,20},{max_unknown_requests,20}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],auto,{rate_limit,[{window,1},{max_requests,20},{max_unknown_requests,20}]}}}.",
+            "expected": {
+                "track": "auto",
+                "window": 1,
+                "max_requests": 20,
+                "max_unknown_requests": 20
+            }
+        },
+        {
+            "stored": {
+                "track_default": "on",
+                "rl_window": 1,
+                "rl_max_requests": 20,
+                "rl_max_unknown_requests": 20
+            },
+            "trackAtom": ",on",
+            "rlElement": ",{rate_limit,[{window,1},{max_requests,20},{max_unknown_requests,20}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],on,{rate_limit,[{window,1},{max_requests,20},{max_unknown_requests,20}]}}}.",
+            "expected": {
+                "track": "on",
+                "window": 1,
+                "max_requests": 20,
+                "max_unknown_requests": 20
+            }
+        },
+        {
+            "stored": {
+                "track_default": "off",
+                "rl_window": 60,
+                "rl_max_requests": null,
+                "rl_max_unknown_requests": null
+            },
+            "trackAtom": "",
+            "rlElement": ",{rate_limit,[{window,60}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],{rate_limit,[{window,60}]}}}.",
+            "expected": {
+                "track": "off",
+                "window": 60,
+                "max_requests": null,
+                "max_unknown_requests": null
+            }
+        },
+        {
+            "stored": {
+                "track_default": "auto",
+                "rl_window": 60,
+                "rl_max_requests": null,
+                "rl_max_unknown_requests": null
+            },
+            "trackAtom": ",auto",
+            "rlElement": ",{rate_limit,[{window,60}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],auto,{rate_limit,[{window,60}]}}}.",
+            "expected": {
+                "track": "auto",
+                "window": 60,
+                "max_requests": null,
+                "max_unknown_requests": null
+            }
+        },
+        {
+            "stored": {
+                "track_default": "on",
+                "rl_window": 60,
+                "rl_max_requests": null,
+                "rl_max_unknown_requests": null
+            },
+            "trackAtom": ",on",
+            "rlElement": ",{rate_limit,[{window,60}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],on,{rate_limit,[{window,60}]}}}.",
+            "expected": {
+                "track": "on",
+                "window": 60,
+                "max_requests": null,
+                "max_unknown_requests": null
+            }
+        },
+        {
+            "stored": {
+                "track_default": "off",
+                "rl_window": 60,
+                "rl_max_requests": null,
+                "rl_max_unknown_requests": 0
+            },
+            "trackAtom": "",
+            "rlElement": ",{rate_limit,[{window,60},{max_unknown_requests,0}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],{rate_limit,[{window,60},{max_unknown_requests,0}]}}}.",
+            "expected": {
+                "track": "off",
+                "window": 60,
+                "max_requests": null,
+                "max_unknown_requests": 0
+            }
+        },
+        {
+            "stored": {
+                "track_default": "auto",
+                "rl_window": 60,
+                "rl_max_requests": null,
+                "rl_max_unknown_requests": 0
+            },
+            "trackAtom": ",auto",
+            "rlElement": ",{rate_limit,[{window,60},{max_unknown_requests,0}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],auto,{rate_limit,[{window,60},{max_unknown_requests,0}]}}}.",
+            "expected": {
+                "track": "auto",
+                "window": 60,
+                "max_requests": null,
+                "max_unknown_requests": 0
+            }
+        },
+        {
+            "stored": {
+                "track_default": "on",
+                "rl_window": 60,
+                "rl_max_requests": null,
+                "rl_max_unknown_requests": 0
+            },
+            "trackAtom": ",on",
+            "rlElement": ",{rate_limit,[{window,60},{max_unknown_requests,0}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],on,{rate_limit,[{window,60},{max_unknown_requests,0}]}}}.",
+            "expected": {
+                "track": "on",
+                "window": 60,
+                "max_requests": null,
+                "max_unknown_requests": 0
+            }
+        },
+        {
+            "stored": {
+                "track_default": "off",
+                "rl_window": 60,
+                "rl_max_requests": null,
+                "rl_max_unknown_requests": 20
+            },
+            "trackAtom": "",
+            "rlElement": ",{rate_limit,[{window,60},{max_unknown_requests,20}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],{rate_limit,[{window,60},{max_unknown_requests,20}]}}}.",
+            "expected": {
+                "track": "off",
+                "window": 60,
+                "max_requests": null,
+                "max_unknown_requests": 20
+            }
+        },
+        {
+            "stored": {
+                "track_default": "auto",
+                "rl_window": 60,
+                "rl_max_requests": null,
+                "rl_max_unknown_requests": 20
+            },
+            "trackAtom": ",auto",
+            "rlElement": ",{rate_limit,[{window,60},{max_unknown_requests,20}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],auto,{rate_limit,[{window,60},{max_unknown_requests,20}]}}}.",
+            "expected": {
+                "track": "auto",
+                "window": 60,
+                "max_requests": null,
+                "max_unknown_requests": 20
+            }
+        },
+        {
+            "stored": {
+                "track_default": "on",
+                "rl_window": 60,
+                "rl_max_requests": null,
+                "rl_max_unknown_requests": 20
+            },
+            "trackAtom": ",on",
+            "rlElement": ",{rate_limit,[{window,60},{max_unknown_requests,20}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],on,{rate_limit,[{window,60},{max_unknown_requests,20}]}}}.",
+            "expected": {
+                "track": "on",
+                "window": 60,
+                "max_requests": null,
+                "max_unknown_requests": 20
+            }
+        },
+        {
+            "stored": {
+                "track_default": "off",
+                "rl_window": 60,
+                "rl_max_requests": 0,
+                "rl_max_unknown_requests": null
+            },
+            "trackAtom": "",
+            "rlElement": ",{rate_limit,[{window,60},{max_requests,0}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],{rate_limit,[{window,60},{max_requests,0}]}}}.",
+            "expected": {
+                "track": "off",
+                "window": 60,
+                "max_requests": 0,
+                "max_unknown_requests": null
+            }
+        },
+        {
+            "stored": {
+                "track_default": "auto",
+                "rl_window": 60,
+                "rl_max_requests": 0,
+                "rl_max_unknown_requests": null
+            },
+            "trackAtom": ",auto",
+            "rlElement": ",{rate_limit,[{window,60},{max_requests,0}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],auto,{rate_limit,[{window,60},{max_requests,0}]}}}.",
+            "expected": {
+                "track": "auto",
+                "window": 60,
+                "max_requests": 0,
+                "max_unknown_requests": null
+            }
+        },
+        {
+            "stored": {
+                "track_default": "on",
+                "rl_window": 60,
+                "rl_max_requests": 0,
+                "rl_max_unknown_requests": null
+            },
+            "trackAtom": ",on",
+            "rlElement": ",{rate_limit,[{window,60},{max_requests,0}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],on,{rate_limit,[{window,60},{max_requests,0}]}}}.",
+            "expected": {
+                "track": "on",
+                "window": 60,
+                "max_requests": 0,
+                "max_unknown_requests": null
+            }
+        },
+        {
+            "stored": {
+                "track_default": "off",
+                "rl_window": 60,
+                "rl_max_requests": 0,
+                "rl_max_unknown_requests": 0
+            },
+            "trackAtom": "",
+            "rlElement": ",{rate_limit,[{window,60},{max_requests,0},{max_unknown_requests,0}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],{rate_limit,[{window,60},{max_requests,0},{max_unknown_requests,0}]}}}.",
+            "expected": {
+                "track": "off",
+                "window": 60,
+                "max_requests": 0,
+                "max_unknown_requests": 0
+            }
+        },
+        {
+            "stored": {
+                "track_default": "auto",
+                "rl_window": 60,
+                "rl_max_requests": 0,
+                "rl_max_unknown_requests": 0
+            },
+            "trackAtom": ",auto",
+            "rlElement": ",{rate_limit,[{window,60},{max_requests,0},{max_unknown_requests,0}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],auto,{rate_limit,[{window,60},{max_requests,0},{max_unknown_requests,0}]}}}.",
+            "expected": {
+                "track": "auto",
+                "window": 60,
+                "max_requests": 0,
+                "max_unknown_requests": 0
+            }
+        },
+        {
+            "stored": {
+                "track_default": "on",
+                "rl_window": 60,
+                "rl_max_requests": 0,
+                "rl_max_unknown_requests": 0
+            },
+            "trackAtom": ",on",
+            "rlElement": ",{rate_limit,[{window,60},{max_requests,0},{max_unknown_requests,0}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],on,{rate_limit,[{window,60},{max_requests,0},{max_unknown_requests,0}]}}}.",
+            "expected": {
+                "track": "on",
+                "window": 60,
+                "max_requests": 0,
+                "max_unknown_requests": 0
+            }
+        },
+        {
+            "stored": {
+                "track_default": "off",
+                "rl_window": 60,
+                "rl_max_requests": 0,
+                "rl_max_unknown_requests": 20
+            },
+            "trackAtom": "",
+            "rlElement": ",{rate_limit,[{window,60},{max_requests,0},{max_unknown_requests,20}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],{rate_limit,[{window,60},{max_requests,0},{max_unknown_requests,20}]}}}.",
+            "expected": {
+                "track": "off",
+                "window": 60,
+                "max_requests": 0,
+                "max_unknown_requests": 20
+            }
+        },
+        {
+            "stored": {
+                "track_default": "auto",
+                "rl_window": 60,
+                "rl_max_requests": 0,
+                "rl_max_unknown_requests": 20
+            },
+            "trackAtom": ",auto",
+            "rlElement": ",{rate_limit,[{window,60},{max_requests,0},{max_unknown_requests,20}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],auto,{rate_limit,[{window,60},{max_requests,0},{max_unknown_requests,20}]}}}.",
+            "expected": {
+                "track": "auto",
+                "window": 60,
+                "max_requests": 0,
+                "max_unknown_requests": 20
+            }
+        },
+        {
+            "stored": {
+                "track_default": "on",
+                "rl_window": 60,
+                "rl_max_requests": 0,
+                "rl_max_unknown_requests": 20
+            },
+            "trackAtom": ",on",
+            "rlElement": ",{rate_limit,[{window,60},{max_requests,0},{max_unknown_requests,20}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],on,{rate_limit,[{window,60},{max_requests,0},{max_unknown_requests,20}]}}}.",
+            "expected": {
+                "track": "on",
+                "window": 60,
+                "max_requests": 0,
+                "max_unknown_requests": 20
+            }
+        },
+        {
+            "stored": {
+                "track_default": "off",
+                "rl_window": 60,
+                "rl_max_requests": 20,
+                "rl_max_unknown_requests": null
+            },
+            "trackAtom": "",
+            "rlElement": ",{rate_limit,[{window,60},{max_requests,20}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],{rate_limit,[{window,60},{max_requests,20}]}}}.",
+            "expected": {
+                "track": "off",
+                "window": 60,
+                "max_requests": 20,
+                "max_unknown_requests": null
+            }
+        },
+        {
+            "stored": {
+                "track_default": "auto",
+                "rl_window": 60,
+                "rl_max_requests": 20,
+                "rl_max_unknown_requests": null
+            },
+            "trackAtom": ",auto",
+            "rlElement": ",{rate_limit,[{window,60},{max_requests,20}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],auto,{rate_limit,[{window,60},{max_requests,20}]}}}.",
+            "expected": {
+                "track": "auto",
+                "window": 60,
+                "max_requests": 20,
+                "max_unknown_requests": null
+            }
+        },
+        {
+            "stored": {
+                "track_default": "on",
+                "rl_window": 60,
+                "rl_max_requests": 20,
+                "rl_max_unknown_requests": null
+            },
+            "trackAtom": ",on",
+            "rlElement": ",{rate_limit,[{window,60},{max_requests,20}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],on,{rate_limit,[{window,60},{max_requests,20}]}}}.",
+            "expected": {
+                "track": "on",
+                "window": 60,
+                "max_requests": 20,
+                "max_unknown_requests": null
+            }
+        },
+        {
+            "stored": {
+                "track_default": "off",
+                "rl_window": 60,
+                "rl_max_requests": 20,
+                "rl_max_unknown_requests": 0
+            },
+            "trackAtom": "",
+            "rlElement": ",{rate_limit,[{window,60},{max_requests,20},{max_unknown_requests,0}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],{rate_limit,[{window,60},{max_requests,20},{max_unknown_requests,0}]}}}.",
+            "expected": {
+                "track": "off",
+                "window": 60,
+                "max_requests": 20,
+                "max_unknown_requests": 0
+            }
+        },
+        {
+            "stored": {
+                "track_default": "auto",
+                "rl_window": 60,
+                "rl_max_requests": 20,
+                "rl_max_unknown_requests": 0
+            },
+            "trackAtom": ",auto",
+            "rlElement": ",{rate_limit,[{window,60},{max_requests,20},{max_unknown_requests,0}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],auto,{rate_limit,[{window,60},{max_requests,20},{max_unknown_requests,0}]}}}.",
+            "expected": {
+                "track": "auto",
+                "window": 60,
+                "max_requests": 20,
+                "max_unknown_requests": 0
+            }
+        },
+        {
+            "stored": {
+                "track_default": "on",
+                "rl_window": 60,
+                "rl_max_requests": 20,
+                "rl_max_unknown_requests": 0
+            },
+            "trackAtom": ",on",
+            "rlElement": ",{rate_limit,[{window,60},{max_requests,20},{max_unknown_requests,0}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],on,{rate_limit,[{window,60},{max_requests,20},{max_unknown_requests,0}]}}}.",
+            "expected": {
+                "track": "on",
+                "window": 60,
+                "max_requests": 20,
+                "max_unknown_requests": 0
+            }
+        },
+        {
+            "stored": {
+                "track_default": "off",
+                "rl_window": 60,
+                "rl_max_requests": 20,
+                "rl_max_unknown_requests": 20
+            },
+            "trackAtom": "",
+            "rlElement": ",{rate_limit,[{window,60},{max_requests,20},{max_unknown_requests,20}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],{rate_limit,[{window,60},{max_requests,20},{max_unknown_requests,20}]}}}.",
+            "expected": {
+                "track": "off",
+                "window": 60,
+                "max_requests": 20,
+                "max_unknown_requests": 20
+            }
+        },
+        {
+            "stored": {
+                "track_default": "auto",
+                "rl_window": 60,
+                "rl_max_requests": 20,
+                "rl_max_unknown_requests": 20
+            },
+            "trackAtom": ",auto",
+            "rlElement": ",{rate_limit,[{window,60},{max_requests,20},{max_unknown_requests,20}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],auto,{rate_limit,[{window,60},{max_requests,20},{max_unknown_requests,20}]}}}.",
+            "expected": {
+                "track": "auto",
+                "window": 60,
+                "max_requests": 20,
+                "max_unknown_requests": 20
+            }
+        },
+        {
+            "stored": {
+                "track_default": "on",
+                "rl_window": 60,
+                "rl_max_requests": 20,
+                "rl_max_unknown_requests": 20
+            },
+            "trackAtom": ",on",
+            "rlElement": ",{rate_limit,[{window,60},{max_requests,20},{max_unknown_requests,20}]}",
+            "line": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"],on,{rate_limit,[{window,60},{max_requests,20},{max_unknown_requests,20}]}}}.",
+            "expected": {
+                "track": "on",
+                "window": 60,
+                "max_requests": 20,
+                "max_unknown_requests": 20
+            }
+        }
+    ],
+    "rpz": [
+        {
+            "stored": {
+                "track_sources": "Inherit",
+                "rl_window": null,
+                "rl_max_requests": null
+            },
+            "trackAtom": "",
+            "rlElement": "",
+            "line": "{rpz,{\"feed.example\",3600,60,86400,30,\"true\",\"true\",\"nxdomain\",[],\"fqdn\",900,300,[\"src1\",\"src2\"],[],[\"wl1\"]}}.",
+            "expected": {
+                "track": "Inherit",
+                "window": null,
+                "max_requests": null
+            }
+        },
+        {
+            "stored": {
+                "track_sources": "auto",
+                "rl_window": null,
+                "rl_max_requests": null
+            },
+            "trackAtom": ",auto",
+            "rlElement": "",
+            "line": "{rpz,{\"feed.example\",3600,60,86400,30,\"true\",\"true\",\"nxdomain\",[],\"fqdn\",900,300,[\"src1\",\"src2\"],[],[\"wl1\"],auto}}.",
+            "expected": {
+                "track": "auto",
+                "window": null,
+                "max_requests": null
+            }
+        },
+        {
+            "stored": {
+                "track_sources": "true",
+                "rl_window": null,
+                "rl_max_requests": null
+            },
+            "trackAtom": ",true",
+            "rlElement": "",
+            "line": "{rpz,{\"feed.example\",3600,60,86400,30,\"true\",\"true\",\"nxdomain\",[],\"fqdn\",900,300,[\"src1\",\"src2\"],[],[\"wl1\"],true}}.",
+            "expected": {
+                "track": "true",
+                "window": null,
+                "max_requests": null
+            }
+        },
+        {
+            "stored": {
+                "track_sources": "false",
+                "rl_window": null,
+                "rl_max_requests": null
+            },
+            "trackAtom": ",false",
+            "rlElement": "",
+            "line": "{rpz,{\"feed.example\",3600,60,86400,30,\"true\",\"true\",\"nxdomain\",[],\"fqdn\",900,300,[\"src1\",\"src2\"],[],[\"wl1\"],false}}.",
+            "expected": {
+                "track": "false",
+                "window": null,
+                "max_requests": null
+            }
+        },
+        {
+            "stored": {
+                "track_sources": "Inherit",
+                "rl_window": null,
+                "rl_max_requests": 0
+            },
+            "trackAtom": "",
+            "rlElement": ",{rate_limit,[{max_requests,0}]}",
+            "line": "{rpz,{\"feed.example\",3600,60,86400,30,\"true\",\"true\",\"nxdomain\",[],\"fqdn\",900,300,[\"src1\",\"src2\"],[],[\"wl1\"],{rate_limit,[{max_requests,0}]}}}.",
+            "expected": {
+                "track": "Inherit",
+                "window": null,
+                "max_requests": 0
+            }
+        },
+        {
+            "stored": {
+                "track_sources": "auto",
+                "rl_window": null,
+                "rl_max_requests": 0
+            },
+            "trackAtom": ",auto",
+            "rlElement": ",{rate_limit,[{max_requests,0}]}",
+            "line": "{rpz,{\"feed.example\",3600,60,86400,30,\"true\",\"true\",\"nxdomain\",[],\"fqdn\",900,300,[\"src1\",\"src2\"],[],[\"wl1\"],auto,{rate_limit,[{max_requests,0}]}}}.",
+            "expected": {
+                "track": "auto",
+                "window": null,
+                "max_requests": 0
+            }
+        },
+        {
+            "stored": {
+                "track_sources": "true",
+                "rl_window": null,
+                "rl_max_requests": 0
+            },
+            "trackAtom": ",true",
+            "rlElement": ",{rate_limit,[{max_requests,0}]}",
+            "line": "{rpz,{\"feed.example\",3600,60,86400,30,\"true\",\"true\",\"nxdomain\",[],\"fqdn\",900,300,[\"src1\",\"src2\"],[],[\"wl1\"],true,{rate_limit,[{max_requests,0}]}}}.",
+            "expected": {
+                "track": "true",
+                "window": null,
+                "max_requests": 0
+            }
+        },
+        {
+            "stored": {
+                "track_sources": "false",
+                "rl_window": null,
+                "rl_max_requests": 0
+            },
+            "trackAtom": ",false",
+            "rlElement": ",{rate_limit,[{max_requests,0}]}",
+            "line": "{rpz,{\"feed.example\",3600,60,86400,30,\"true\",\"true\",\"nxdomain\",[],\"fqdn\",900,300,[\"src1\",\"src2\"],[],[\"wl1\"],false,{rate_limit,[{max_requests,0}]}}}.",
+            "expected": {
+                "track": "false",
+                "window": null,
+                "max_requests": 0
+            }
+        },
+        {
+            "stored": {
+                "track_sources": "Inherit",
+                "rl_window": null,
+                "rl_max_requests": 20
+            },
+            "trackAtom": "",
+            "rlElement": ",{rate_limit,[{max_requests,20}]}",
+            "line": "{rpz,{\"feed.example\",3600,60,86400,30,\"true\",\"true\",\"nxdomain\",[],\"fqdn\",900,300,[\"src1\",\"src2\"],[],[\"wl1\"],{rate_limit,[{max_requests,20}]}}}.",
+            "expected": {
+                "track": "Inherit",
+                "window": null,
+                "max_requests": 20
+            }
+        },
+        {
+            "stored": {
+                "track_sources": "auto",
+                "rl_window": null,
+                "rl_max_requests": 20
+            },
+            "trackAtom": ",auto",
+            "rlElement": ",{rate_limit,[{max_requests,20}]}",
+            "line": "{rpz,{\"feed.example\",3600,60,86400,30,\"true\",\"true\",\"nxdomain\",[],\"fqdn\",900,300,[\"src1\",\"src2\"],[],[\"wl1\"],auto,{rate_limit,[{max_requests,20}]}}}.",
+            "expected": {
+                "track": "auto",
+                "window": null,
+                "max_requests": 20
+            }
+        },
+        {
+            "stored": {
+                "track_sources": "true",
+                "rl_window": null,
+                "rl_max_requests": 20
+            },
+            "trackAtom": ",true",
+            "rlElement": ",{rate_limit,[{max_requests,20}]}",
+            "line": "{rpz,{\"feed.example\",3600,60,86400,30,\"true\",\"true\",\"nxdomain\",[],\"fqdn\",900,300,[\"src1\",\"src2\"],[],[\"wl1\"],true,{rate_limit,[{max_requests,20}]}}}.",
+            "expected": {
+                "track": "true",
+                "window": null,
+                "max_requests": 20
+            }
+        },
+        {
+            "stored": {
+                "track_sources": "false",
+                "rl_window": null,
+                "rl_max_requests": 20
+            },
+            "trackAtom": ",false",
+            "rlElement": ",{rate_limit,[{max_requests,20}]}",
+            "line": "{rpz,{\"feed.example\",3600,60,86400,30,\"true\",\"true\",\"nxdomain\",[],\"fqdn\",900,300,[\"src1\",\"src2\"],[],[\"wl1\"],false,{rate_limit,[{max_requests,20}]}}}.",
+            "expected": {
+                "track": "false",
+                "window": null,
+                "max_requests": 20
+            }
+        },
+        {
+            "stored": {
+                "track_sources": "Inherit",
+                "rl_window": 1,
+                "rl_max_requests": null
+            },
+            "trackAtom": "",
+            "rlElement": ",{rate_limit,[{window,1}]}",
+            "line": "{rpz,{\"feed.example\",3600,60,86400,30,\"true\",\"true\",\"nxdomain\",[],\"fqdn\",900,300,[\"src1\",\"src2\"],[],[\"wl1\"],{rate_limit,[{window,1}]}}}.",
+            "expected": {
+                "track": "Inherit",
+                "window": 1,
+                "max_requests": null
+            }
+        },
+        {
+            "stored": {
+                "track_sources": "auto",
+                "rl_window": 1,
+                "rl_max_requests": null
+            },
+            "trackAtom": ",auto",
+            "rlElement": ",{rate_limit,[{window,1}]}",
+            "line": "{rpz,{\"feed.example\",3600,60,86400,30,\"true\",\"true\",\"nxdomain\",[],\"fqdn\",900,300,[\"src1\",\"src2\"],[],[\"wl1\"],auto,{rate_limit,[{window,1}]}}}.",
+            "expected": {
+                "track": "auto",
+                "window": 1,
+                "max_requests": null
+            }
+        },
+        {
+            "stored": {
+                "track_sources": "true",
+                "rl_window": 1,
+                "rl_max_requests": null
+            },
+            "trackAtom": ",true",
+            "rlElement": ",{rate_limit,[{window,1}]}",
+            "line": "{rpz,{\"feed.example\",3600,60,86400,30,\"true\",\"true\",\"nxdomain\",[],\"fqdn\",900,300,[\"src1\",\"src2\"],[],[\"wl1\"],true,{rate_limit,[{window,1}]}}}.",
+            "expected": {
+                "track": "true",
+                "window": 1,
+                "max_requests": null
+            }
+        },
+        {
+            "stored": {
+                "track_sources": "false",
+                "rl_window": 1,
+                "rl_max_requests": null
+            },
+            "trackAtom": ",false",
+            "rlElement": ",{rate_limit,[{window,1}]}",
+            "line": "{rpz,{\"feed.example\",3600,60,86400,30,\"true\",\"true\",\"nxdomain\",[],\"fqdn\",900,300,[\"src1\",\"src2\"],[],[\"wl1\"],false,{rate_limit,[{window,1}]}}}.",
+            "expected": {
+                "track": "false",
+                "window": 1,
+                "max_requests": null
+            }
+        },
+        {
+            "stored": {
+                "track_sources": "Inherit",
+                "rl_window": 1,
+                "rl_max_requests": 0
+            },
+            "trackAtom": "",
+            "rlElement": ",{rate_limit,[{window,1},{max_requests,0}]}",
+            "line": "{rpz,{\"feed.example\",3600,60,86400,30,\"true\",\"true\",\"nxdomain\",[],\"fqdn\",900,300,[\"src1\",\"src2\"],[],[\"wl1\"],{rate_limit,[{window,1},{max_requests,0}]}}}.",
+            "expected": {
+                "track": "Inherit",
+                "window": 1,
+                "max_requests": 0
+            }
+        },
+        {
+            "stored": {
+                "track_sources": "auto",
+                "rl_window": 1,
+                "rl_max_requests": 0
+            },
+            "trackAtom": ",auto",
+            "rlElement": ",{rate_limit,[{window,1},{max_requests,0}]}",
+            "line": "{rpz,{\"feed.example\",3600,60,86400,30,\"true\",\"true\",\"nxdomain\",[],\"fqdn\",900,300,[\"src1\",\"src2\"],[],[\"wl1\"],auto,{rate_limit,[{window,1},{max_requests,0}]}}}.",
+            "expected": {
+                "track": "auto",
+                "window": 1,
+                "max_requests": 0
+            }
+        },
+        {
+            "stored": {
+                "track_sources": "true",
+                "rl_window": 1,
+                "rl_max_requests": 0
+            },
+            "trackAtom": ",true",
+            "rlElement": ",{rate_limit,[{window,1},{max_requests,0}]}",
+            "line": "{rpz,{\"feed.example\",3600,60,86400,30,\"true\",\"true\",\"nxdomain\",[],\"fqdn\",900,300,[\"src1\",\"src2\"],[],[\"wl1\"],true,{rate_limit,[{window,1},{max_requests,0}]}}}.",
+            "expected": {
+                "track": "true",
+                "window": 1,
+                "max_requests": 0
+            }
+        },
+        {
+            "stored": {
+                "track_sources": "false",
+                "rl_window": 1,
+                "rl_max_requests": 0
+            },
+            "trackAtom": ",false",
+            "rlElement": ",{rate_limit,[{window,1},{max_requests,0}]}",
+            "line": "{rpz,{\"feed.example\",3600,60,86400,30,\"true\",\"true\",\"nxdomain\",[],\"fqdn\",900,300,[\"src1\",\"src2\"],[],[\"wl1\"],false,{rate_limit,[{window,1},{max_requests,0}]}}}.",
+            "expected": {
+                "track": "false",
+                "window": 1,
+                "max_requests": 0
+            }
+        },
+        {
+            "stored": {
+                "track_sources": "Inherit",
+                "rl_window": 1,
+                "rl_max_requests": 20
+            },
+            "trackAtom": "",
+            "rlElement": ",{rate_limit,[{window,1},{max_requests,20}]}",
+            "line": "{rpz,{\"feed.example\",3600,60,86400,30,\"true\",\"true\",\"nxdomain\",[],\"fqdn\",900,300,[\"src1\",\"src2\"],[],[\"wl1\"],{rate_limit,[{window,1},{max_requests,20}]}}}.",
+            "expected": {
+                "track": "Inherit",
+                "window": 1,
+                "max_requests": 20
+            }
+        },
+        {
+            "stored": {
+                "track_sources": "auto",
+                "rl_window": 1,
+                "rl_max_requests": 20
+            },
+            "trackAtom": ",auto",
+            "rlElement": ",{rate_limit,[{window,1},{max_requests,20}]}",
+            "line": "{rpz,{\"feed.example\",3600,60,86400,30,\"true\",\"true\",\"nxdomain\",[],\"fqdn\",900,300,[\"src1\",\"src2\"],[],[\"wl1\"],auto,{rate_limit,[{window,1},{max_requests,20}]}}}.",
+            "expected": {
+                "track": "auto",
+                "window": 1,
+                "max_requests": 20
+            }
+        },
+        {
+            "stored": {
+                "track_sources": "true",
+                "rl_window": 1,
+                "rl_max_requests": 20
+            },
+            "trackAtom": ",true",
+            "rlElement": ",{rate_limit,[{window,1},{max_requests,20}]}",
+            "line": "{rpz,{\"feed.example\",3600,60,86400,30,\"true\",\"true\",\"nxdomain\",[],\"fqdn\",900,300,[\"src1\",\"src2\"],[],[\"wl1\"],true,{rate_limit,[{window,1},{max_requests,20}]}}}.",
+            "expected": {
+                "track": "true",
+                "window": 1,
+                "max_requests": 20
+            }
+        },
+        {
+            "stored": {
+                "track_sources": "false",
+                "rl_window": 1,
+                "rl_max_requests": 20
+            },
+            "trackAtom": ",false",
+            "rlElement": ",{rate_limit,[{window,1},{max_requests,20}]}",
+            "line": "{rpz,{\"feed.example\",3600,60,86400,30,\"true\",\"true\",\"nxdomain\",[],\"fqdn\",900,300,[\"src1\",\"src2\"],[],[\"wl1\"],false,{rate_limit,[{window,1},{max_requests,20}]}}}.",
+            "expected": {
+                "track": "false",
+                "window": 1,
+                "max_requests": 20
+            }
+        },
+        {
+            "stored": {
+                "track_sources": "Inherit",
+                "rl_window": 60,
+                "rl_max_requests": null
+            },
+            "trackAtom": "",
+            "rlElement": ",{rate_limit,[{window,60}]}",
+            "line": "{rpz,{\"feed.example\",3600,60,86400,30,\"true\",\"true\",\"nxdomain\",[],\"fqdn\",900,300,[\"src1\",\"src2\"],[],[\"wl1\"],{rate_limit,[{window,60}]}}}.",
+            "expected": {
+                "track": "Inherit",
+                "window": 60,
+                "max_requests": null
+            }
+        },
+        {
+            "stored": {
+                "track_sources": "auto",
+                "rl_window": 60,
+                "rl_max_requests": null
+            },
+            "trackAtom": ",auto",
+            "rlElement": ",{rate_limit,[{window,60}]}",
+            "line": "{rpz,{\"feed.example\",3600,60,86400,30,\"true\",\"true\",\"nxdomain\",[],\"fqdn\",900,300,[\"src1\",\"src2\"],[],[\"wl1\"],auto,{rate_limit,[{window,60}]}}}.",
+            "expected": {
+                "track": "auto",
+                "window": 60,
+                "max_requests": null
+            }
+        },
+        {
+            "stored": {
+                "track_sources": "true",
+                "rl_window": 60,
+                "rl_max_requests": null
+            },
+            "trackAtom": ",true",
+            "rlElement": ",{rate_limit,[{window,60}]}",
+            "line": "{rpz,{\"feed.example\",3600,60,86400,30,\"true\",\"true\",\"nxdomain\",[],\"fqdn\",900,300,[\"src1\",\"src2\"],[],[\"wl1\"],true,{rate_limit,[{window,60}]}}}.",
+            "expected": {
+                "track": "true",
+                "window": 60,
+                "max_requests": null
+            }
+        },
+        {
+            "stored": {
+                "track_sources": "false",
+                "rl_window": 60,
+                "rl_max_requests": null
+            },
+            "trackAtom": ",false",
+            "rlElement": ",{rate_limit,[{window,60}]}",
+            "line": "{rpz,{\"feed.example\",3600,60,86400,30,\"true\",\"true\",\"nxdomain\",[],\"fqdn\",900,300,[\"src1\",\"src2\"],[],[\"wl1\"],false,{rate_limit,[{window,60}]}}}.",
+            "expected": {
+                "track": "false",
+                "window": 60,
+                "max_requests": null
+            }
+        },
+        {
+            "stored": {
+                "track_sources": "Inherit",
+                "rl_window": 60,
+                "rl_max_requests": 0
+            },
+            "trackAtom": "",
+            "rlElement": ",{rate_limit,[{window,60},{max_requests,0}]}",
+            "line": "{rpz,{\"feed.example\",3600,60,86400,30,\"true\",\"true\",\"nxdomain\",[],\"fqdn\",900,300,[\"src1\",\"src2\"],[],[\"wl1\"],{rate_limit,[{window,60},{max_requests,0}]}}}.",
+            "expected": {
+                "track": "Inherit",
+                "window": 60,
+                "max_requests": 0
+            }
+        },
+        {
+            "stored": {
+                "track_sources": "auto",
+                "rl_window": 60,
+                "rl_max_requests": 0
+            },
+            "trackAtom": ",auto",
+            "rlElement": ",{rate_limit,[{window,60},{max_requests,0}]}",
+            "line": "{rpz,{\"feed.example\",3600,60,86400,30,\"true\",\"true\",\"nxdomain\",[],\"fqdn\",900,300,[\"src1\",\"src2\"],[],[\"wl1\"],auto,{rate_limit,[{window,60},{max_requests,0}]}}}.",
+            "expected": {
+                "track": "auto",
+                "window": 60,
+                "max_requests": 0
+            }
+        },
+        {
+            "stored": {
+                "track_sources": "true",
+                "rl_window": 60,
+                "rl_max_requests": 0
+            },
+            "trackAtom": ",true",
+            "rlElement": ",{rate_limit,[{window,60},{max_requests,0}]}",
+            "line": "{rpz,{\"feed.example\",3600,60,86400,30,\"true\",\"true\",\"nxdomain\",[],\"fqdn\",900,300,[\"src1\",\"src2\"],[],[\"wl1\"],true,{rate_limit,[{window,60},{max_requests,0}]}}}.",
+            "expected": {
+                "track": "true",
+                "window": 60,
+                "max_requests": 0
+            }
+        },
+        {
+            "stored": {
+                "track_sources": "false",
+                "rl_window": 60,
+                "rl_max_requests": 0
+            },
+            "trackAtom": ",false",
+            "rlElement": ",{rate_limit,[{window,60},{max_requests,0}]}",
+            "line": "{rpz,{\"feed.example\",3600,60,86400,30,\"true\",\"true\",\"nxdomain\",[],\"fqdn\",900,300,[\"src1\",\"src2\"],[],[\"wl1\"],false,{rate_limit,[{window,60},{max_requests,0}]}}}.",
+            "expected": {
+                "track": "false",
+                "window": 60,
+                "max_requests": 0
+            }
+        },
+        {
+            "stored": {
+                "track_sources": "Inherit",
+                "rl_window": 60,
+                "rl_max_requests": 20
+            },
+            "trackAtom": "",
+            "rlElement": ",{rate_limit,[{window,60},{max_requests,20}]}",
+            "line": "{rpz,{\"feed.example\",3600,60,86400,30,\"true\",\"true\",\"nxdomain\",[],\"fqdn\",900,300,[\"src1\",\"src2\"],[],[\"wl1\"],{rate_limit,[{window,60},{max_requests,20}]}}}.",
+            "expected": {
+                "track": "Inherit",
+                "window": 60,
+                "max_requests": 20
+            }
+        },
+        {
+            "stored": {
+                "track_sources": "auto",
+                "rl_window": 60,
+                "rl_max_requests": 20
+            },
+            "trackAtom": ",auto",
+            "rlElement": ",{rate_limit,[{window,60},{max_requests,20}]}",
+            "line": "{rpz,{\"feed.example\",3600,60,86400,30,\"true\",\"true\",\"nxdomain\",[],\"fqdn\",900,300,[\"src1\",\"src2\"],[],[\"wl1\"],auto,{rate_limit,[{window,60},{max_requests,20}]}}}.",
+            "expected": {
+                "track": "auto",
+                "window": 60,
+                "max_requests": 20
+            }
+        },
+        {
+            "stored": {
+                "track_sources": "true",
+                "rl_window": 60,
+                "rl_max_requests": 20
+            },
+            "trackAtom": ",true",
+            "rlElement": ",{rate_limit,[{window,60},{max_requests,20}]}",
+            "line": "{rpz,{\"feed.example\",3600,60,86400,30,\"true\",\"true\",\"nxdomain\",[],\"fqdn\",900,300,[\"src1\",\"src2\"],[],[\"wl1\"],true,{rate_limit,[{window,60},{max_requests,20}]}}}.",
+            "expected": {
+                "track": "true",
+                "window": 60,
+                "max_requests": 20
+            }
+        },
+        {
+            "stored": {
+                "track_sources": "false",
+                "rl_window": 60,
+                "rl_max_requests": 20
+            },
+            "trackAtom": ",false",
+            "rlElement": ",{rate_limit,[{window,60},{max_requests,20}]}",
+            "line": "{rpz,{\"feed.example\",3600,60,86400,30,\"true\",\"true\",\"nxdomain\",[],\"fqdn\",900,300,[\"src1\",\"src2\"],[],[\"wl1\"],false,{rate_limit,[{window,60},{max_requests,20}]}}}.",
+            "expected": {
+                "track": "false",
+                "window": 60,
+                "max_requests": 20
+            }
+        }
+    ],
+    "legacy": {
+        "srv": "{srv,{\"ns.example.com\",\"admin.example.com\",[\"mkey1\"],[\"192.0.2.10\"]}}.",
+        "rpz": "{rpz,{\"feed.example\",3600,60,86400,30,\"true\",\"true\",\"nxdomain\",[],\"fqdn\",900,300,[\"src1\",\"src2\"],[],[\"wl1\"]}}."
+    }
+}
