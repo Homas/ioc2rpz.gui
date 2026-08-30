@@ -181,6 +181,41 @@ function checkSourceURL(HN) {
 }
 
 /**
+ * Characters NOT allowed in a fetched source/allowlist URL (http, https, ftp).
+ *
+ * This is the RFC 3986 URI character set - unreserved, gen-delims, sub-delims and the
+ * "%" of a percent-escape - plus a literal space.
+ *
+ * Space and "%" are deliberately allowed. Both used to be stripped, silently:
+ * "https://host/a b.txt" became "https://host/ab.txt", and, worse, the correct encoding
+ * "https://host/a%20b.txt" became "https://host/a20b.txt" because "%" was not in the set.
+ * That corrupted every percent-escape (%2F, %3D, %26) with no error shown, producing a
+ * source that fetched the wrong path, or 404'd only at publish time.
+ *
+ * Excluded on purpose: the double quote, backslash, angle brackets, braces, pipe, caret,
+ * backtick and control characters. The double quote is the important one - these values
+ * are written verbatim into a quoted Erlang string in the generated ioc2rpz.conf, so a
+ * quote would terminate it. Keeping that exclusion is what makes widening the set to
+ * include space and "%" safe.
+ *
+ * Used only with String.prototype.replace(), which resets lastIndex, so sharing one
+ * global-flagged regex across calls is safe. Do not use it with .test().
+ */
+const SOURCE_URL_DISALLOWED = /[^A-Za-z0-9\-._~:/?#[\]@!$&'()*+,;=% ]/g;
+
+/**
+ * Characters NOT allowed in a local file path (cert, key, CA cert).
+ *
+ * Mirrors the backend validateFilePath() exactly: letters, digits, dot, underscore,
+ * hyphen, slash. The previous pattern wrote the hyphen unescaped as
+ * "[^A-Za-z0-9/=:\?#.-_&]", which is read as the range "." to "_" and silently permitted
+ * ":", ";", "<", ">", "@", "[", "]", "\" and "^". Those passed the form and were then
+ * rejected by the backend, so the user got a server-side "Invalid certificate file path"
+ * for input the field had accepted.
+ */
+const LOC_FILE_DISALLOWED = /[^A-Za-z0-9._/-]/g;
+
+/**
  * Escapes HTML special characters to prevent XSS attacks
  * @param {string} str - The string to escape
  * @returns {string} - The escaped string safe for HTML insertion
@@ -1903,7 +1938,14 @@ export const appConfig = {
 
     formatSourceURL: function(val, e) {
       let a;
-      if (/^shell:/.test(val) || /^file:/.test(val) || /^[:AXFR:]/.test(val)) a = val; else a = val.replace(/[^A-Za-z0-9/=:\?#.\-_&]/g, "");
+      // shell: and file: are passed through untouched - a shell command needs spaces,
+      // quotes and redirection, and a local path may contain anything the filesystem
+      // allows. An IXFR meta URL starting with the literal [:AXFR:] is also left alone.
+      // That last test used to be /^[:AXFR:]/, which is a character class matching a
+      // leading ":", "A", "X", "F" or "R" rather than the literal token, so it never did
+      // what it was named for.
+      if (/^shell:/.test(val) || /^file:/.test(val) || /^\[:AXFR:\]/.test(val)) a = val;
+      else a = val.replace(SOURCE_URL_DISALLOWED, "");
       if (e) e.currentTarget.value = a;
       return a;
     },
@@ -1913,7 +1955,7 @@ export const appConfig = {
     },
 
     formatLocFile: function(val, e) {
-      let a = val.replace(/[^A-Za-z0-9/=:\?#.-_&]/g, "");
+      let a = val.replace(LOC_FILE_DISALLOWED, "");
       if (e) e.currentTarget.value = a;
       return a;
     },
@@ -1924,7 +1966,13 @@ export const appConfig = {
 
     formatIXFRURL: function(val, e) {
       let a;
-      if (/^shell:/.test(val) || /^file:/.test(val) || /^[:AXFR:]/.test(val)) a = val; else a = val.replace(/[^A-Za-z0-9/=:\?#.-_&]/g, "");
+      // Same rules as the source URL field: an IXFR path is either a meta URL starting
+      // with the literal [:AXFR:], a shell:/file: value, or a fetched URL. Sharing
+      // SOURCE_URL_DISALLOWED keeps the two fields consistent - they previously used
+      // different character sets purely because one escaped the hyphen and the other
+      // did not.
+      if (/^shell:/.test(val) || /^file:/.test(val) || /^\[:AXFR:\]/.test(val)) a = val;
+      else a = val.replace(SOURCE_URL_DISALLOWED, "");
       if (e) e.currentTarget.value = a;
       return a;
     },

@@ -83,6 +83,25 @@ that it needs to authenticate the current user rather than gate on administrator
 
 ### Changed
 
+- Source and allowlist URLs now accept spaces and `%` for `http`, `https` and `ftp`. Both were
+silently deleted as you typed: `https://host/a b.txt` became `https://host/ab.txt`, and the
+correctly encoded `https://host/a%20b.txt` became `https://host/a20b.txt` because `%` was not
+in the permitted set - which corrupted every percent-escape (`%2F`, `%3D`, `%26`), with no error
+shown and no sign of it until the feed failed to fetch. The field now permits the RFC 3986 URI
+character set plus a literal space. The double quote, backslash, angle brackets, braces, pipe,
+caret, backtick and control characters are still removed; the double quote matters because these
+values are written verbatim into a quoted Erlang string in the generated `ioc2rpz.conf`.
+`shell:` and `file:` values are still passed through untouched
+- The IXFR path field now uses the same character set as the source URL field. The two had
+diverged only because one escaped the hyphen and the other did not, leaving
+`[^A-Za-z0-9/=:?#.-_&]` to be read as the range `.`-`_`, which silently permitted `[`, `]`,
+`;`, `<`, `>`, `@`, `\` and `^`
+- Certificate, key and CA path fields now permit exactly what the backend
+`validateFilePath()` accepts. They previously accepted characters the server then rejected, so
+a valid-looking entry failed on save with "Invalid certificate file path"
+- Fixed `/^[:AXFR:]/` in the source and IXFR formatters: written as a character class it
+matched a leading `:`, `A`, `X`, `F` or `R` rather than the literal `[:AXFR:]` token, so the
+pass-through it was named for never happened
 - Replaced all 53 uses of the deprecated `"${var}"` string interpolation in `www/io2vars.php`
 and `scripts/publish_cfg.php` with `"{$var}"`. These are deprecated as of PHP 8.2 and removed
 in PHP 9; the container already runs a version that warns. Generated configuration output is
@@ -91,6 +110,15 @@ generated installation scripts and are intentionally left alone
 - Added `.github/workflows/ci.yml`. Both test suites existed but nothing ran them. The PHP job
 covers 8.1 and 8.4 and fails on any deprecation; a hygiene job rejects committed editor backups
 and database files and checks that `package.json` and `ChangeLog.md` agree
+- The CI PHP matrix is 8.2, 8.3 and 8.4, and `require.php` in composer.json moved from `>=8.1`
+to `>=8.2`. 8.1 could never pass: `phpunit/phpunit` 11 and the whole `sebastian/*` tree require
+`php >= 8.2`, so the job died at `composer install` before running a test. 8.2 is the declared
+floor and what Debian 12 ships, 8.3 is what the container ships, 8.4 provides the deprecation
+early warning. `composer.lock` was refreshed with `composer update --lock` so that
+`composer validate --strict` still passes; no package versions changed
+- The PHPUnit step now checks that a `phpunit.xml.dist` exists before invoking PHPUnit. Without
+a configuration file PHPUnit has no test target, prints its usage text and exits 1, which reads
+as a broken command line rather than a missing file
 - CI also builds the container image on every push and smoke tests it: the login page must
 answer 200 over HTTPS, the database and its `-wal`/`-shm` sidecars must return 403, a fresh
 database must contain the complete sample configuration, and `genConfig()` must produce every

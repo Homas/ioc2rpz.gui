@@ -22,10 +22,20 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # 8.1 is the floor declared in composer.json; 8.4 is what the container ships
-        # (Dockerfile installs php83, but 8.4 catches deprecations early - the
-        # "${var}" string interpolation removal is the reason this matrix exists).
-        php: ['8.1', '8.4']
+        # Each entry corresponds to a PHP version something actually runs on:
+        #   8.2 - the declared floor in composer.json, and what Debian 12 installs for a
+        #         bare-metal deployment. Also the lowest version the test toolchain
+        #         supports: phpunit/phpunit 11 and the whole sebastian/* tree require
+        #         php >= 8.2, so anything below this cannot even `composer install`.
+        #   8.3 - what the container ships (Dockerfile installs php83). The primary
+        #         supported deployment, so it must be tested.
+        #   8.4 - forward warning. The lint step below fails on deprecations, which is
+        #         what surfaced the "${var}" interpolation that PHP 9 removes.
+        #
+        # 8.1 was here and could never pass: the dev dependencies do not install on it,
+        # so the job died at `composer install` without running a test. Do not add a
+        # version below 8.2 without also downgrading phpunit.
+        php: ['8.2', '8.3', '8.4']
     steps:
       - uses: actions/checkout@v4
 
@@ -58,7 +68,16 @@ jobs:
           exit $rc
 
       - name: PHPUnit
-        run: ./vendor/bin/phpunit --colors=never
+        # The config file is checked explicitly first. Without it PHPUnit has no test
+        # target, prints its usage text, and exits 1 - which looks like a broken CLI
+        # invocation rather than a missing file. That cost a debugging cycle when
+        # phpunit.xml.dist had not been committed alongside tests/.
+        run: |
+          if [ ! -f phpunit.xml.dist ] && [ ! -f phpunit.xml ]; then
+            echo "::error::no phpunit.xml.dist or phpunit.xml in the checkout - is it committed?"
+            exit 1
+          fi
+          ./vendor/bin/phpunit --colors=never
 
   js:
     name: Frontend

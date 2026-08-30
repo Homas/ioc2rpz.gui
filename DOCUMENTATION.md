@@ -50,7 +50,7 @@ ioc2rpz.gui/
 
 | Command | Runs |
 |---------|------|
-| `composer install` | PHP dev dependencies (PHPUnit, Eris) |
+| `composer install` | PHP dev dependencies (PHPUnit, Eris). Needs PHP >= 8.2 |
 | `./vendor/bin/phpunit` | Backend suite |
 | `npm test` | Frontend suite (`vitest run`) |
 | `npm run build` | Production Vite build |
@@ -66,9 +66,19 @@ in four jobs:
 | `container` | Builds the image, then smoke tests a running container |
 | `hygiene` | Shell syntax, committed backups/databases, version consistency |
 
-The PHP job runs on 8.1 (the floor in composer.json) and 8.4. It fails on any deprecation
-reported by `php -l`, which is what catches the `"${var}"` string interpolation that PHP 9
-removes.
+The PHP job runs on 8.2, 8.3 and 8.4, each for a reason: 8.2 is the declared floor in
+composer.json and what Debian 12 installs, 8.3 is what the container ships, and 8.4 gives
+forward warning because the job fails on any deprecation reported by `php -l` — which is
+what caught the `"${var}"` interpolation that PHP 9 removes.
+
+**8.2 is a hard lower bound for the matrix.** `phpunit/phpunit` 11 and the whole
+`sebastian/*` tree require `php >= 8.2`, so on anything older the job dies at
+`composer install` without running a test. Adding an older version means downgrading
+PHPUnit first.
+
+Note that `require.php` in composer.json and the matrix must move together: changing
+`require` alters the `composer.lock` content-hash, and the `composer validate --strict`
+step fails on a stale lock. Run `composer update --lock` after any change to `require`.
 
 The `container` job is gated on `php` and `js` so a commit with failing tests does not
 spend minutes on an image build. It builds with Buildx using the GitHub Actions cache and
