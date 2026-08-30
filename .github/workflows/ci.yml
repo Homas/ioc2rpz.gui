@@ -1,0 +1,245 @@
+name: CI
+
+# Both test suites existed but nothing ran them, so a regression only surfaced when
+# someone happened to run them locally.
+on:
+  push:
+    branches: [master, dev]
+  pull_request:
+    branches: [master, dev]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  php:
+    name: PHP ${{ matrix.php }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 8.1 is the floor declared in composer.json; 8.4 is what the container ships
+        # (Dockerfile installs php83, but 8.4 catches deprecations early - the
+        # "${var}" string interpolation removal is the reason this matrix exists).
+        php: ['8.1', '8.4']
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: sqlite3, ctype, curl, session
+          coverage: none
+          ini-values: error_reporting=E_ALL, display_errors=On
+
+      - name: Validate composer.json
+        run: composer validate --strict
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Lint all PHP sources
+        # -l reports deprecations as well as syntax errors. Fails the job on any
+        # output beyond the "No syntax errors" line.
+        run: |
+          rc=0
+          while IFS= read -r file; do
+            out=$(php -l "$file" 2>&1) || rc=1
+            if printf '%s\n' "$out" | grep -qiE 'deprecated|warning'; then
+              printf '%s\n' "$out"
+              rc=1
+            fi
+          done < <(find www scripts tests -name '*.php' -not -path '*/vendor/*')
+          exit $rc
+
+      - name: PHPUnit
+        run: ./vendor/bin/phpunit --colors=never
+
+  js:
+    name: Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Vitest
+        run: npm test
+
+      - name: Production build
+        # The Vite build is part of the container image, so a build break is a
+        # release break.
+        run: npm run build
+
+  container:
+    name: Container build and smoke test
+    runs-on: ubuntu-latest
+    # Gated on the test jobs so a commit with failing tests does not spend several
+    # minutes on an image build. Remove `needs` if you would rather see both results
+    # on every push.
+    needs: [php, js]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          # Loaded into the local daemon so the smoke test can run it. Not pushed:
+          # publishing to a registry needs credentials, so it is a deliberate decision
+          # rather than a default. To publish, add a registry login step and set
+          # push: ${{ github.event_name == 'push' }} with the appropriate tags.
+          load: true
+          push: false
+          tags: ioc2rpz-gui:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Start container
+        run: docker run -d --name io2ci -p 18443:443 ioc2rpz-gui:ci
+
+      - name: Wait for HTTPS to come up
+        run: |
+          for i in $(seq 1 60); do
+            code=$(curl -ks -o /dev/null -w '%{http_code}' https://localhost:18443/ || true)
+            if [ "$code" = "200" ]; then
+              echo "login page responded 200 after ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "::error::container did not serve the login page within 60s"
+          exit 1
+
+      - name: Entrypoint reported no errors
+        # init_db.php exits non-zero and logs to stderr if the sample configuration
+        # cannot be created, which is how the column drift fixed in 2.3.0 would have been
+        # caught. Three classes of expected noise are filtered out:
+        #   ssl:warn / AH01906 / AH01909 - the bundled self-signed default certificate
+        #   AH00558                      - ServerName not set, cosmetic
+        #   AH01630 / authz_core:error   - "client denied by server configuration", which
+        #                                  is what the deny rule is *supposed* to log. The
+        #                                  step below deliberately triggers these, so
+        #                                  without this filter the check would depend on
+        #                                  step ordering.
+        run: |
+          logs=$(docker logs io2ci 2>&1)
+          printf '%s\n' "$logs"
+          if printf '%s\n' "$logs" \
+              | grep -iE 'warning|error' \
+              | grep -vE 'ssl:warn|AH00558|AH01630|authz_core:error'; then
+            echo "::error::entrypoint reported warnings or errors"
+            exit 1
+          fi
+
+      - name: Database is not reachable over HTTP
+        # Regression guard for the 2.3.0 fix. The database lives inside DocumentRoot, so
+        # this can regress from an Apache config change alone, with nothing in the PHP
+        # or JS suites noticing. The -wal sidecar matters as much as the database: in
+        # WAL mode it holds the most recent writes.
+        run: |
+          rc=0
+          for path in /io2cfg/ /io2cfg/io2db.sqlite /io2cfg/io2db.sqlite-wal /io2cfg/io2db.sqlite-shm; do
+            code=$(curl -ks -o /dev/null -w '%{http_code}' "https://localhost:18443$path" || true)
+            echo "$path -> $code"
+            if [ "$code" != "403" ]; then
+              echo "::error::$path returned $code, expected 403"
+              rc=1
+            fi
+          done
+          exit $rc
+
+      - name: Fresh install has a complete sample configuration
+        # Regression guard for the init_db.php column drift found in 2.3.0: positional
+        # inserts silently stopped matching the schema, and because each was the first
+        # statement of a multi-statement exec() the associations after it never ran.
+        # A new user got an empty GUI.
+        run: |
+          db=/opt/ioc2rpz.gui/www/io2cfg/io2db.sqlite
+          rc=0
+          for pair in servers:1 rpzs:1 sources:2 whitelists:1 tkeys:2 mgmt_ips:1 \
+                      rpzs_servers:1 rpzs_sources:2 rpzs_tkeys:1 rpzs_whitelists:1 rpzs_notify:1; do
+            table=${pair%%:*}; min=${pair##*:}
+            n=$(docker exec io2ci sqlite3 "$db" "select count(*) from $table;")
+            echo "$table = $n (expected >= $min)"
+            if [ "$n" -lt "$min" ]; then
+              echo "::error::$table has $n rows, expected at least $min"
+              rc=1
+            fi
+          done
+          exit $rc
+
+      - name: Server configuration generates
+        # Exercises genConfig() against the real sample data, which covers the config
+        # writer end to end rather than through fixtures. Note the binary is php83.
+        run: |
+          cfg=$(docker exec io2ci sh -c 'cd /opt/ioc2rpz.gui/www && php83 -r "require \"io2vars.php\"; \$db=DB_open(); \$c=genConfig(\$db,1,1); echo \$c[\"cfg\"];"')
+          printf '%s\n' "$cfg"
+          for token in '{srv,{' '{key,{' '{source,{' '{whitelist,{' '{rpz,{'; do
+            case "$cfg" in
+              *"$token"*) ;;
+              *) echo "::error::generated config is missing a $token record"; exit 1 ;;
+            esac
+          done
+
+      - name: Container logs on failure
+        if: failure()
+        run: docker logs io2ci 2>&1 || true
+
+      - name: Stop container
+        if: always()
+        run: docker rm -f io2ci || true
+
+  hygiene:
+    name: Repository hygiene
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Shell script syntax
+        run: |
+          rc=0
+          for f in $(find scripts -name '*.sh'); do
+            bash -n "$f" || rc=1
+          done
+          exit $rc
+
+      - name: No editor backups or databases committed
+        # These were both real: io2.js.bak/.bak2 were tracked and served from the
+        # document root, and the SQLite database lives under www/.
+        run: |
+          if git ls-files | grep -E '\.(bak[0-9]?|orig|swp)$'; then
+            echo "::error::editor backup files must not be committed"
+            exit 1
+          fi
+          if git ls-files | grep -E '\.sqlite(-wal|-shm)?$'; then
+            echo "::error::database files must not be committed"
+            exit 1
+          fi
+
+      - name: Version consistency
+        # package.json, ChangeLog.md and $io2ver in www/io2vars.php drifted apart
+        # across releases; keep them in step.
+        run: |
+          pkg=$(node -p "require('./package.json').version")
+          log=$(grep -m1 -oE '^## [0-9]+\.[0-9]+\.[0-9]+' ChangeLog.md | awk '{print $2}')
+          echo "package.json=$pkg ChangeLog.md=$log"
+          if [ "$pkg" != "$log" ]; then
+            echo "::error::package.json ($pkg) and ChangeLog.md ($log) disagree"
+            exit 1
+          fi
