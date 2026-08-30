@@ -10,7 +10,7 @@
  * @package ioc2rpz.gui
  * @author Vadim Pavlov
  * @copyright 2019-2026
- * @license MIT
+ * @license Apache-2.0
  */
 #(c) Vadim Pavlov 2019-2026
 

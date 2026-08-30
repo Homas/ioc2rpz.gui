@@ -22,7 +22,7 @@
  * @package ioc2rpz.gui
  * @author Vadim Pavlov
  * @copyright 2018-2026
- * @license MIT
+ * @license Apache-2.0
  */
   require 'io2auth.php';
   require_once 'vite-helpers.php';
@@ -666,9 +666,9 @@
               <label for="fSrvRLWindow" class="mb-0">Rate limit window (seconds)</label>
             </b-col>
             <b-col :sm="6" class="form_row text-start">
-              <b-form-input id="fSrvRLWindow" v-model.trim="ftSrvRLWindow" :state="validateRateLimit('ftSrvRLWindow', 1)" :formatter="formatInt" ref="formSrvRLWindow" :readonly="infoWindow" placeholder="Inherit" aria-describedby="fSrvRLWindowHint fSrvRLWindowError" v-b-tooltip.hover title="Rate limit window in seconds" />
+              <b-form-input id="fSrvRLWindow" v-model.trim="ftSrvRLWindow" :state="validateRateLimit('ftSrvRLWindow', 1, rlWindowMax)" :formatter="formatInt" ref="formSrvRLWindow" :readonly="infoWindow" placeholder="Inherit" aria-describedby="fSrvRLWindowHint fSrvRLWindowError" v-b-tooltip.hover title="Rate limit window in seconds" />
               <small v-if="ftSrvRLWindow === ''" class="text-muted d-block" id="fSrvRLWindowHint">{{ effectiveSrvRLWindowHint }}</small>
-              <b-form-invalid-feedback id="fSrvRLWindowError" role="alert">Window must be a whole number of seconds greater than 0.</b-form-invalid-feedback>
+              <b-form-invalid-feedback id="fSrvRLWindowError" role="alert">Window must be a whole number of seconds from 1 to {{ rlWindowMax }}.</b-form-invalid-feedback>
             </b-col>
           </b-row>
           <b-row>
@@ -807,9 +807,9 @@ local_cname=www.example.com
                   <label for="fRPZRLWindow" class="mb-0">Rate limit window (seconds)</label>
                 </b-col>
                 <b-col :sm="8" class="text-start">
-                  <b-form-input id="fRPZRLWindow" v-model.trim="ftRPZRLWindow" :state="validateRateLimit('ftRPZRLWindow', 1)" :formatter="formatInt" ref="formRPZRLWindow" :readonly="infoWindow" placeholder="Inherit" aria-describedby="fRPZRLWindowHint fRPZRLWindowError" v-b-tooltip.hover title="Rate limit window in seconds" />
+                  <b-form-input id="fRPZRLWindow" v-model.trim="ftRPZRLWindow" :state="validateRateLimit('ftRPZRLWindow', 1, rlWindowMax)" :formatter="formatInt" ref="formRPZRLWindow" :readonly="infoWindow" placeholder="Inherit" aria-describedby="fRPZRLWindowHint fRPZRLWindowError" v-b-tooltip.hover title="Rate limit window in seconds" />
                   <small v-if="ftRPZRLWindow === ''" class="text-muted d-block" id="fRPZRLWindowHint">{{ effectiveRPZRLWindowHint }}</small>
-                  <b-form-invalid-feedback id="fRPZRLWindowError" role="alert">Window must be a whole number of seconds greater than 0.</b-form-invalid-feedback>
+                  <b-form-invalid-feedback id="fRPZRLWindowError" role="alert">Window must be a whole number of seconds from 1 to {{ rlWindowMax }}.</b-form-invalid-feedback>
                 </b-col>
               </b-row>
               <b-row class="form_row">

@@ -21,12 +21,12 @@ foreach($serv_upd as $srv){
       file_put_contents($fn,$cfg['cfg']);
       if ($srv['ip'] and !$srv['disabled'] ) {
         if (io2mgmt == "dns" ){
-          $cmd=dig." -y hmac-${srv['alg']}:${srv['tname']}:${srv['tkey']} \@${srv['ip']} +tries=1 +time=1 ioc2rpz-reload-cfg TXT -c CHAOS";
+          $cmd=dig." -y hmac-{$srv['alg']}:{$srv['tname']}:{$srv['tkey']} \@{$srv['ip']} +tries=1 +time=1 ioc2rpz-reload-cfg TXT -c CHAOS";
           $res=`$cmd`;
         }else{
-          $curl = curl_init("https://${srv['ip']}:".rest_mgmt_port."/api/v1.0/mgmt/reload_cfg"); #Should be FQDN in settings
+          $curl = curl_init("https://{$srv['ip']}:".rest_mgmt_port."/api/v1.0/mgmt/reload_cfg"); #Should be FQDN in settings
           curl_setopt($curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-          curl_setopt($curl, CURLOPT_USERPWD, "${srv['tname']}:${srv['tkey']}");
+          curl_setopt($curl, CURLOPT_USERPWD, "{$srv['tname']}:{$srv['tkey']}");
           curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, io2mgmt_verifyssl);
           curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, io2mgmt_verifyssl);
           curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
@@ -39,7 +39,7 @@ foreach($serv_upd as $srv){
       #TODO check the response
       #ioc2rpz-reload-cfg.	900	IN	TXT	"ioc2rpz configuration was reloaded"
 
-      $sql="update servers set publish_upd=0 where rowid=${srv['rowid']}";
+      $sql="update servers set publish_upd=0 where rowid={$srv['rowid']}";
       DB_execute($db,$sql); //TODO error handling
       break;
     case 1: #SFTP/SCP
@@ -53,9 +53,9 @@ foreach($serv_upd as $srv){
         //the keys should be named as "{serverName}_rsa" and "{serverName}_rsa.pub" and stored in {localCFGPath}
         if (ssh2_auth_pubkey_file($scp, $url[1],localCFGPath.'/'.$srv['sname'].'_rsa.pub',localCFGPath.'/'.$srv['sname'].'_rsa')){
           ssh2_scp_send($scp, $fn, $url[3], 0644);
-          $curl = curl_init("https://${srv['ip']}:".rest_mgmt_port."/api/v1.0/mgmt/reload_cfg"); #Should be FQDN in settings
+          $curl = curl_init("https://{$srv['ip']}:".rest_mgmt_port."/api/v1.0/mgmt/reload_cfg"); #Should be FQDN in settings
           curl_setopt($curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-          curl_setopt($curl, CURLOPT_USERPWD, "${srv['tname']}:${srv['tkey']}");
+          curl_setopt($curl, CURLOPT_USERPWD, "{$srv['tname']}:{$srv['tkey']}");
           curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, io2mgmt_verifyssl);
           curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, io2mgmt_verifyssl);
           curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
@@ -66,7 +66,7 @@ foreach($serv_upd as $srv){
         ssh2_disconnect ($scp);
         unlink($fn);
       };
-      $sql="update servers set publish_upd=0 where rowid=${srv['rowid']}";
+      $sql="update servers set publish_upd=0 where rowid={$srv['rowid']}";
       DB_execute($db,$sql); //TODO error handling
       break;
     case 2: #AWS S3

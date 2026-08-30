@@ -56,7 +56,7 @@ PHP_INI=$(ls /etc/php83/php.ini 2>/dev/null || ls /etc/php81/php.ini 2>/dev/null
 
 if [ ! -f /etc/apache2/ioc2rpz.gui.config-done.txt ]; then
     if [ -f "$PHP_INI" ]; then
-        sed -i -e "s/^\(session.use_strict_mode = \).*/\1 1/" -e "s/^\(session.cookie_httponly =\)/\1 1/" -e "s/^;*\(session.cookie_secure =\)/\1 1/" "$PHP_INI"
+        sed -i -e "s/^\(session.use_strict_mode = \).*/\1 1/" -e "s/^\(session.cookie_httponly =\)/\1 1/" -e "s/^;*\(session.cookie_secure =\)/\1 1/" -e "s/^;*\(session.cookie_samesite =\).*/\1 Strict/" "$PHP_INI"
     fi
 
     sed -i -e "s%SSLCertificateFile /etc/ssl/apache2/server.pem%SSLCertificateFile /etc/apache2/ssl/ioc2_server.pem%"  /etc/apache2/conf.d/ssl.conf
@@ -86,6 +86,45 @@ EOF
 cat /tmp/$SYSUSER | crontab -u $SYSUSER -
 rm -rf /tmp/$SYSUSER
 
+fi
+
+####Deny HTTP access to the SQLite database
+# The database lives inside DocumentRoot (www/io2cfg) and the rewrite rules only
+# redirect requests whose target does not exist on disk, so "GET /io2cfg/io2db.sqlite"
+# was served as a static file by Apache: every password hash and every TSIG key
+# secret, unauthenticated.
+#
+# File permissions cannot fix this. Apache needs read/write on the database because
+# mod_php runs in-process, and Apache is also what serves it - same process, same
+# credentials, no bit to distinguish the two.
+#
+# Denying the whole directory rather than a filename pattern also covers the -wal and
+# -shm sidecars. Those matter: DB_open() sets "PRAGMA journal_mode = wal", so recent
+# writes live in io2db.sqlite-wal until a checkpoint.
+#
+# Applied outside the config-done guard and made idempotent on purpose. Containers
+# provisioned before this fix already have the marker file, so anything inside that
+# guard would never reach them on restart.
+#
+# This is containment, not the cure - the database belongs outside DocumentRoot
+# entirely. See TODO.md, "Move the SQLite database out of the web root".
+if ! grep -q "ioc2rpz.gui: deny database access" /etc/apache2/httpd.conf; then
+    echo "restricting HTTP access to ${IO2_ROOT}/www/io2cfg"
+    cat >> /etc/apache2/httpd.conf << EOF
+
+# ioc2rpz.gui: deny database access
+<Directory ${IO2_ROOT}/www/io2cfg/>
+    AllowOverride None
+    Require all denied
+</Directory>
+EOF
+fi
+
+# Refuse to start on a broken config rather than leaving the database exposed by a
+# half-applied edit.
+if ! /usr/sbin/httpd -t -f /etc/apache2/httpd.conf; then
+    echo "ERROR: Apache configuration test failed, refusing to start" >&2
+    exit 1
 fi
 
 ###

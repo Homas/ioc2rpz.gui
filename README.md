@@ -39,7 +39,7 @@ The database initialization script also creates a sample configuration. You need
 **The init script doesn't create a default user. You should create the administrator after the first start. Please do it ASAP.**
 
 ### Dependencies
-PHP7, SQLite, ISC Bind tools (dig only command). The following packets are required for Alpine Linux with Apache web-server:
+PHP 8.1 or newer (the container ships PHP 8.3), SQLite, ISC Bind tools (dig only command). The following packets are required for Alpine Linux with Apache web-server:
 ```
 bash openrc curl coreutils openssl apache2 libxml2-dev apache2-utils php7 php7-apache2 php7-session php7-json php7-curl apache2-ssl sqlite php7-sqlite3 php7-ctype bind-tools
 ```

@@ -22,7 +22,7 @@
  * @package ioc2rpz.gui
  * @author Vadim Pavlov
  * @copyright 2018-2026
- * @license MIT
+ * @license Apache-2.0
  */
 
   require_once "io2vars.php";
@@ -33,7 +33,7 @@
 
 //Logout
   if (isset($REQUEST['req']) and $REQUEST['req']=="logout" and $REQUEST['method']=='POST') { 
-    session_start();
+    startSession();
     session_destroy();
     exit;
   };
@@ -127,7 +127,7 @@
         DB_execute($db, $sql);
       }
       
-      session_start();
+      startSession();
       session_regenerate_id(true); // Prevent session fixation attacks
       $_SESSION['idUser']=$user[0]['rowid'];
       $_SESSION['userName']=$user[0]['name'];
@@ -170,7 +170,7 @@
 
 //User signed on already
   //if (isset($_REQUEST[session_name()]))
-  session_start();
+  startSession();
   if (isset($_SESSION['idUser']) AND $_SESSION['UserAgent'] == md5($_SERVER['HTTP_USER_AGENT']) ) {
     $now = time();
 
@@ -311,6 +311,6 @@
 </body>
 </html>
 <?php
-  exit(1);
   DB_close($db);
+  exit(0);
 ?>

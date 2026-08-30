@@ -335,6 +335,17 @@ export function splitErlTupleFields(body) {
 }
 
 /**
+ * Largest accepted rate limit window, in seconds (24 hours).
+ *
+ * The window is not just a policy number: it is stored with every rate limit entry in
+ * the server's `rate_limits` ETS table and decides when that entry is swept. An absurd
+ * window (a fumbled digit, a value pasted in milliseconds) would keep every entry alive
+ * for as long as it lasts, turning the table into a slow config-driven memory leak. A
+ * day is far beyond any legitimate DNS rate limit window.
+ */
+export const RL_WINDOW_MAX = 86400;
+
+/**
  * Rate limit options the ioc2rpz server accepts, with the level each one is valid at
  * and its legal range.
  *
@@ -343,11 +354,12 @@ export function splitErlTupleFields(body) {
  * resolved to a zone, so there is no zone config to read it from. The server logs and
  * ignores it when it appears on an rpz record.
  *
- * `window` must be > 0. The maximums may be 0, which means "refuse every request in
- * that bucket".
+ * `window` must be > 0 and is capped at RL_WINDOW_MAX. The maximums may be 0, which
+ * means "refuse every request in that bucket", and are not capped: a large threshold
+ * only makes the limiter permissive, it does not retain anything.
  */
 export const RL_OPTIONS = {
-  window: { min: 1, srv: true, rpz: true },
+  window: { min: 1, max: RL_WINDOW_MAX, srv: true, rpz: true },
   max_requests: { min: 0, srv: true, rpz: true },
   max_unknown_requests: { min: 0, srv: true, rpz: false }
 };
@@ -408,6 +420,12 @@ export function parseErlRateLimit(token, level) {
         error: 'rate_limit option "' + name + '" value ' + value + ' is below the minimum of ' + spec.min
       };
     }
+    if (spec.max !== undefined && value > spec.max) {
+      return {
+        ok: false,
+        error: 'rate_limit option "' + name + '" value ' + value + ' is above the maximum of ' + spec.max
+      };
+    }
     opts[name] = value;
   }
   return { ok: true, opts: opts };
@@ -456,7 +474,9 @@ export function classifyErlTrailingElements(tokens, level) {
  *
  * Each option resolves independently, so a feed may set `max_requests` alone and
  * still inherit `window` from the server. An absent value at a level means "inherit"
- * and never masks the level below it.
+ * and never masks the level below it. A value outside the option's legal range is
+ * skipped exactly like an absent one, mirroring the server: it logs and ignores such a
+ * value and falls back to the next level.
  *
  * @param {*} zoneValue - the feed's value ('' / null / undefined means inherit)
  * @param {*} srvValue - the server's value ('' / null / undefined means inherit)
@@ -473,6 +493,7 @@ export function resolveRateLimit(zoneValue, srvValue, option) {
     if (typeof raw === 'string' && !/^\s*-?[0-9]+\s*$/.test(raw)) continue;
     var n = typeof raw === 'number' ? raw : parseInt(raw, 10);
     if (!Number.isInteger(n) || n < spec.min) continue;
+    if (spec.max !== undefined && n > spec.max) continue;
     return { value: n, from: from };
   }
   return { value: RL_DEFAULTS[option], from: 'default' };
@@ -506,6 +527,43 @@ export function rlToInput(value) {
 }
 
 /**
+ * Resolves one rate limit option for a feed that may be assigned to several servers.
+ *
+ * Each server generates its own configuration file, so an option the feed does not set
+ * is inherited from each server separately and can land on a different value for each
+ * one. When the servers do not agree the result is marked ambiguous and carries the
+ * per-server breakdown, so the editor can say the inherited value varies instead of
+ * showing one server's value as if it were the effective limit.
+ *
+ * A value set on the feed overrides every server, so it is never ambiguous. No servers
+ * selected resolves straight to the built-in default.
+ *
+ * Agreement is decided on the resolved VALUE: when several servers resolve to the same
+ * number through different routes (one setting it explicitly, another inheriting the
+ * built-in default that happens to equal it) the effective limit is the same
+ * everywhere, so it is reported as a single value and attributed to the server level,
+ * which is where it can be changed.
+ *
+ * @param {*} zoneValue - the feed's value ('' / null / undefined means inherit)
+ * @param {{name: string}[]} servers - output of the rpzServerRateLimits computed
+ * @param {string} option - one of the RL_OPTIONS keys
+ * @returns {{value: number, from: string}|{ambiguous: true, perServer: Array}}
+ */
+export function resolveRateLimitAcrossServers(zoneValue, servers, option) {
+  var list = Array.isArray(servers) ? servers : [];
+  if (list.length === 0) return resolveRateLimit(zoneValue, '', option);
+  var perServer = list.map(function(srv) {
+    var r = resolveRateLimit(zoneValue, srv ? srv[option] : '', option);
+    return { name: srv && srv.name ? srv.name : '', value: r.value, from: r.from };
+  });
+  var first = perServer[0];
+  var sameValue = perServer.every(function(el) { return el.value === first.value; });
+  if (!sameValue) return { ambiguous: true, perServer: perServer };
+  var sameOrigin = perServer.every(function(el) { return el.from === first.from; });
+  return { value: first.value, from: sameOrigin ? first.from : 'server' };
+}
+
+/**
  * Renders a resolved rate limit as the inherited-state hint shown next to an empty
  * input, naming both the value and where it came from so the operator can tell an
  * inherited server setting from the ioc2rpz built-in default.
@@ -513,11 +571,23 @@ export function rlToInput(value) {
  * Mirrors the existing `Inherited: {{ effectiveTracking }}` indicator, adding the
  * origin because the rate limits resolve through one more level than attribution.
  *
- * @param {{value: number, from: string}} resolved - output of resolveRateLimit()
- * @returns {string} e.g. `"Inherited: 60 (server)"`
+ * An ambiguous result (a feed on several servers that inherit different values) is
+ * rendered as the per-server breakdown, because there is no single effective limit to
+ * report: each server's generated configuration gets its own.
+ *
+ * @param {{value: number, from: string}|{ambiguous: true, perServer: Array}} resolved
+ *        output of resolveRateLimit() or resolveRateLimitAcrossServers()
+ * @returns {string} e.g. `"Inherited: 60 (server)"` or
+ *          `"Inherited: varies by server - ns1: 30, ns2: 60"`
  */
 export function rateLimitHint(resolved) {
   if (!resolved) return '';
+  if (resolved.ambiguous) {
+    var parts = (resolved.perServer || []).map(function(el) {
+      return (el.name === '' ? '?' : el.name) + ': ' + el.value;
+    });
+    return 'Inherited: varies by server - ' + parts.join(', ');
+  }
   var origin = resolved.from === 'server' ? 'server'
     : resolved.from === 'zone' ? 'this feed'
     : 'built-in default';
@@ -985,6 +1055,9 @@ export const appConfig = {
     // Server-level DNS rate limits. '' means inherit the ioc2rpz built-in default;
     // they are kept as strings so an empty input stays distinguishable from 0.
     ftSrvRLWindow: '', ftSrvRLMaxRequests: '', ftSrvRLMaxUnknownRequests: '',
+    // Exposed to the templates so the window inputs and their error messages share the
+    // single cap definition instead of repeating the number.
+    rlWindowMax: RL_WINDOW_MAX,
     servers_filter: "",
 
     Srv_TrackDefault_Options: [
@@ -1188,26 +1261,36 @@ export const appConfig = {
     },
 
     /**
-     * The selected server's stored rate limits, used as the middle link of the
-     * feed-level resolution chain.
+     * The stored rate limits of EVERY server this feed is assigned to, which form the
+     * middle link of the feed-level resolution chain.
      *
-     * Taken from the first selected server (ftRPZSrvs[0]) in the loaded server list
-     * (ftRPZSrvsAll), which the rpz_servers endpoint exposes rl_window and
-     * rl_max_requests on. When no server is selected, or the list has not loaded,
-     * every option is treated as absent so resolution falls through to the built-in
-     * defaults.
+     * A feed can be published to several servers, and each server generates its own
+     * configuration file, so the same feed can end up with a different effective limit
+     * per server. Returning all of them (rather than just the first) is what lets the
+     * editor say so instead of showing one arbitrary server's value as if it were the
+     * only one. `ftRPZSrvsAll` carries rl_window and rl_max_requests because the
+     * rpz_servers endpoint selects them.
+     *
+     * When no server is selected, or the list has not loaded, the result is empty and
+     * resolution falls through to the built-in defaults.
+     *
+     * @returns {{name: string, window: *, max_requests: *}[]} one entry per selected
+     *          server, in selection order; '' for an option the server does not set
      */
-    rpzServerRateLimit: function() {
-      var empty = { window: '', max_requests: '' };
-      if (!Array.isArray(this.ftRPZSrvs) || this.ftRPZSrvs.length === 0) return empty;
-      if (!Array.isArray(this.ftRPZSrvsAll)) return empty;
-      var firstId = this.ftRPZSrvs[0];
-      var srv = this.ftRPZSrvsAll.find(function(el) { return el && el.value == firstId; });
-      if (!srv) return empty;
-      return {
-        window: srv.rl_window === undefined || srv.rl_window === null ? '' : srv.rl_window,
-        max_requests: srv.rl_max_requests === undefined || srv.rl_max_requests === null ? '' : srv.rl_max_requests
-      };
+    rpzServerRateLimits: function() {
+      if (!Array.isArray(this.ftRPZSrvs) || this.ftRPZSrvs.length === 0) return [];
+      if (!Array.isArray(this.ftRPZSrvsAll)) return [];
+      var all = this.ftRPZSrvsAll;
+      var absent = function(v) { return v === undefined || v === null ? '' : v; };
+      return this.ftRPZSrvs.map(function(id) {
+        var srv = all.find(function(el) { return el && el.value == id; });
+        if (!srv) return null;
+        return {
+          name: srv.text === undefined || srv.text === null ? String(id) : String(srv.text),
+          window: absent(srv.rl_window),
+          max_requests: absent(srv.rl_max_requests)
+        };
+      }).filter(function(el) { return el !== null; });
     },
 
     /**
@@ -1215,15 +1298,22 @@ export const appConfig = {
      *
      * Each option resolves independently through zone -> server -> built-in default,
      * so a feed may set max_requests alone and still inherit window from the server.
-     * Returns, per option, the resolved value and where it came from, so the editor
-     * can tell the operator whether an empty input is inheriting from the server or
-     * from the ioc2rpz built-in default.
+     *
+     * A feed assigned to several servers inherits from each of them separately, so an
+     * option the feed does NOT set can resolve to a different value per server. In that
+     * case the result carries `ambiguous: true` and the per-server breakdown, and the
+     * editor reports that the inherited value varies rather than picking one server's
+     * value and presenting it as the effective limit. An option the feed DOES set is
+     * never ambiguous: it overrides every server.
+     *
+     * @returns {Object} per option, either {value, from} or
+     *          {ambiguous: true, perServer: [{name, value, from}]}
      */
     effectiveRPZRateLimit: function() {
-      var srv = this.rpzServerRateLimit;
+      var servers = this.rpzServerRateLimits;
       return {
-        window: resolveRateLimit(this.ftRPZRLWindow, srv.window, 'window'),
-        max_requests: resolveRateLimit(this.ftRPZRLMaxRequests, srv.max_requests, 'max_requests')
+        window: resolveRateLimitAcrossServers(this.ftRPZRLWindow, servers, 'window'),
+        max_requests: resolveRateLimitAcrossServers(this.ftRPZRLMaxRequests, servers, 'max_requests')
       };
     },
 
@@ -1758,9 +1848,13 @@ export const appConfig = {
      *
      * Empty means inherit, so it yields null (no validation state shown), matching
      * validateInt()'s treatment of an empty field. A value that is present must be a
-     * non-negative integer at or above `min`: `min` is 1 for `window` (a zero-length
-     * window is meaningless) and 0 for the maximums, where 0 legitimately means
-     * "refuse every request in that bucket".
+     * non-negative integer at or above `min`, and at or below `max` when one applies:
+     * `min` is 1 for `window` (a zero-length window is meaningless) and 0 for the
+     * maximums, where 0 legitimately means "refuse every request in that bucket".
+     * `window` is additionally capped at RL_WINDOW_MAX, because the window is stored
+     * with every rate limit entry and decides when it is swept - an absurd window keeps
+     * entries alive that long. The maximums have no cap: a large threshold only makes
+     * the limiter permissive.
      *
      * Validating here matters because the server only logs and ignores an invalid
      * value and then falls back to the next level, so a bad value would silently do
@@ -1768,14 +1862,17 @@ export const appConfig = {
      *
      * @param {string} vrbl Name of the reactive field holding the input
      * @param {number} min Smallest accepted value
+     * @param {number} [max] Largest accepted value, omitted when unbounded
      * @returns {boolean|null} true valid, false invalid, null empty (inherit)
      */
-    validateRateLimit: function(vrbl, min) {
+    validateRateLimit: function(vrbl, min, max) {
       var v = this.$data[vrbl];
       if (v === null || v === undefined || String(v).length === 0) return null;
       v = String(v);
       if (!/^[0-9]+$/.test(v)) return false;
-      return parseInt(v, 10) >= min;
+      var n = parseInt(v, 10);
+      if (n < min) return false;
+      return max === undefined || n <= max;
     },
 
     validateInt: function(vrbl) {
@@ -1979,7 +2076,7 @@ export const appConfig = {
     },
 
     tblMgmtSrvRecord: function(ev, table) {
-      if (this.validateName('ftSrvName') && (this.validateIP('ftSrvPubIP') || this.validateIP('ftSrvPubIP') == null) && (this.validateIP('ftSrvIP') || this.validateIP('ftSrvIP') == null) && this.validateHostname('ftSrvNS') && this.validateEmail('ftSrvEmail') && (this.validateIPList('ftSrvMGMTIP') || this.validateIP('ftSrvMGMTIP') == null) && this.validateRateLimit('ftSrvRLWindow', 1) !== false && this.validateRateLimit('ftSrvRLMaxRequests', 0) !== false && this.validateRateLimit('ftSrvRLMaxUnknownRequests', 0) !== false) {
+      if (this.validateName('ftSrvName') && (this.validateIP('ftSrvPubIP') || this.validateIP('ftSrvPubIP') == null) && (this.validateIP('ftSrvIP') || this.validateIP('ftSrvIP') == null) && this.validateHostname('ftSrvNS') && this.validateEmail('ftSrvEmail') && (this.validateIPList('ftSrvMGMTIP') || this.validateIP('ftSrvMGMTIP') == null) && this.validateRateLimit('ftSrvRLWindow', 1, RL_WINDOW_MAX) !== false && this.validateRateLimit('ftSrvRLMaxRequests', 0) !== false && this.validateRateLimit('ftSrvRLMaxUnknownRequests', 0) !== false) {
         var obj = this;
         if (this.ftSrvName != this.editRow.name || this.ftSrvIP != this.editRow.ip || this.ftSrvPubIP != this.editRow.pub_ip || this.ftSrvNS != this.editRow.ns || this.ftSrvEmail != this.editRow.email || this.ftSrvMGMT != this.editRow.mgmt || this.ftSrvSType != this.editRow.stype || this.ftSrvURL != this.editRow.URL || this.ftSrvMGMTIP != this.editRow.mgmt_ips_str || this.ftSrvTKeys != this.editRow.tkeys_arr || this.ftCertFile != this.editRow.certfile || this.ftKeyFile != this.editRow.keyfile || this.ftCACertFile != this.editRow.cacertfile || this.ftCustomConfig != this.editRow.custom_config || this.ftSrvTrackDefault != (this.editRow.track_default || 'off') || this.ftSrvRLWindow != rlToInput(this.editRow.rl_window) || this.ftSrvRLMaxRequests != rlToInput(this.editRow.rl_max_requests) || this.ftSrvRLMaxUnknownRequests != rlToInput(this.editRow.rl_max_unknown_requests)) toggleUpdates(0, this, true);
         let data = { tSrvId: this.ftSrvId, tSrvName: this.ftSrvName, tSrvIP: this.ftSrvIP, tSrvPubIP: this.ftSrvPubIP, tSrvNS: this.ftSrvNS, tSrvEmail: this.ftSrvEmail, tSrvMGMT: this.ftSrvMGMT, tSrvMGMTIP: JSON.stringify(this.ftSrvMGMTIP.split(/,|\s/g).filter(String)), tSrvTKeys: JSON.stringify(this.ftSrvTKeys), tSrvDisabled: this.ftSrvDisabled, tSrvSType: this.ftSrvSType, tSrvURL: this.ftSrvURL, tCertFile: this.ftCertFile, tKeyFile: this.ftKeyFile, tCACertFile: this.ftCACertFile, tCustomConfig: this.ftCustomConfig, tSrvTrackDefault: this.ftSrvTrackDefault, tSrvRLWindow: this.ftSrvRLWindow, tSrvRLMaxRequests: this.ftSrvRLMaxRequests, tSrvRLMaxUnknownRequests: this.ftSrvRLMaxUnknownRequests };
@@ -1998,12 +2095,18 @@ export const appConfig = {
         else if (!this.validateLocFile('ftCertFile')) this.$refs.formCertFile.$el.focus();
         else if (!this.validateLocFile('ftKeyFile')) this.$refs.formKeyFile.$el.focus();
         else if (!this.validateLocFile('ftCACertFile')) this.$refs.formCACertFile.$el.focus();
+        // Rate limits block the save, so focus has to reach them: a keyboard or screen
+        // reader user is otherwise left on an unrelated field with no way to find the
+        // one that is refusing to submit.
+        else if (this.validateRateLimit('ftSrvRLWindow', 1, RL_WINDOW_MAX) === false) this.$refs.formSrvRLWindow.$el.focus();
+        else if (this.validateRateLimit('ftSrvRLMaxRequests', 0) === false) this.$refs.formSrvRLMaxRequests.$el.focus();
+        else if (this.validateRateLimit('ftSrvRLMaxUnknownRequests', 0) === false) this.$refs.formSrvRLMaxUnknownRequests.$el.focus();
         else this.$refs.formSrcNotify.$el.focus();
       }
     },
 
     tblMgmtRPZRecord: function(ev, table) {
-      if (this.validateHostnameNum('ftRPZName') && (this.validateIPList('ftRPZNotify') || this.validateIPList('ftRPZNotify') == null) && ((this.validateCustomAction(this.ftRPZActionCustom) && this.ftRPZAction === 'local') || this.ftRPZAction != 'local') && this.validateInt('ftRPZSOA_Refresh') && this.validateInt('ftRPZSOA_UpdRetry') && this.validateInt('ftRPZSOA_Exp') && this.validateInt('ftRPZSOA_NXTTL') && this.validateInt('ftRPZAXFR') && this.validateInt('ftRPZIXFR') && this.validateRateLimit('ftRPZRLWindow', 1) !== false && this.validateRateLimit('ftRPZRLMaxRequests', 0) !== false) {
+      if (this.validateHostnameNum('ftRPZName') && (this.validateIPList('ftRPZNotify') || this.validateIPList('ftRPZNotify') == null) && ((this.validateCustomAction(this.ftRPZActionCustom) && this.ftRPZAction === 'local') || this.ftRPZAction != 'local') && this.validateInt('ftRPZSOA_Refresh') && this.validateInt('ftRPZSOA_UpdRetry') && this.validateInt('ftRPZSOA_Exp') && this.validateInt('ftRPZSOA_NXTTL') && this.validateInt('ftRPZAXFR') && this.validateInt('ftRPZIXFR') && this.validateRateLimit('ftRPZRLWindow', 1, RL_WINDOW_MAX) !== false && this.validateRateLimit('ftRPZRLMaxRequests', 0) !== false) {
         var obj = this;
         if (this.ftRPZName != this.editRow.name || this.ftRPZSOA_Refresh != this.editRow.soa_refresh || this.ftRPZSOA_UpdRetry != this.editRow.soa_update_retry || this.ftRPZSOA_Exp != this.editRow.soa_expiration || this.ftRPZSOA_NXTTL != this.editRow.soa_nx_ttl || this.ftRPZAXFR != this.editRow.axfr_update || this.ftRPZIXFR != this.editRow.ixfr_update || this.ftRPZCache != this.editRow.cache || this.ftRPZWildcard != this.editRow.wildcard || this.ftRPZAction != this.editRow.action || this.ftRPZIOCType != this.editRow.ioc_type || this.editRow.notify_str != this.ftRPZNotify || this.editRow.servers_arr != this.ftRPZSrvs || this.editRow.tkeys_arr != this.ftRPZTKeys || this.editRow.sources_arr != this.ftRPZSrc || this.editRow.whitelists_arr != this.ftRPZWL || this.ftRPZActionCustom != this.editRow.actioncustom || this.ftRPZDisabled != this.editRow.disabled || this.ftRPZTrackSources != (this.editRow.track_sources || 'Inherit') || this.ftRPZRLWindow != rlToInput(this.editRow.rl_window) || this.ftRPZRLMaxRequests != rlToInput(this.editRow.rl_max_requests)) toggleUpdates(0, this, true);
         let data = { tRPZId: this.ftRPZId, tRPZName: this.ftRPZName, tRPZSOA_Refresh: this.ftRPZSOA_Refresh, tRPZSOA_UpdRetry: this.ftRPZSOA_UpdRetry, tRPZSOA_Exp: this.ftRPZSOA_Exp, tRPZSOA_NXTTL: this.ftRPZSOA_NXTTL, tRPZCache: this.ftRPZCache, tRPZWildcard: this.ftRPZWildcard, tRPZNotify: JSON.stringify(this.ftRPZNotify.split(/,|\s/g).filter(String)), tRPZSrvs: JSON.stringify(this.ftRPZSrvs), tRPZIOCType: this.ftRPZIOCType, tRPZAXFR: this.ftRPZAXFR, tRPZIXFR: this.ftRPZIXFR, tRPZDisabled: this.ftRPZDisabled, tRPZTKeys: JSON.stringify(this.ftRPZTKeys), tRPZWL: JSON.stringify(this.ftRPZWL), tRPZSrc: JSON.stringify(this.ftRPZSrc), tRPZAction: this.ftRPZAction, tRPZActionCustom: JSON.stringify(this.ftRPZActionCustom), tRPZTrackSources: this.ftRPZTrackSources, tRPZRLWindow: this.ftRPZRLWindow, tRPZRLMaxRequests: this.ftRPZRLMaxRequests };
@@ -2022,6 +2125,10 @@ export const appConfig = {
         else if (!this.validateInt('ftRPZSOA_Exp')) this.$refs.formRPZSOA_Exp.$el.focus();
         else if (!this.validateInt('ftRPZSOA_NXTTL')) this.$refs.formRPZSOA_NXTTL.$el.focus();
         else if (!this.validateInt('ftRPZAXFR')) this.$refs.formRPZAXFR.$el.focus();
+        // See the server handler: an invalid rate limit blocks the save, so focus must
+        // land on it rather than on the last field of the form.
+        else if (this.validateRateLimit('ftRPZRLWindow', 1, RL_WINDOW_MAX) === false) this.$refs.formRPZRLWindow.$el.focus();
+        else if (this.validateRateLimit('ftRPZRLMaxRequests', 0) === false) this.$refs.formRPZRLMaxRequests.$el.focus();
         else this.$refs.formRPZIXFR.$el.focus();
       }
     },

@@ -21,7 +21,7 @@
  * @package ioc2rpz.gui
  * @author Vadim Pavlov
  * @copyright 2018-2026
- * @license MIT
+ * @license Apache-2.0
  */
 
 require_once 'io2auth.php';
@@ -41,7 +41,30 @@ if (in_array($REQUEST['method'], ['POST', 'PUT', 'DELETE', 'PATCH'])) {
     }
 }
 
-if (!empty($REQUEST['rowid'])) $ReqRowId=ctype_digit($REQUEST['rowid'])?$REQUEST['rowid']:implode(",",array_filter(json_decode($REQUEST['rowid'],true),'is_numeric'));
+// Normalise the requested row id(s) into a comma separated list of integers for use in
+// "... where rowid in ($ReqRowId)".
+//
+// Always initialised: it was previously assigned only inside the `!empty` branch, so a
+// request without a rowid left it undefined and every consumer emitted a PHP warning
+// before interpolating an empty string.
+//
+// The input may arrive as a bare id, a JSON array of ids, or - from a JSON request body -
+// an actual integer. The previous version passed the raw value to ctype_digit(), which
+// interprets an int as a character code, and then handed a possibly-null json_decode()
+// result to array_filter(), which is a TypeError on PHP 8. Both paths are handled here,
+// and every id is cast with intval() so the result can never carry SQL syntax.
+$ReqRowId='';
+if (isset($REQUEST['rowid']) && $REQUEST['rowid'] !== '' && $REQUEST['rowid'] !== null) {
+  $reqIds = $REQUEST['rowid'];
+  if (!is_array($reqIds)) {
+    $reqIds = ctype_digit((string)$reqIds) ? [$reqIds] : json_decode((string)$reqIds, true);
+  }
+  $rowIds = [];
+  foreach ((is_array($reqIds) ? $reqIds : []) as $id) {
+    if (is_numeric($id)) $rowIds[] = intval($id);
+  };
+  $ReqRowId = implode(",", $rowIds);
+};
 
 // API rate limiting — enforces per-session request throttling
 $rateCheck = checkApiRateLimit($REQUEST['method']);
@@ -49,6 +72,16 @@ if (!$rateCheck['allowed']) {
     header('Retry-After: ' . $rateCheck['retry_after']);
     http_response_code(429);
     echo '{"status":"failed","reason":"Rate limit exceeded. Try again in '.$rateCheck['retry_after'].' second(s)."}';
+    exit;
+}
+
+// Every DELETE handler interpolates $ReqRowId (or intval($REQUEST['rowid'])) into a
+// where clause. Without a usable id the statement used to degrade into "rowid in ()",
+// which SQLite accepts and silently matches nothing - a delete that reports success
+// while doing nothing. Reject the request instead of guessing.
+if ($REQUEST['method'] === 'DELETE' && $ReqRowId === '') {
+    http_response_code(400);
+    echo '{"status":"failed","reason":"Missing or invalid rowid"}';
     exit;
 }
 
@@ -85,8 +118,25 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
       $rlWindow = DB_intOrNull($REQUEST['tSrvRLWindow'] ?? null);
       $rlMaxRequests = DB_intOrNull($REQUEST['tSrvRLMaxRequests'] ?? null);
       $rlMaxUnknownRequests = DB_intOrNull($REQUEST['tSrvRLMaxUnknownRequests'] ?? null);
+      // Column order: user_id, name, ip, pub_ip, ns, email, mgmt, disabled, stype, URL,
+      // cfg_updated, publish_upd, certfile, keyfile, cacertfile, custom_config,
+      // track_default, rl_window, rl_max_requests, rl_max_unknown_requests.
+      //
+      // `mgmt` is an integer flag and must go through DB_boolval. It previously used
+      // DB_escape without surrounding quotes, which left an unquoted, attacker-controlled
+      // fragment in the VALUES list: DB_escape only doubles single quotes, so a payload
+      // containing none of them escaped the statement entirely. DB_execute runs through
+      // SQLite3::exec(), which accepts multiple statements, so that was a full SQL
+      // injection reachable by any authenticated user (validateServerFields never
+      // inspected tSrvMGMT). DB_boolval collapses the value to 0 or 1 and can never
+      // carry syntax.
+      //
+      // `cfg_updated` is set to 1, not derived from tSrvMGMT as it was before: a new
+      // server has no configuration on the DNS node yet, so it must be picked up by the
+      // next publish (POST publish_upd selects on cfg_updated=1). PUT servers likewise
+      // forces it to 1 on every edit.
       $sql="insert into servers values($USERID,'".DB_escape($db,$REQUEST['tSrvName'])."','".DB_escape($db,$REQUEST['tSrvIP'])."','".DB_escape($db,$REQUEST['tSrvPubIP']).
-      "','".DB_escape($db,$REQUEST['tSrvNS'])."','".DB_escape($db,$REQUEST['tSrvEmail'])."',".DB_escape($db,$REQUEST['tSrvMGMT']).",".DB_boolval($REQUEST['tSrvDisabled']).",".intval($REQUEST['tSrvSType']).",'".DB_escape($db,$REQUEST['tSrvURL'])."',".DB_boolval($REQUEST['tSrvMGMT']).",0,'".DB_escape($db,$REQUEST['tCertFile'])."','".DB_escape($db,$REQUEST['tKeyFile'])."','".DB_escape($db,$REQUEST['tCACertFile'])."','".DB_escape($db,$REQUEST['tCustomConfig'])."','".DB_escape($db,$trackDefault)."',$rlWindow,$rlMaxRequests,$rlMaxUnknownRequests)"; #certfile, keyfile, cacertfile, custom_config, track_default, rate limits (validated values; NULL = inherit)
+      "','".DB_escape($db,$REQUEST['tSrvNS'])."','".DB_escape($db,$REQUEST['tSrvEmail'])."',".DB_boolval($REQUEST['tSrvMGMT']).",".DB_boolval($REQUEST['tSrvDisabled']).",".intval($REQUEST['tSrvSType']).",'".DB_escape($db,$REQUEST['tSrvURL'])."',1,0,'".DB_escape($db,$REQUEST['tCertFile'])."','".DB_escape($db,$REQUEST['tKeyFile'])."','".DB_escape($db,$REQUEST['tCACertFile'])."','".DB_escape($db,$REQUEST['tCustomConfig'])."','".DB_escape($db,$trackDefault)."',$rlWindow,$rlMaxRequests,$rlMaxUnknownRequests)"; #certfile, keyfile, cacertfile, custom_config, track_default, rate limits (validated values; NULL = inherit)
       if (DB_execute($db,$sql)) {
         //safest way to get id?
         $srvid=DB_selectArray($db,"select max(rowid) as rowid from servers where name='".DB_escape($db,$REQUEST['tSrvName'])."'")[0]['rowid'];
@@ -122,28 +172,34 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
       $tkeys_old=DB_selectArray($db,"select rowid,tsig_id from servers_tsig where server_id=$srvid");
       $tkeys_groups_new=DB_selectArray($db,"select rowid from tkeys_groups where rowid in (".implode(",",getGroupsId(json_decode($REQUEST['tSrvTKeys']))).")");
       $tkeys_groups_old=DB_selectArray($db,"select rowid,tsig_group_id from servers_tsig_groups where server_id=$srvid");
+      // Association diffs. These used array_search($fk, $rows) where $rows is a list of
+      // associative rows, which never matches, so the "already linked" branch was dead and
+      // every association was deleted and re-inserted on each save. The assignment
+      // `if ($k=array_search(...))` was additionally false for a match at index 0.
+      // diffAssociations resolves both against the target row ids.
       $sql='';
-      foreach($tkeys_old as $tkey){
-        if ($k=array_search($tkey['tsig_id'],$tkeys_new)) unset($tkeys_new[$k]); else $sql.="delete from servers_tsig where rowid={$tkey['rowid']};\n";
+      $tkeysDiff=diffAssociations($tkeys_old,'tsig_id',$tkeys_new);
+      foreach($tkeysDiff['delete'] as $rowid){
+        $sql.="delete from servers_tsig where rowid=$rowid;\n";
       };
-      //$tkeys=DB_selectArray($db,"select rowid from tkeys where user_id=$USERID and rowid in (".implode(",",$tkeys_new).")");
-      foreach($tkeys_new as $tkey){
-        $sql.="insert into servers_tsig values($srvid,$USERID,{$tkey['rowid']});\n";
+      foreach($tkeysDiff['insert'] as $tsigid){
+        $sql.="insert into servers_tsig values($srvid,$USERID,$tsigid);\n";
       };
 
-      foreach($tkeys_groups_old as $tkey_group){
-        if ($k=array_search($tkey_group['tsig_group_id'],$tkeys_groups_new)) unset($tkeys_groups_new[$k]); else $sql.="delete from servers_tsig_groups where rowid={$tkey_group['rowid']};\n";
+      $tkeysGroupsDiff=diffAssociations($tkeys_groups_old,'tsig_group_id',$tkeys_groups_new);
+      foreach($tkeysGroupsDiff['delete'] as $rowid){
+        $sql.="delete from servers_tsig_groups where rowid=$rowid;\n";
       };
-			foreach($tkeys_groups_new as $tkey_group){
-				$sql.="insert into servers_tsig_groups values($srvid,$USERID,{$tkey_group['rowid']});\n";
-			};
+      foreach($tkeysGroupsDiff['insert'] as $groupid){
+        $sql.="insert into servers_tsig_groups values($srvid,$USERID,$groupid);\n";
+      };
 
-      $mgmtip_new=array_unique(json_decode($REQUEST['tSrvMGMTIP']));
       $mgmtip_old=DB_selectArray($db,"select rowid, mgmt_ip from mgmt_ips where server_id=$srvid");
-      foreach($mgmtip_old as $ip){
-        if ($k=array_search($ip['mgmt_ip'],$mgmtip_new)) unset($mgmtip_new[$k]); else $sql.="delete from mgmt_ips where rowid={$ip['rowid']};\n";
+      $mgmtipDiff=diffValueAssociations($mgmtip_old,'mgmt_ip',json_decode($REQUEST['tSrvMGMTIP']));
+      foreach($mgmtipDiff['delete'] as $rowid){
+        $sql.="delete from mgmt_ips where rowid=$rowid;\n";
       };
-      foreach($mgmtip_new as $ip){
+      foreach($mgmtipDiff['insert'] as $ip){
         $sql.="insert into mgmt_ips values($srvid,$USERID,'".DB_escape($db,$ip)."');\n";
       };
       $sql.="update servers set name='".DB_escape($db,$REQUEST['tSrvName'])."', ip='".DB_escape($db,$REQUEST['tSrvIP'])."', pub_ip='".DB_escape($db,$REQUEST['tSrvPubIP']).
@@ -227,12 +283,13 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
       $sql="update tkeys set name='".DB_escape($db,$REQUEST['tKeyName'])."', alg='".DB_escape($db,$REQUEST['tKeyAlg'])."', tkey='".DB_escape($db,$REQUEST['tKey'])."', mgmt=".DB_boolval($REQUEST['tKeyMGMT'])." where rowid=".intval($REQUEST['tKeyId']).";\n$sql_update";
       $tkeys_groups_new=DB_selectArray($db,"select rowid from tkeys_groups where rowid in (".implode(",",filterIntArr(json_decode($REQUEST['tTKeysGroups']))).")");
       $tkeys_groups_old=DB_selectArray($db,"select rowid,tsig_group_id from tkeys_tsig_groups where tsig_id=".intval($REQUEST['tKeyId']));
-      foreach($tkeys_groups_old as $tkey_group){
-        if ($k=array_search($tkey_group['tsig_group_id'],$tkeys_groups_new)) unset($tkeys_groups_new[$k]); else $sql.="delete from tkeys_tsig_groups where rowid={$tkey_group['rowid']};\n";
+      $tkeysGroupsDiff=diffAssociations($tkeys_groups_old,'tsig_group_id',$tkeys_groups_new);
+      foreach($tkeysGroupsDiff['delete'] as $rowid){
+        $sql.="delete from tkeys_tsig_groups where rowid=$rowid;\n";
       };
-			foreach($tkeys_groups_new as $tkey_group){
-				$sql.="insert into tkeys_tsig_groups values(".intval($REQUEST['tKeyId']).",$USERID,{$tkey_group['rowid']});\n";
-			};
+      foreach($tkeysGroupsDiff['insert'] as $groupid){
+        $sql.="insert into tkeys_tsig_groups values(".intval($REQUEST['tKeyId']).",$USERID,$groupid);\n";
+      };
 
       if (DB_execute($db,$sql)) $response='{"status":"ok"}'; else $response='{"status":"failed", "reason":"Database operation failed"}';
 			//TODO add tsig_groups
@@ -288,6 +345,10 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
     case "DELETE servers":
       $sql="delete from mgmt_ips where server_id in ($ReqRowId);\n";
       $sql.="delete from servers_tsig where server_id in ($ReqRowId);\n";
+      // servers_tsig_groups and rpzs_servers were left behind, orphaning rows that keep
+      // referencing a server that no longer exists.
+      $sql.="delete from servers_tsig_groups where server_id in ($ReqRowId);\n";
+      $sql.="delete from rpzs_servers where server_id in ($ReqRowId);\n";
       $sql.="delete from servers where rowid in ($ReqRowId);\n";
       if (DB_execute($db,$sql)) $response='{"status":"ok"}'; else $response='{"status":"failed", "reason":"Database operation failed"}';
       break;
@@ -404,31 +465,51 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
 
       if (in_array($REQUEST['tRPZAction'],["nxdomain","nodata","passthru","drop","tcp-only"])) $action=$REQUEST['tRPZAction'];else $action=erlChLRecords($REQUEST['tRPZActionCustom']);
 
+      // Association diffs. Each of these previously diffed against $tkeys_new regardless of
+      // which relation was being processed, and compared a foreign key against a list of
+      // associative rows, which never matches. The combined effect was that every
+      // association was dropped and re-created on every save.
       $sql='';
-      foreach($tkeys_old as $tkey){if ($k=array_search($tkey['tkey_id'],$tkeys_new)) unset($tkeys_new[$k]); else $sql.="delete from rpzs_tkeys where rowid={$tkey['rowid']};\n";};
-      foreach($tkeys_new as $tkey){$sql.="insert into rpzs_tkeys values($rpzid,$USERID,{$tkey['rowid']});\n";};
+      $tkeysDiff=diffAssociations($tkeys_old,'tkey_id',$tkeys_new);
+      foreach($tkeysDiff['delete'] as $rowid){$sql.="delete from rpzs_tkeys where rowid=$rowid;\n";};
+      foreach($tkeysDiff['insert'] as $tkeyid){$sql.="insert into rpzs_tkeys values($rpzid,$USERID,$tkeyid);\n";};
 
-      foreach($tkeys_groups_old as $tkeys_group){if ($k=array_search($tkeys_group['tkey_group_id'],$tkeys_new)) unset($tkeys_groups_new[$k]); else $sql.="delete from rpzs_tkeys_groups where rowid={$tkeys_group['rowid']};\n";};
-      foreach($tkeys_groups_new as $tkeys_group){$sql.="insert into rpzs_tkeys_groups values($rpzid,$USERID,{$tkeys_group['rowid']});\n";};
+      $tkeysGroupsDiff=diffAssociations($tkeys_groups_old,'tkey_group_id',$tkeys_groups_new);
+      foreach($tkeysGroupsDiff['delete'] as $rowid){$sql.="delete from rpzs_tkeys_groups where rowid=$rowid;\n";};
+      foreach($tkeysGroupsDiff['insert'] as $groupid){$sql.="insert into rpzs_tkeys_groups values($rpzid,$USERID,$groupid);\n";};
 
-      $chCfgSrv=[];
-      foreach($servers_old as $item){if ($k=array_search($item['server_id'],$tkeys_new)) unset($servers_new[$k]); else {$sql.="delete from rpzs_servers where rowid={$item['rowid']};\n";array_push($chCfgSrv,$item['rowid']);}};
-      foreach($servers_new as $item){$sql.="insert into rpzs_servers values($rpzid,$USERID,{$item['rowid']});\n";array_push($chCfgSrv,$item['rowid']);};
-      $sql.="update servers set cfg_updated=1 where rowid in (".implode(",", $chCfgSrv).");\n";
+      $serversDiff=diffAssociations($servers_old,'server_id',$servers_new);
+      foreach($serversDiff['delete'] as $rowid){$sql.="delete from rpzs_servers where rowid=$rowid;\n";};
+      foreach($serversDiff['insert'] as $serverid){$sql.="insert into rpzs_servers values($rpzid,$USERID,$serverid);\n";};
 
-      foreach($sources_old as $item){if ($k=array_search($item['source_id'],$tkeys_new)) unset($sources_new[$k]); else $sql.="delete from rpzs_sources where rowid={$item['rowid']};\n";};
-      foreach($sources_new as $item){$sql.="insert into rpzs_sources values($rpzid,$USERID,{$item['rowid']});\n";};
+      // Servers needing a republished configuration: the union of those that served this
+      // zone before the change and those that serve it after. Removed servers need a config
+      // without the zone, added servers need one with it, and retained servers need one
+      // reflecting the zone attributes updated below.
+      //
+      // This previously collected $item['rowid'] from $servers_old, which is the rowid of
+      // the rpzs_servers association row rather than of the server, so the update marked
+      // unrelated servers (or none) as needing a publish.
+      $chCfgSrv=array_values(array_unique(array_merge(
+        array_map('intval',array_column($servers_old,'server_id')),
+        array_map('intval',array_column($servers_new,'rowid'))
+      )));
+      if ($chCfgSrv) $sql.="update servers set cfg_updated=1 where rowid in (".implode(",", $chCfgSrv).");\n";
 
-      foreach($whlists_old as $item){if ($k=array_search($item['whitelist_id'],$tkeys_new)) unset($whlists_new[$k]); else $sql.="delete from rpzs_whitelists where rowid={$item['rowid']};\n";};
-      foreach($whlists_new as $item){$sql.="insert into rpzs_whitelists values($rpzid,$USERID,{$item['rowid']});\n";};
+      $sourcesDiff=diffAssociations($sources_old,'source_id',$sources_new);
+      foreach($sourcesDiff['delete'] as $rowid){$sql.="delete from rpzs_sources where rowid=$rowid;\n";};
+      foreach($sourcesDiff['insert'] as $sourceid){$sql.="insert into rpzs_sources values($rpzid,$USERID,$sourceid);\n";};
 
-      $ip_new=array_unique(json_decode($REQUEST['tRPZNotify']));
+      $whlistsDiff=diffAssociations($whlists_old,'whitelist_id',$whlists_new);
+      foreach($whlistsDiff['delete'] as $rowid){$sql.="delete from rpzs_whitelists where rowid=$rowid;\n";};
+      foreach($whlistsDiff['insert'] as $whlistid){$sql.="insert into rpzs_whitelists values($rpzid,$USERID,$whlistid);\n";};
+
       $ip_old=DB_selectArray($db,"select rowid, notify from rpzs_notify where rpz_id=$rpzid");
-
-      foreach($ip_old as $ip){
-        if ($k=array_search($ip['notify'],$ip_new)) unset($ip_new[$k]); else $sql.="delete from rpzs_notify where rowid={$ip['rowid']};\n";
+      $notifyDiff=diffValueAssociations($ip_old,'notify',json_decode($REQUEST['tRPZNotify']));
+      foreach($notifyDiff['delete'] as $rowid){
+        $sql.="delete from rpzs_notify where rowid=$rowid;\n";
       };
-      foreach($ip_new as $ip){
+      foreach($notifyDiff['insert'] as $ip){
         $sql.="insert into rpzs_notify values($rpzid,$USERID,'".DB_escape($db,$ip)."');\n";
       };
 
@@ -442,10 +523,19 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
 
       break;
     case "DELETE rpzs":
+      // Resolve the affected servers before the association rows are removed. The previous
+      // version reused $ReqRowId - a list of rpz ids - as the server rowid filter, so it
+      // flagged whichever servers happened to share those ids and missed the ones actually
+      // serving the deleted zones.
+      $affectedSrv=array_map('intval',array_column(
+        DB_selectArray($db,"select distinct server_id from rpzs_servers where rpz_id in ($ReqRowId)"),
+        'server_id'
+      ));
       $sql="delete from rpzs_notify where rpz_id in ($ReqRowId);\n";
       $sql.="delete from rpzs_tkeys where rpz_id in ($ReqRowId);\n";
       $sql.="delete from rpzs_tkeys_groups where rpz_id in ($ReqRowId);\n";
-      $sql.="delete from rpzs_servers where rpz_id in ($ReqRowId);\n update servers set cfg_updated=1 where rowid in ($ReqRowId);\n";
+      $sql.="delete from rpzs_servers where rpz_id in ($ReqRowId);\n";
+      if ($affectedSrv) $sql.="update servers set cfg_updated=1 where rowid in (".implode(",", $affectedSrv).");\n";
       $sql.="delete from rpzs_whitelists where rpz_id in ($ReqRowId);\n";
       $sql.="delete from rpzs_sources where rpz_id in ($ReqRowId);\n";
       $sql.="delete from rpzs where rowid in ($ReqRowId);\n";
@@ -546,12 +636,11 @@ switch ($REQUEST['method'].' '.$REQUEST["req"]):
         $response='{"status":"failed", "reason":"not supported"}';
       };
       break;
-    case "PATCH user_passsword":
-      if ($_SESSION['perm'] == 1){
-      }else{
-        $response='{"status":"failed", "reason":"not supported"}';
-      };
-      break;
+    // "PATCH user_passsword" removed: the case name was misspelled, the admin branch was
+    // empty, and nothing in the frontend called it, so it only ever returned an
+    // uninitialised response. Self-service password change is tracked in TODO.md; when it
+    // lands it needs its own handler that authenticates the *current* user rather than
+    // gating on perm == 1. Unknown endpoints now fall through to the default case.
     case "DELETE users":
       if ($_SESSION['perm'] == 1){
         $sql="delete from users where rowid=".intval($REQUEST['rowid']);

@@ -11,7 +11,7 @@
  * @package ioc2rpz.gui
  * @author Vadim Pavlov
  * @copyright 2018-2026
- * @license MIT
+ * @license Apache-2.0
  */
 
 /**
@@ -59,6 +59,122 @@ function getProto(){
 };
 
 /**
+ * Starts the PHP session with hardened cookie attributes.
+ *
+ * The cookie flags are applied here rather than relying on php.ini because the
+ * only place that edits php.ini is the container entrypoint
+ * (scripts/run_ioc2rpz.gui.sh), and it does so once, guarded by a marker file.
+ * Bare-metal installations and already-provisioned containers therefore never
+ * received them. Setting them in code makes every deployment consistent.
+ *
+ * SameSite=Strict prevents the browser from attaching the session cookie to any
+ * cross-site request, which is the backstop behind the CSRF token check in
+ * io2data.php: even a leaked or omitted token cannot be replayed from a foreign
+ * origin. Strict rather than Lax because the GUI has no inbound deep links that
+ * need to carry an authenticated session.
+ *
+ * `secure` follows the detected protocol instead of being pinned on, so a
+ * deployment terminating TLS elsewhere and serving plain HTTP internally can
+ * still log in. Calling this on an already-active session is a no-op.
+ *
+ * @return void
+ */
+function startSession(){
+  if (session_status() === PHP_SESSION_ACTIVE) return;
+  session_set_cookie_params([
+    'lifetime' => 0,
+    'path'     => '/',
+    'httponly' => true,
+    'secure'   => (getProto() === "https://"),
+    'samesite' => 'Strict',
+  ]);
+  session_start();
+};
+
+/**
+ * Diffs stored association rows against the requested target set.
+ *
+ * Association tables (servers_tsig, rpzs_servers, rpzs_sources, ...) hold one row
+ * per link, and the editors submit the complete desired set on every save. This
+ * resolves that into the minimum set of statements: association rows whose target
+ * is no longer wanted are deleted, targets that are not linked yet are inserted,
+ * and links that already match are left untouched.
+ *
+ * Both inputs are result sets from DB_selectArray, i.e. arrays of associative
+ * rows. `$old` rows carry the association's own `rowid` plus the foreign key named
+ * by `$fkColumn`; `$new` rows carry the target `rowid`. Everything is cast to int
+ * before comparison so the returned values are always safe to interpolate into
+ * SQL, and so a string rowid from SQLite compares equal to an int from the
+ * request.
+ *
+ * A duplicate link to the same target is reported for deletion, keeping only the
+ * first occurrence, so pre-existing duplicates get cleaned up rather than
+ * preserved.
+ *
+ * @param array  $old      Existing association rows (need `rowid` and $fkColumn)
+ * @param string $fkColumn Name of the column holding the target row id
+ * @param array  $new      Requested target rows (need `rowid`)
+ * @return array{delete:int[],insert:int[],keep:int[]} `delete` holds association
+ *         rowids, `insert` and `keep` hold target rowids
+ */
+function diffAssociations(array $old, string $fkColumn, array $new){
+  $wanted = array_values(array_unique(array_map('intval', array_column($new, 'rowid'))));
+  $keep   = [];
+  $delete = [];
+  foreach ($old as $row) {
+    $target = intval($row[$fkColumn] ?? 0);
+    // in_array with strict comparison on an int list: unlike array_search the
+    // result cannot be confused with a valid index of 0.
+    if (in_array($target, $wanted, true) && !in_array($target, $keep, true)) {
+      $keep[] = $target;
+    } else {
+      $delete[] = intval($row['rowid']);
+    }
+  };
+  return [
+    'delete' => $delete,
+    'insert' => array_values(array_diff($wanted, $keep)),
+    'keep'   => $keep,
+  ];
+};
+
+/**
+ * Diffs stored association rows that hold a literal value rather than a foreign key.
+ *
+ * Used for the notify and management IP tables, where the association row stores
+ * the address itself. Behaves like diffAssociations, but compares strings and
+ * returns the values to insert instead of row ids. The caller still has to escape
+ * the returned values before use.
+ *
+ * @param array    $old         Existing rows (need `rowid` and $valueColumn)
+ * @param string   $valueColumn Name of the column holding the value
+ * @param iterable $wanted      Requested values
+ * @return array{delete:int[],insert:string[]} `delete` holds association rowids
+ */
+function diffValueAssociations(array $old, string $valueColumn, $wanted){
+  $wantedList = [];
+  foreach (($wanted ?: []) as $value) {
+    if (is_array($value) || is_object($value)) continue;
+    $value = (string)$value;
+    if ($value !== '' && !in_array($value, $wantedList, true)) $wantedList[] = $value;
+  };
+  $keep   = [];
+  $delete = [];
+  foreach ($old as $row) {
+    $value = (string)($row[$valueColumn] ?? '');
+    if (in_array($value, $wantedList, true) && !in_array($value, $keep, true)) {
+      $keep[] = $value;
+    } else {
+      $delete[] = intval($row['rowid']);
+    }
+  };
+  return [
+    'delete' => $delete,
+    'insert' => array_values(array_diff($wantedList, $keep)),
+  ];
+};
+
+/**
  * Sets security-related HTTP headers
  * 
  * Configures the following security headers:
@@ -93,6 +209,15 @@ function secHeaders(){
     // - base-uri 'self': Restrict base element to same origin
     // - object-src 'none': Disallow plugins like Flash
     header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://use.fontawesome.com; font-src 'self' https://use.fontawesome.com data:; img-src 'self' data:; connect-src 'self'; frame-ancestors 'self'; form-action 'self'; base-uri 'self'; object-src 'none';");
+
+    // HSTS. Previously only set by the container's Apache config, which left
+    // bare-metal installations (RpiDNS) without it. Emitted from PHP so every
+    // deployment gets it regardless of the web server in front.
+    // Only meaningful over TLS - browsers ignore it on plain HTTP, and sending it
+    // there would be a no-op that hides a misconfigured deployment.
+    if (getProto() === "https://") {
+        header("Strict-Transport-Security: max-age=63072000; includeSubDomains");
+    }
 };
 
 /**
@@ -649,7 +774,7 @@ function validateServerFields($data) {
     // ioc2rpz compile-time default and is always valid; anything present must be an
     // integer in range. All three options are valid at the server level.
     $rl = validateRateLimitFields($data, [
-        'tSrvRLWindow'             => ['label' => 'rate limit window',              'min' => 1],
+        'tSrvRLWindow'             => ['label' => 'rate limit window',              'min' => 1, 'max' => RL_WINDOW_MAX],
         'tSrvRLMaxRequests'        => ['label' => 'rate limit max requests',        'min' => 0],
         'tSrvRLMaxUnknownRequests' => ['label' => 'rate limit max unknown requests', 'min' => 0],
     ]);
@@ -664,16 +789,22 @@ function validateServerFields($data) {
  *
  * Every option is individually optional: an absent or empty value means "inherit"
  * (resolve through zone -> server -> compile-time default) and is always accepted. A
- * value that is present must be a plain integer at or above the option's minimum:
- * `window` must be > 0 (min 1), and the maximums must be >= 0, where 0 is legal and
- * means "refuse every request in that bucket".
+ * value that is present must be a plain integer within the option's range: `window`
+ * must be > 0 and at most RL_WINDOW_MAX, and the maximums must be >= 0, where 0 is
+ * legal and means "refuse every request in that bucket".
+ *
+ * Only `window` is capped. It is stored with every entry in the server's rate limit
+ * table and decides when that entry is swept, so an absurd window (a fumbled digit, a
+ * value pasted in milliseconds) would keep entries alive for as long as it lasts. A
+ * large maximum only makes the limiter permissive and retains nothing.
  *
  * Rejecting here matters because the server only logs and ignores an invalid value
  * and then falls back to the next level, so a bad value written by the GUI would
  * silently do nothing.
  *
  * @param array $data Request data
- * @param array $fields Map of request key => ['label' => string, 'min' => int]
+ * @param array $fields Map of request key => ['label' => string, 'min' => int,
+ *                      'max' => int (optional, unbounded when omitted)]
  * @return array ['valid' => bool, 'error' => string|null]
  */
 function validateRateLimitFields($data, $fields) {
@@ -697,6 +828,12 @@ function validateRateLimitFields($data, $fields) {
             return [
                 'valid' => false,
                 'error' => 'Invalid ' . $spec['label'] . ': ' . $int . ' is below the minimum of ' . $spec['min'],
+            ];
+        }
+        if (isset($spec['max']) && $int > $spec['max']) {
+            return [
+                'valid' => false,
+                'error' => 'Invalid ' . $spec['label'] . ': ' . $int . ' is above the maximum of ' . $spec['max'],
             ];
         }
     }
@@ -788,7 +925,7 @@ function validateRpzFields($data) {
     // Validate the per-feed DNS rate limits. Absent/empty means inherit the
     // server-level value (then the compile-time default).
     $rl = validateRateLimitFields($data, [
-        'tRPZRLWindow'      => ['label' => 'rate limit window',       'min' => 1],
+        'tRPZRLWindow'      => ['label' => 'rate limit window',       'min' => 1, 'max' => RL_WINDOW_MAX],
         'tRPZRLMaxRequests' => ['label' => 'rate limit max requests', 'min' => 0],
     ]);
     if (!$rl['valid']) {

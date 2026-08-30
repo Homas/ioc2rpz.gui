@@ -107,45 +107,79 @@ function initSQLiteDB($DBF){
 
 
   # Sample data
-  $sql='insert into tkeys_groups values(1,"mgmt"),(1,"public");';
-  $db->exec($sql);
+  #
+  # Every insert below names its columns explicitly. Positional inserts used to be the
+  # norm here and they broke silently: when the rate limit columns were added, the
+  # `servers` and `rpzs` inserts still supplied the old number of values, SQLite rejected
+  # them, and because each was the first statement in a multi-statement exec() the
+  # associations that followed (servers_tsig, mgmt_ips, rpzs_servers, rpzs_sources,
+  # rpzs_notify, rpzs_tkeys) never ran either. A fresh install came up with no sample
+  # server and no sample feed at all, contradicting the README, and nothing reported it
+  # because the exec() return value was discarded.
+  #
+  # Naming the columns means a future column with a default no longer breaks these, and
+  # sampleExec() makes any remaining failure loud instead of silent.
+  $sampleErrors=0;
+  $sampleExec=function($sql,$label) use ($db,&$sampleErrors){
+    if ($db->exec($sql)===false) {
+      $sampleErrors++;
+      fwrite(STDERR,"ERROR: sample data '$label' failed: ".$db->lastErrorMsg()."\n");
+    };
+  };
 
-  $sql='insert into tkeys values(1,"tkey_mgmt_1","md5","'.base64_encode(random_bytes(16)).'",1);'.
-       'insert into tkeys values(1,"tkey_1","md5","'.base64_encode(random_bytes(16)).'",0);';
-  $db->exec($sql);
+  $sampleExec('insert into tkeys_groups (user_id,group_name) values(1,"mgmt"),(1,"public");','tkeys_groups');
+
+  $sampleExec('insert into tkeys (user_id,name,alg,tkey,mgmt) values'.
+       '(1,"tkey_mgmt_1","md5","'.base64_encode(random_bytes(16)).'",1),'.
+       '(1,"tkey_1","md5","'.base64_encode(random_bytes(16)).'",0);','tkeys');
 
   $gw_ip=exec("ip route | grep default | awk '{print $3}'"); $gw_ip=$gw_ip?$gw_ip:"127.0.0.1";
 
-  $sql='insert into servers values(1,"server_1","'.$gw_ip.'","127.0.0.1","ns1.ioc2rpz.local","support@ioc2rpz.local",1,0,0,"ioc2rpz.conf",1,1,"./cfg/ioc2_server.pem","./cfg/ioc2_server.key","","","off");'.
-       'insert into servers_tsig values(1,1,1);'.
-       'insert into mgmt_ips values(1,1,"127.0.0.1");';
-  $localIP = getHostByName(getHostName());
-  if ($localIP) $sql.='insert into mgmt_ips values(1,1,"'.$localIP.'");';
-  if ($gw_ip!="127.0.0.1") $sql.='insert into mgmt_ips values(1,1,"'.$gw_ip.'");';
+  # rl_window / rl_max_requests / rl_max_unknown_requests are deliberately omitted so they
+  # stay NULL, i.e. inherit the ioc2rpz compile-time default.
+  $sampleExec('insert into servers (user_id,name,ip,pub_ip,ns,email,mgmt,disabled,stype,URL,'.
+       'cfg_updated,publish_upd,certfile,keyfile,cacertfile,custom_config,track_default) values'.
+       '(1,"server_1","'.$gw_ip.'","127.0.0.1","ns1.ioc2rpz.local","support@ioc2rpz.local",1,0,0,'.
+       '"ioc2rpz.conf",1,1,"./cfg/ioc2_server.pem","./cfg/ioc2_server.key","","","off");','servers');
+  $sampleExec('insert into servers_tsig (server_id,user_id,tsig_id) values(1,1,1);','servers_tsig');
 
-  $db->exec($sql);
+  $mgmtIPs=['127.0.0.1'];
+  $localIP=getHostByName(getHostName());
+  if ($localIP && !in_array($localIP,$mgmtIPs,true)) $mgmtIPs[]=$localIP;
+  if ($gw_ip!="127.0.0.1" && !in_array($gw_ip,$mgmtIPs,true)) $mgmtIPs[]=$gw_ip;
+  foreach($mgmtIPs as $ip){
+    $sampleExec('insert into mgmt_ips (server_id,user_id,mgmt_ip) values(1,1,"'.$ip.'");','mgmt_ips '.$ip);
+  };
 
-  $sql='insert into whitelists values(1,"allowlist_1","file:/opt/ioc2rpz/cfg/whitelist1.txt","none", NULL, 0, 900, 0, "mixed", 0);';
-  $db->exec($sql);
+  $sampleExec('insert into whitelists (user_id,name,url,regex,userid,max_ioc,hotcache_time,'.
+       'hotcacheixfr_time,ioc_type,keep_in_cache) values'.
+       '(1,"allowlist_1","file:/opt/ioc2rpz/cfg/whitelist1.txt","none",NULL,0,900,0,"mixed",0);','whitelists');
 
-  $sql='insert into sources values(1,"notracking_hosts","https://raw.githubusercontent.com/notracking/hosts-blocklists/master/hostnames.txt","[:AXFR:]","^0\.0\.0\.0 ([A-Za-z0-9\._\-]+[A-Za-z])$", NULL, 0, 900, 0, "mixed", 0);'.
-       'insert into sources values(1,"notracking_domains","https://raw.githubusercontent.com/notracking/hosts-blocklists/master/domains.txt","[:AXFR:]","^address=\/([A-Za-z0-9\._\-]+[A-Za-z])\/0\.0\.0\.0$", NULL, 0, 900, 0, "mixed", 0);';
-  $db->exec($sql);
+  $sampleExec('insert into sources (user_id,name,url,url_ixfr,regex,userid,max_ioc,hotcache_time,'.
+       'hotcacheixfr_time,ioc_type,keep_in_cache) values'.
+       '(1,"notracking_hosts","https://raw.githubusercontent.com/notracking/hosts-blocklists/master/hostnames.txt","[:AXFR:]","^0\.0\.0\.0 ([A-Za-z0-9\._\-]+[A-Za-z])$",NULL,0,900,0,"mixed",0),'.
+       '(1,"notracking_domains","https://raw.githubusercontent.com/notracking/hosts-blocklists/master/domains.txt","[:AXFR:]","^address=\/([A-Za-z0-9\._\-]+[A-Za-z])\/0\.0\.0\.0$",NULL,0,900,0,"mixed",0);','sources');
 
-  $sql='insert into rpzs values(1,"notracking.ioc2rpz",86400,3600,2592000,7200,1,1,"nxdomain","mixed",604800,86400,0,"Inherit");'.
-       'insert into rpzs_servers values(1,1,1);'.
-       'insert into rpzs_whitelists values(1,1,1);'.
-       'insert into rpzs_sources values(1,1,1);'.
-       'insert into rpzs_sources values(1,1,2);'.
-       'insert into rpzs_notify values(1,1,"127.0.0.1");'.
-       'insert into rpzs_tkeys values(1,1,2);';
-  $db->exec($sql);
+  # rl_window / rl_max_requests omitted on purpose - NULL means inherit from the server.
+  $sampleExec('insert into rpzs (user_id,name,soa_refresh,soa_update_retry,soa_expiration,'.
+       'soa_nx_ttl,cache,wildcard,action,ioc_type,axfr_update,ixfr_update,disabled,track_sources) values'.
+       '(1,"notracking.ioc2rpz",86400,3600,2592000,7200,1,1,"nxdomain","mixed",604800,86400,0,"Inherit");','rpzs');
+  $sampleExec('insert into rpzs_servers (rpz_id,user_id,server_id) values(1,1,1);','rpzs_servers');
+  $sampleExec('insert into rpzs_whitelists (rpz_id,user_id,whitelist_id) values(1,1,1);','rpzs_whitelists');
+  $sampleExec('insert into rpzs_sources (rpz_id,user_id,source_id) values(1,1,1),(1,1,2);','rpzs_sources');
+  $sampleExec('insert into rpzs_notify (rpz_id,user_id,notify) values(1,1,"127.0.0.1");','rpzs_notify');
+  $sampleExec('insert into rpzs_tkeys (rpz_id,user_id,tkey_id) values(1,1,2);','rpzs_tkeys');
+
+  if ($sampleErrors) fwrite(STDERR,"ERROR: $sampleErrors sample data statement(s) failed\n");
 
   #close DB
   DB_close($db);
+  return $sampleErrors===0;
 };
 
 
-initSQLiteDB(IO2PATH."/www/".DBFile);
+# Exit non-zero if the sample configuration could not be created, so the container
+# entrypoint and CI surface it instead of coming up with an empty database.
+if (!initSQLiteDB(IO2PATH."/www/".DBFile)) exit(1);
 
 ?>

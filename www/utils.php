@@ -14,7 +14,7 @@
  * @package ioc2rpz.gui
  * @author Vadim Pavlov
  * @copyright 2018-2026
- * @license MIT
+ * @license Apache-2.0
  */
 
 require 'io2auth.php';
