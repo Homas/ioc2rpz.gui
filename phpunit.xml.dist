@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  PHPUnit configuration for ioc2rpz.gui PHP tests.
+
+  This config is the counterpart to vitest.config.js: where Vitest exercises the
+  pure logic in www/js/io2.js, PHPUnit + Eris exercise the pure backend logic in
+  www/io2vars.php (Config_Writer helpers) and www/io2fun.php (validators).
+
+  The bootstrap loads the Composer autoloader (Eris/PHPUnit) and requires the
+  two backend files so their pure functions are available to tests. Feature
+  specific property tests (Properties 1, 2, 5, 8) are added by later tasks.
+-->
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="tests/php/bootstrap.php"
+         colors="true"
+         cacheDirectory=".phpunit.cache">
+    <testsuites>
+        <testsuite name="ioc2rpz.gui PHP">
+            <directory>tests/php</directory>
+        </testsuite>
+    </testsuites>
+    <source>
+        <include>
+            <file>www/io2vars.php</file>
+            <file>www/io2fun.php</file>
+        </include>
+    </source>
+</phpunit>
