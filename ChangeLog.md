@@ -1,4 +1,15 @@
 #ioc2rpz.gui change log
+## 2.3.1 2026-09-29
+
+### Changed
+
+- Upgraded the test runner from Vitest 3.2 to 4.1.11 (`^4.1.11`). The existing suites run
+unchanged. This is a development dependency only; the shipped bundle is unaffected.
+Vitest 4 supports Node 20, 22 and 24+, but not the odd-numbered Node 23 release.
+CI and the Docker builder already use Node 22. npm 10 can crash
+while resolving the updated peer set (`Cannot read properties of null (reading
+'edgesOut')`); use npm 11 to install
+
 ## 2.3.0 2026-08-30
 
 ### Security
