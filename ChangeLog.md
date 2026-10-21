@@ -1,4 +1,18 @@
 #ioc2rpz.gui change log
+## 2.3.2 2026-10-21
+
+### Security
+
+- **PHP2Shell (CVE-2026-109618, CVE-2026-109619).** Two critical (CVSS v4.0 9.2)
+unauthenticated remote code execution flaws in PHP core, fixed upstream in PHP 8.3.36.
+The container runs Apache with mod_php, which PHP rates as the highest-risk configuration:
+an unauthenticated request can trigger the attack before any application code runs.
+The runtime image is now pinned to `alpine:3.24` instead of `alpine:latest`, and `php83`
+and `php83-apache2` are required at `>=8.3.36`, so a stale mirror or base image fails the
+build instead of shipping a vulnerable PHP. **Rebuild with `docker build --pull --no-cache`**;
+a cached `apk add` layer would otherwise keep the old PHP. Bare-metal installations must
+update their distribution's PHP package to a fixed release (8.2.35, 8.3.36, 8.4.27, 8.5.12)
+
 ## 2.3.1 2026-09-29
 
 ### Changed

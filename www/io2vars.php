@@ -62,7 +62,7 @@ const rest_mgmt_port=8443;
  * Application version number (YYYYMMDDNN format)
  * @var int
  */
-$io2ver=2026083001;
+$io2ver=2026102101;
 
 /**
  * Filters an array to return only numeric values

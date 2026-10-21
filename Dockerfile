@@ -57,14 +57,16 @@ RUN BUILD_MODE=${BUILD_MODE} npm run build
 # =============================================================================
 # Stage 2: Final runtime image
 # =============================================================================
-FROM alpine:latest
+# Pinned to a release branch rather than "latest" so the PHP major/minor line is predictable.
+# Alpine 3.24 ships php83 8.3.36, which fixes CVE-2026-109618 / CVE-2026-109619 (PHP2Shell).
+FROM alpine:3.24
 LABEL maintainer="Vadim Pavlov <ioc2rpz@gmail.com>"
 
 WORKDIR /opt/ioc2rpz.gui
 
 RUN mkdir -p /run/apache2 /etc/apache2/ssl /opt/ioc2rpz.gui/www /opt/ioc2rpz.gui/www/js /opt/ioc2rpz.gui/www/css /opt/ioc2rpz.gui/www/webfonts /opt/ioc2rpz.gui/www/dist /opt/ioc2rpz.gui/img /opt/ioc2rpz.gui/www/io2cfg \
     /opt/ioc2rpz.gui/export-cfg /opt/ioc2rpz.gui/scripts && \
-    apk add bash openrc curl coreutils openssl apache2 libxml2-dev apache2-utils php83 php83-apache2 php83-session php83-curl php83-pecl-ssh2 apache2-ssl sqlite php83-sqlite3 php83-ctype bind-tools knot-utils && \
+    apk add bash openrc curl coreutils openssl apache2 libxml2-dev apache2-utils 'php83>=8.3.36' 'php83-apache2>=8.3.36' php83-session php83-curl php83-pecl-ssh2 apache2-ssl sqlite php83-sqlite3 php83-ctype bind-tools knot-utils && \
     ln -sf /proc/self/fd/1 /var/log/apache2/access.log && \
     ln -sf /proc/self/fd/1 /var/log/apache2/error.log && \
     ln -sf /proc/self/fd/1 /var/log/apache2/ssl_access.log && \
