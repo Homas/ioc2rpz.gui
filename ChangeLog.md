@@ -15,9 +15,10 @@ update their distribution's PHP package to a fixed release (8.2.35, 8.3.36, 8.4.
 - Upgraded npm dependencies flagged by security scanning: `vite` 8.0.16 → 8.3.5 (`^8.3.5`),
 `vue` 3.5.27 → 3.5.44 (`^3.5.44`, which brings `@vue/server-renderer` 3.5.44),
 `follow-redirects` 1.16.0 → 1.16.1 (via axios) and `source-map-js` 1.2.1 → 1.2.2
-(via postcss and the Vue compiler). Only `vue` ships in the browser bundle; `vite`,
-`source-map-js` and `follow-redirects` (axios's Node.js HTTP adapter) are build- or
-test-time only
+(via postcss and the Vue compiler), and `vitest` 4.1.11 → 4.1.12 (`^4.1.12`), which brings
+`@vitest/mocker` 4.1.12 (GHSA-qxg6-89mg-rqv8, GHSA-xp26-3454-mjgp). Only `vue` ships in the browser bundle; `vite`,
+`vitest`, `source-map-js` and `follow-redirects` (axios's Node.js HTTP adapter) are build-
+or test-time only
 
 ## 2.3.1 2026-09-29
 
