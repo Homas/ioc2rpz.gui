@@ -12,6 +12,12 @@ and `php83-apache2` are required at `>=8.3.36`, so a stale mirror or base image 
 build instead of shipping a vulnerable PHP. **Rebuild with `docker build --pull --no-cache`**;
 a cached `apk add` layer would otherwise keep the old PHP. Bare-metal installations must
 update their distribution's PHP package to a fixed release (8.2.35, 8.3.36, 8.4.27, 8.5.12)
+- Upgraded npm dependencies flagged by security scanning: `vite` 8.0.16 → 8.3.5 (`^8.3.5`),
+`vue` 3.5.27 → 3.5.44 (`^3.5.44`, which brings `@vue/server-renderer` 3.5.44),
+`follow-redirects` 1.16.0 → 1.16.1 (via axios) and `source-map-js` 1.2.1 → 1.2.2
+(via postcss and the Vue compiler). Only `vue` ships in the browser bundle; `vite`,
+`source-map-js` and `follow-redirects` (axios's Node.js HTTP adapter) are build- or
+test-time only
 
 ## 2.3.1 2026-09-29
 
